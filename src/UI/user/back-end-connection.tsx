@@ -50,7 +50,7 @@ export async function login(username:string, password:string){
 
             console.log(`Logged in as ${loginInfo.username}.`);
             alert(`Logged in succesfuly as ${loginInfo.username}. Returning to main page.`);
-            window.location.replace(url);
+            document.location.replace(url);
         }
         else {
             const errorMsg = "Server responded with status: " + tokenResponse.status + ".\nReturned message: " + (await tokenResponse.json()).message;

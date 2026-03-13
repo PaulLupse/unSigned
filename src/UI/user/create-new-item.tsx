@@ -7,6 +7,7 @@ import configFile from "../config.json"
 import {useNavigate, BrowserRouter} from "react-router-dom";
 
 import type {Item} from "./back-end-connection";
+import * as url from "node:url";
 
 const baseURL:string = configFile.baseURL
 
@@ -275,7 +276,7 @@ function CreateNewForm({username}:any) {
 
                     <button onClick={
                         async() => {
-
+                            window.location.assign(baseURL);
                         }
                     } style={{maxWidth:'200px', flexGrow:'1'}}
                     >
@@ -300,7 +301,7 @@ function CreateNewForm({username}:any) {
     )
 }
 
-function Main() {
+export function CreateNewFormRoot() {
 
     const [username, setUsername] = React.useState('');
     // isLoggedIn = {-1, daca nu se stie starea de logare; 0, daca nu este logat userul; 1, daca este logat userul}
@@ -380,5 +381,5 @@ function Main() {
 window.onload = () => {
     const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement
     const root = createRoot(rootDiv);
-    root.render(<BrowserRouter><Main /></BrowserRouter>);
+    root.render(<BrowserRouter><CreateNewFormRoot /></BrowserRouter>);
 }

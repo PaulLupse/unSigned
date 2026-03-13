@@ -8,7 +8,9 @@ import {Table} from "./components/Table";
 
 import type {Item} from "./user/back-end-connection";
 
-import {BrowserRouter, useNavigate, Route} from "react-router-dom"
+import {BrowserRouter, useNavigate, Route, Routes, Link} from "react-router-dom"
+
+import {CreateNewFormRoot} from "./user/create-new-item";
 
 const baseURL:string = configFile.baseURL;
 
@@ -39,6 +41,7 @@ function DataDisplay(props:DataProps) {
 
     const navigate = useNavigate();
 
+    /*
     React.useEffect(()=> {
                     async function getItems ():Promise<void> {
                         const newItems:Array<Item>|undefined = await get_items();
@@ -53,6 +56,7 @@ function DataDisplay(props:DataProps) {
                 },
                 [props.isLoggedIn]
             );
+     */
 
     return(
         // folosim un grid pentru a aseza sectiunile din continut
@@ -64,17 +68,17 @@ function DataDisplay(props:DataProps) {
                 <h3 style={{padding:'5px'}}>My Items</h3>
 
                 <Table<Item> columns={["Name", "Value"]} data={itemList} />
-                <div style={{display:"flex", flexDirection:'column'}}>
-                    <button className={"table-button"}
-                        onClick={
-                            () => {
-                                navigate('/create-new-item');
-                                navigate(0);
-                            }
-                        }>
-                        New Item
-                    </button>
-                </div>
+                {/*<Link to={'/create-new-item'} style={{textDecoration:'none'}}>*/}
+                <a href={baseURL + '/create-new-item'}>
+                    <div style={{display:"flex", justifyContent:'center'}} className="table-button">
+                        <p style={{margin:'0'}}>
+                            New Item
+                        </p>
+                    </div>
+                </a>
+
+                {/*</Link>*/}
+
             </div>
         </div>
 
@@ -166,6 +170,12 @@ window.onload = ()=>{
     root.render(
         <BrowserRouter>
 
+            <Routes>
+                <Route path="/create-new-item" element={<CreateNewFormRoot />}/>
+            </Routes>
+
             <Main />
+
         </BrowserRouter>);
 }
+
