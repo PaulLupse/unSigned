@@ -108,6 +108,14 @@ function Main() {
         []
     );
 
+    React.useEffect(() => {
+       window.onpageshow = function(event) {
+         if (event.persisted) {
+           window.location.reload();
+         }
+       };
+    }, []);
+
     return (
         <div id="Pagina intreaga"
             style={{display:"flex", flexDirection:"column", height:'100vh', minWidth:'300px', alignItems:'stretch',

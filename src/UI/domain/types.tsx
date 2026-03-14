@@ -48,11 +48,11 @@ export class GridQuestion extends FormQuestion {
 }
 
 export class TextQuestion extends FormQuestion {
-    maxCharacters:number=30
+    maxChars:number=30
 
     constructor(text:string, isOptional:boolean, maxChars:number) {
         super(text, isOptional);
-        this.maxCharacters = maxChars
+        this.maxChars = maxChars
     }
 
 }

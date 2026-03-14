@@ -68,7 +68,7 @@ function DisplayQuestion(props:DisplayQuestionProps) {
                (question instanceof TextQuestion)?
                    <TextQuestionComponent text={question.text}
                                           isOptional={question.isOptional}
-                                          maxCharacters={question.maxCharacters} />
+                                          maxCharacters={question.maxChars} />
                    :
                    <GridQuestionComponent text={question.text}
                                           isOptional={question.isOptional}
@@ -88,6 +88,9 @@ function NewGridQuestionOptions(props:GridQuestionOptionsProps) {
 
     const inputNewOptionText = React.useRef<HTMLInputElement>(null);
 
+    const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+
+
     return (
         <>
             {
@@ -99,7 +102,16 @@ function NewGridQuestionOptions(props:GridQuestionOptionsProps) {
                                 return (
                                     <div style={{display:'flex', gap:'5px'}}>
                                         <p key={index} style={{flexGrow:'1', margin:'0'}}>{index+1}. {text}</p>
-                                        <button>
+                                        <button onClick={
+                                                () => {
+                                                    const newChoices:Array<string> = props.choices;
+                                                    newChoices.splice(index, 1);
+                                                    props.setChoices(newChoices);
+
+                                                    forceUpdate();
+                                                }
+                                            }
+                                        >
                                             Delete
                                         </button>
                                     </div>
@@ -114,23 +126,27 @@ function NewGridQuestionOptions(props:GridQuestionOptionsProps) {
 
             <input type={'text'} ref={inputNewOptionText} placeholder={'Option text'} />
 
-            <button  onClick={
-                ()=>{
-                    // metoda pentru adaugarea unei noi variante de raspuns
-                    if(inputNewOptionText.current) {
-                        const newOptionValue:string = inputNewOptionText.current.value;
-                        if(newOptionValue==='')
-                            alert("Choice cannot be empty.")
-                        else {
-                            props.setChoices([...props.choices, inputNewOptionText.current.value])
-                            inputNewOptionText.current.value = '';
-                        }
+            <div style={{display:'flex', justifyContent:'center'}}>
+                <button  onClick={
+                    ()=>{
+                        // metoda pentru adaugarea unei noi variante de raspuns
+                        if(inputNewOptionText.current) {
+                            const newOptionValue:string = inputNewOptionText.current.value;
+                            if(newOptionValue==='')
+                                alert("Choice cannot be empty.")
+                            else {
+                                props.setChoices([...props.choices, inputNewOptionText.current.value])
+                                inputNewOptionText.current.value = '';
+                            }
 
+                        }
                     }
                 }
-            }>
-                Add option
-            </button>
+                style={{maxWidth:'200px', flexGrow:'1'}}>
+                    Add option
+                </button>
+            </div>
+
         </>
     )
 }
@@ -152,12 +168,12 @@ function CreateNewQuestion(props:CreateNewQuestionProps) {
     const [options, setOptions] = React.useState(Array<string>);
 
     return (
-        <div id="CreateNewQuestionDiv" style={{display:'flex', flexGrow:'1', maxWidth:'400px', flexDirection:'column', alignItems:'stretch', gap:'5px'}}>
+        <div id="CreateNewQuestionDiv" style={{display:'flex', flexGrow:'1', maxWidth:'400px', flexDirection:'column', alignItems:'stretch', gap:'5px', padding:'10px'}}>
 
             <input ref={inputQuestionText} type='text' placeholder="Question text" style={{border:'0px',
                     borderBottom:'dashed 1px', maxWidth:'400px'}} maxLength={60}/>
 
-            <div style={{display:'flex'}}>
+            <div style={{display:'flex', justifyContent:'space-between'}}>
                 <input ref={isOptionalCheckbox} type='checkbox' />
                 <p style={{margin:'0'}}>Optional</p>
                 {
@@ -183,26 +199,27 @@ function CreateNewQuestion(props:CreateNewQuestionProps) {
                 questionType==='grid' &&
                 <NewGridQuestionOptions setChoices={setOptions} choices={options}/>
             }
-
-            <button onClick={
-                ()=>{
-                    if(inputQuestionText.current && isOptionalCheckbox.current) {
-                        const questionText:string = inputQuestionText.current.value;
-                        const isOptional:boolean = isOptionalCheckbox.current.checked;
-                        if(questionType==='grid' && isMultipleChoiceCheckbox.current) {
-                            const isMultipleChoice:boolean = isMultipleChoiceCheckbox.current.checked;
-
-                            props.addQuestionCallback(new GridQuestion(questionText, isOptional, isMultipleChoice, options));
+            <div style={{display:'flex', justifyContent:'center'}}>
+                <button style={{flexGrow:'1', maxWidth:'200px'}}
+                    onClick={
+                    ()=>{
+                        if(inputQuestionText.current && isOptionalCheckbox.current) {
+                            const questionText:string = inputQuestionText.current.value;
+                            const isOptional:boolean = isOptionalCheckbox.current.checked;
+                            if(questionType==='grid' && isMultipleChoiceCheckbox.current) {
+                                const isMultipleChoice:boolean = isMultipleChoiceCheckbox.current.checked;
+                                props.addQuestionCallback(new GridQuestion(questionText, isOptional, isMultipleChoice, options));
+                            }
+                            else if(questionType==='text')
+                                props.addQuestionCallback(new TextQuestion(questionText, isOptional, 30));
                         }
-                        else if(questionType==='text')
-                            props.addQuestionCallback(new TextQuestion(questionText, isOptional, 30));
-                    }
 
-                    props.setDisplayQuestionCreator(false);
-                }
-            }>
-                Add
-            </button>
+                        props.setDisplayQuestionCreator(false);
+                    }
+                }>
+                    Add
+                </button>
+            </div>
         </div>
     )
 }
