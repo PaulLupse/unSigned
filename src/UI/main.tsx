@@ -2,15 +2,20 @@ import React, {use} from 'react'
 import {createRoot} from "react-dom/client";
 import configFile from './config.json'
 
-import {auto_login, get_items, logout} from "./user/back-end-connection";
+import {auto_login, get_forms, logout} from "./user/back-end-connection";
 
 import {Table} from "./components/Table";
 
-import type {Item} from "./user/back-end-connection";
+import type {FormInfo, Submission} from "./domain/types";
 
 import {BrowserRouter, useNavigate, Route, Routes, Link} from "react-router-dom"
 
 import {CreateNewFormRoot} from "./user/create-new-item";
+
+import type {pair} from "./components/Utilities";
+import {makePair} from "./components/Utilities";
+
+
 
 const baseURL:string = configFile.baseURL;
 
@@ -34,21 +39,19 @@ function NotLoggedInPanel(props:{divStyle:any}) {
         )
 }
 
-
 function DataDisplay(props:DataProps) {
 
-    const [itemList, setItemList] = React.useState(Array<Item>);
+    const [formList, setFormList] = React.useState(Array<FormInfo>);
 
     const navigate = useNavigate();
 
-    /*
+
     React.useEffect(()=> {
                     async function getItems ():Promise<void> {
-                        const newItems:Array<Item>|undefined = await get_items();
+                        const newItems:Array<FormInfo>|undefined = await get_forms();
 
                         if(newItems) {
-                            console.log(newItems);
-                            setItemList(newItems);
+                            setFormList(newItems);
                         }
                     }
                     if(props.isLoggedIn)
@@ -56,7 +59,7 @@ function DataDisplay(props:DataProps) {
                 },
                 [props.isLoggedIn]
             );
-     */
+
 
     return(
         // folosim un grid pentru a aseza sectiunile din continut
@@ -67,17 +70,18 @@ function DataDisplay(props:DataProps) {
 
                 <h3 style={{padding:'5px'}}>My Items</h3>
 
-                <Table<Item> columns={["Name", "Value"]} data={itemList} />
-                {/*<Link to={'/create-new-item'} style={{textDecoration:'none'}}>*/}
-                <a href={baseURL + '/create-new-item'}>
+                <Table<FormInfo> columns={["Name", "Date created", "Date updated", "Submissions"]}
+                                 dataFields={['name', 'dateCreated', 'dateUpdated', makePair('submissions',
+                                     (subs:Array<Submission>):number=>subs?subs.length:0)]}
+                                 data={formList} />
+
+                <a href={baseURL + '/create-new-form'} className="sneaky-anchor">
                     <div style={{display:"flex", justifyContent:'center'}} className="table-button">
                         <p style={{margin:'0'}}>
-                            New Item
+                            New Form
                         </p>
                     </div>
                 </a>
-
-                {/*</Link>*/}
 
             </div>
         </div>

@@ -1,6 +1,7 @@
 import React from "react";
-import type {Item} from "../user/back-end-connection";
-import getValues from "./Utilities";
+import type {FormInfo} from "../domain/types";
+import {getValues, validateKey} from "./Utilities";
+import type {pair} from "./Utilities";
 
 // model de data pentru a se folosi impreuna cu TableView
 export class TableModel {
@@ -79,13 +80,18 @@ export class TableModel {
 }
 
 
-// componenta Table ia ca parametrii numele coloanelor, modelul (care retine datele) si, optional, stilul pt
-// tabela
+// Interfata generica pentru componenta Table. Tipul 'lineInterface' reprezinta tipul elementelor vectorului de date.
+// Ia ca parametru numele coloanelor, datele ce trebuie sa populeze tabela si un
+// sir de chei pentru accesarea campurilor din obiectele de tip lineInterface. Pe langa cheie se poate pasa si
+// o functie, ce realizeaza o prelucrare asupra datelor campului inainte de afisarea acestora in tabel
 interface TableProps<lineInterface> {
     columns: Array<string>
     data: Array<lineInterface>
+    dataFields: Array<string| pair<string, (arg:any)=>any>>
     style?: any
 }
+
+
 
 export function Table<lineInterface>(props:TableProps<lineInterface>) {
 
@@ -114,11 +120,22 @@ export function Table<lineInterface>(props:TableProps<lineInterface>) {
                         return (
                             <tr key={index}>
                                 {
-                                    getValues(line).map(
-                                        (entry:any, index:number)=> {
+                                    props.dataFields.map(
+                                        (entry:string|pair<string, (arg:any)=>any>, index:number)=> {
+
                                             return (
                                                 <td key={index}>
-                                                    {entry}
+                                                    {
+                                                        // daca entry-ul e doar un stringm se verifica daca este valid
+                                                        typeof entry === 'string'?
+                                                            validateKey(entry, line)?
+                                                                line[entry as keyof lineInterface]
+                                                                :''
+                                                        :
+                                                            validateKey(entry.obj1, line)?
+                                                                entry.obj2(line[entry.obj1 as keyof lineInterface])
+                                                                :''
+                                                    }
                                                 </td>
                                             )
                                         }

@@ -1,45 +1,16 @@
 import React, {type SetStateAction, useState} from "react";
 import {createRoot} from "react-dom/client";
 import type {RefObject, Dispatch} from "react";
-import {logout, auto_login, add_item} from "./back-end-connection";
+import {logout, auto_login, add_form} from "./back-end-connection";
 
 import configFile from "../config.json"
 import {useNavigate, BrowserRouter} from "react-router-dom";
 
-import type {Item} from "./back-end-connection";
-import * as url from "node:url";
+import {FormInfo, type Submission} from "../domain/types";
+import {TextQuestion, GridQuestion} from "../domain/types";
 
 const baseURL:string = configFile.baseURL
 
-
-class FormQuestion {
-    text:string=''
-    isOptional:boolean=false
-    constructor(text:string, isOptional:boolean) {
-        this.text = text;
-        this.isOptional = isOptional;
-    }
-}
-
-class GridQuestion extends FormQuestion {
-    isMultipleChoice:boolean=false
-    choices:Array<string>=new Array<string>
-    constructor(text:string, isOptional:boolean, isMultipleChoice:boolean, choices:Array<string>) {
-        super(text, isOptional);
-        this.isMultipleChoice = isMultipleChoice;
-        this.choices = choices;
-    }
-}
-
-class TextQuestion extends FormQuestion {
-    maxCharacters:number=30
-
-    constructor(text:string, isOptional:boolean, maxChars:number) {
-        super(text, isOptional);
-        this.maxCharacters = maxChars
-    }
-
-}
 
 interface TextQuestionProps {
     text:string
@@ -220,6 +191,7 @@ function CreateNewQuestion(props:CreateNewQuestionProps) {
                         const isOptional:boolean = isOptionalCheckbox.current.checked;
                         if(questionType==='grid' && isMultipleChoiceCheckbox.current) {
                             const isMultipleChoice:boolean = isMultipleChoiceCheckbox.current.checked;
+
                             props.addQuestionCallback(new GridQuestion(questionText, isOptional, isMultipleChoice, options));
                         }
                         else if(questionType==='text')
@@ -238,6 +210,7 @@ function CreateNewQuestion(props:CreateNewQuestionProps) {
 function CreateNewForm({username}:any) {
 
     const nameInput:RefObject<HTMLInputElement|null> = React.useRef(null);
+    const keyInput:RefObject<HTMLInputElement|null> = React.useRef(null);
 
     const [formQuestions, setFormQuestions] = useState(Array<TextQuestion|GridQuestion>);
 
@@ -251,6 +224,10 @@ function CreateNewForm({username}:any) {
 
                 <div style={{display:'flex', justifyContent:'center'}}>
                     <input type='text' maxLength={30} ref={nameInput} placeholder="Form name" style={{border:'0px',
+                        borderBottom:'dashed 1px', maxWidth:'200px', textAlign:'center', flexGrow:'1'}}/>
+                </div>
+                <div style={{display:'flex', justifyContent:'center'}}>
+                    <input type='text' maxLength={30} ref={keyInput} placeholder="Key" style={{border:'0px',
                         borderBottom:'dashed 1px', maxWidth:'200px', textAlign:'center', flexGrow:'1'}}/>
                 </div>
 
@@ -273,10 +250,28 @@ function CreateNewForm({username}:any) {
                 </div>
 
                 <div style={{display:'flex', justifyContent:'center'}}>
-
+                    {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}
                     <button onClick={
                         async() => {
-                            window.location.assign(baseURL);
+
+                            const newForm:FormInfo = {
+                                name:nameInput.current?nameInput.current.value:'',
+                                questions:formQuestions,
+                                key:keyInput.current?keyInput.current.value:'',
+                                dateCreated:null,
+                                dateUpdated:null,
+                                submissions:null
+                            }
+
+                            console.log(formQuestions)
+
+                            const addResponse:boolean = await add_form(newForm);
+
+                            if(addResponse) {
+                                alert("Form created successfuly.")
+                            }
+                            else alert("Could not create form.")
+
                         }
                     } style={{maxWidth:'200px', flexGrow:'1'}}
                     >
@@ -330,7 +325,7 @@ export function CreateNewFormRoot() {
     return (
         <div id="Pagina intreaga"
             style={{display:"flex", flexDirection:"column", height:'100vh', minWidth:'300px', alignItems:'stretch',
-            gap:'10px', border:'solid 2px'}}>
+            gap:'10px'}}>
 
             <div id="Bara de sus"
                 style={{display:'grid', gridTemplateColumns:'1fr auto 1fr', alignItems:'center',

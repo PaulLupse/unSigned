@@ -1,28 +1,11 @@
+// acest script contine parte din logica de comunicare cu serverul web, precum logare, inregistrare si operati CRUD
+
 import config from '../config.json'
 
 const url:string = config.baseURL;
 
-export class LoginInfo {
-    private _username;
-    private _password;
-
-    constructor(username:string, password:string) {
-        this._username = username;
-        this._password = password;
-
-        Object.seal(this);
-        Object.preventExtensions(this);
-    }
-
-    public get username() { return this._username; }
-    public get password() { return this._password; }
-}
-
-export interface Item {
-    name:string
-    owner:string
-    value:string
-}
+import {LoginInfo, FormInfo} from "../domain/types";
+import type {TextAnswer, GridAnswer, Submission} from "../domain/types";
 
 export async function getAccessToken(loginInfo:LoginInfo) {
 
@@ -128,7 +111,7 @@ export async function auto_login():Promise<string|undefined>{
     }
 }
 
-export async function get_items():Promise<Array<Item>|undefined> {
+export async function get_forms():Promise<Array<FormInfo>|undefined> {
     try {
 
         const getItemsRequest = new Request(
@@ -142,11 +125,16 @@ export async function get_items():Promise<Array<Item>|undefined> {
         if (requestResponse.ok) {
 
             const data = await requestResponse.json();
-            if(Object.hasOwn(data, 'items'))
+            if(Object.hasOwn(data, 'forms'))
             {
-                return data.items;
-            }
+                const newForms:Array<FormInfo> = new Array<FormInfo>;
+                for(let form of data.forms) {
 
+                    console.log(form);
+                    newForms.push(form);
+                }
+                return newForms;
+            }
             else
                 throw new Error('Get items request did not return items.')
         }
@@ -175,18 +163,21 @@ export async function logout():Promise<boolean> {
     }
 }
 
-export async function add_item(username:string, item:Item):Promise<boolean> {
+export async function add_form(form:FormInfo):Promise<boolean> {
     try {
 
         const requestHeader = new Headers({
             'Accept': "application/json",
             'Content-Type': "application/json"
         });
+
+        console.log(JSON.stringify(form))
+
         const createItemRequest = new Request(url+"/users/me/items",
             {
                 method:"POST",
                 headers:requestHeader,
-                body:JSON.stringify(item)
+                body:JSON.stringify(form)
             }
         )
         const createItemResponse = await fetch(createItemRequest);

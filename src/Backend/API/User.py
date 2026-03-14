@@ -16,7 +16,7 @@ from src.Backend.DB.DBConnector import Database
 from src.Backend.Utilities import generate_access_token
 from src.Backend.API.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
 
-from src.Backend.Domain.Models import Item
+from src.Backend.Domain.Models import Form
 
 MDB_URL = "mongodb://localhost:27017/"
 SK = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -45,7 +45,7 @@ class RegisterData(BaseModel):
     password:str
 
 
-async def authenticate(token : Annotated[str, Depends(oauth2_scheme)]):
+async def authenticate(token : Annotated[str, Depends(oauth2_scheme)])->str:
 
     # eroare daca validarea da rateuri
     validation_error = HTTPException(
@@ -147,10 +147,10 @@ async def delete_user(login_response:Annotated[str, Depends(authenticate)]):
         return JSONResponse(content={"message":"Deleted user succesfully."}, status_code=200)
     else: return JSONResponse(content={"message":"Could not delete user."}, status_code=400)
 
-@router.post("/me/items", response_class=JSONResponse, dependencies=[Depends(authenticate)])
-async def add_item(item:Item):
+@router.post("/me/items", response_class=JSONResponse)
+async def add_item(login_response:Annotated[str, Depends(authenticate)], new_form:Form):
 
-    add_response = db_connector.add_item(item)
+    add_response = db_connector.add_form(new_form, login_response)
     if add_response == 409:
         return JSONResponse(content={"message":"Item with this name already exists."},
                             status_code=status.HTTP_409_CONFLICT)
@@ -165,6 +165,8 @@ async def add_item(item:Item):
 @router.get("/me/items")
 async def get_items(login_response:Annotated[str, Depends(authenticate)]):
 
-    item_list:list[Item] = db_connector.get_items(login_response)
+    form_list:list[Form] = db_connector.get_forms(login_response)
 
-    return JSONResponse(content={"message":"Returned successfully.", "items":item_list}, status_code=status.HTTP_200_OK)
+    return JSONResponse(content={"message":"Returned successfully.", "forms":form_list}, status_code=status.HTTP_200_OK)
+
+

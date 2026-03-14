@@ -48,8 +48,8 @@ async def login_page():
 async def register_page():
     return FileResponse("static/html/register.html")
 
-@app.get("/create-new-item")
-async def create_new_item():
-    return FileResponse("static/html/create-new-item.html")
+@app.get("/create-new-form")
+async def create_new_form():
+    return FileResponse("static/html/create-new-form.html")
 
 

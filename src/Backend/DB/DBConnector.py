@@ -2,7 +2,9 @@ from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 
 from src.Backend.Utilities import hash_password, verify_password
-from src.Backend.Domain.Models import Item
+from src.Backend.Domain.Models import Form, TextQuestion
+
+from datetime import date, datetime
 
 class Database:
 
@@ -10,11 +12,10 @@ class Database:
         try:
             database = MongoClient(url)["users"]
             self.users_table = database["users"]
-            self.items_table = database["items"]
+            self.forms_table = database["forms"]
         except ServerSelectionTimeoutError as e:
             print("ERROR: Server Selection Timeout")
             raise e
-
 
     def validate_credentials(self, username:str, password:str):
 
@@ -64,26 +65,23 @@ class Database:
 
         return 200
 
-    def add_item(self, item:Item)->int:
+    def add_form(self, new_form:Form, owner:str)->int:
 
-        if item.name == '' or item.value == '':
-            return 400
-
-        if self.items_table.find_one({"name":item.name}):
+        if self.forms_table.find_one({"name":new_form.name, "owner":owner}):
             return 409
 
-        dict_item:dict = item.model_dump(mode="json")
+        current_date:date = datetime.now().date()
+        new_form.dateCreated = current_date
+        new_form.dateUpdated = current_date
 
-        self.items_table.insert_one(dict_item)
+        new_form_dict = new_form.model_dump(mode="json")
+        new_form_dict["owner"] = owner
+
+        self.forms_table.insert_one(new_form_dict)
 
         return 200
 
-    def get_items(self, owner:str)->list[Item]:
+    def get_forms(self, owner:str)->list[Form]:
 
-        item_list = list(self.items_table.find({"owner":owner}, {"name":1, "value":1, "_id":0}))
-        return item_list
-
-
-if __name__=="__main__":
-
-    print(Database("mongodb://localhost:27017/").get_items(owner="a"))
+        form_list = list(self.forms_table.find({"owner":owner}, {"_id":0}))
+        return form_list
