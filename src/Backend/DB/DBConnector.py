@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
+from pymongo.results import DeleteResult
 
 from src.Backend.Utilities import hash_password, verify_password
 from src.Backend.Domain.Models import Form, TextQuestion
@@ -14,7 +15,7 @@ class Database:
             self.users_table = database["users"]
             self.forms_table = database["forms"]
         except ServerSelectionTimeoutError as e:
-            print("ERROR: Server Selection Timeout")
+            print("ERROR: Server Selection Timeout. Check server connection.")
             raise e
 
     def validate_credentials(self, username:str, password:str):
@@ -85,3 +86,13 @@ class Database:
 
         form_list = list(self.forms_table.find({"owner":owner}, {"_id":0}))
         return form_list
+
+    def delete_form(self, owner:str, name:str):
+
+        delete_result:DeleteResult = self.forms_table.delete_one({"owner":owner,"name":name})
+        if delete_result.deleted_count:
+            return 200
+
+        return 4074
+
+

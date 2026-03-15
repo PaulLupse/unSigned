@@ -169,4 +169,13 @@ async def get_items(login_response:Annotated[str, Depends(authenticate)]):
 
     return JSONResponse(content={"message":"Returned successfully.", "forms":form_list}, status_code=status.HTTP_200_OK)
 
+@router.delete("/me/items/{name}", response_class=JSONResponse)
+async def delete_form(login_response:Annotated[str, Depends(authenticate)], name:str):
+
+    delete_form_response: int = db_connector.delete_form(login_response, name)
+    if delete_form_response == 200:
+        return JSONResponse(content={"message": "Deleted form succesfully."}, status_code=200)
+
+    else:
+        return JSONResponse(content={"message": "Form not found."}, status_code=404)
 

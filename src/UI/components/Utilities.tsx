@@ -30,3 +30,10 @@ export  function getValues<type>(obj:type):Array<any> {
         values.push(obj[key]);
     return values;
 }
+
+export function getValue<type>(obj:type, keyInObj:string):any {
+    for(let key in obj)
+        if(key===keyInObj)
+            return obj[key]
+    return null;
+}

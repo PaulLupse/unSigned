@@ -1,7 +1,8 @@
 import React from "react";
 import type {FormInfo} from "../domain/types";
-import {getValues, validateKey} from "./Utilities";
+import {getValue, validateKey} from "./Utilities";
 import type {pair} from "./Utilities";
+import {delete_form} from "../user/back-end-connection";
 
 // model de data pentru a se folosi impreuna cu TableView
 export class TableModel {
@@ -84,16 +85,19 @@ export class TableModel {
 // Ia ca parametru numele coloanelor, datele ce trebuie sa populeze tabela si un
 // sir de chei pentru accesarea campurilor din obiectele de tip lineInterface. Pe langa cheie se poate pasa si
 // o functie, ce realizeaza o prelucrare asupra datelor campului inainte de afisarea acestora in tabel
-interface TableProps<lineInterface> {
+interface TableProps<lineInterface extends Object> {
     columns: Array<string>
     data: Array<lineInterface>
+    setData: any
     dataFields: Array<string| pair<string, (arg:any)=>any>>
+    deleteButtonCallback: (formName:string)=>void
+    viewButtonCallback?: ()=>void
     style?: any
 }
 
 
 
-export function Table<lineInterface>(props:TableProps<lineInterface>) {
+export function Table<lineInterface extends Object>(props:TableProps<lineInterface>) {
 
     return (
         <table style={props.style?props.style:{}}>
@@ -110,6 +114,10 @@ export function Table<lineInterface>(props:TableProps<lineInterface>) {
                         }
                     )
                 }
+                <th style={{width:'0.1%', whiteSpace:'nowrap'}}>
+                </th>
+                <th style={{width:'0.1%', whiteSpace:'nowrap'}}>
+                </th>
             </tr>
 
             </thead>
@@ -141,6 +149,25 @@ export function Table<lineInterface>(props:TableProps<lineInterface>) {
                                         }
                                     )
                                 }
+                                <td>
+                                    <button
+                                        onClick={
+                                            ()=>{
+                                                props.deleteButtonCallback(getValue(line, 'name'))
+                                                const newData = structuredClone(props.data);
+                                                newData.splice(index, 1);
+                                                props.setData(newData);
+                                            }
+                                        }
+                                    >
+                                        Delete
+                                    </button>
+                                </td>
+                                <td>
+                                    <button style={{}}>
+                                        View
+                                    </button>
+                                </td>
                             </tr>
                         )
                     }

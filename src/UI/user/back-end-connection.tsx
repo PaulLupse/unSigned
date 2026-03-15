@@ -194,3 +194,28 @@ export async function add_form(form:FormInfo):Promise<boolean> {
 
 }
 
+export async function delete_form(formName:string):Promise<boolean> {
+    try {
+        const deleteRequest:Request = new Request(url+`/users/me/items/${formName}`,
+            {
+                method:'DELETE'
+            }
+        );
+
+        const deleteResponse = await fetch(deleteRequest);
+
+        if(deleteResponse.ok) {
+            alert("Item deleted successfully.");
+            return true;
+        }
+        else {
+            const deleteResponseData = await deleteResponse.json();
+            console.log(deleteResponseData)
+            throw new Error("Could not delete form. Returned message: " + deleteResponseData.message)
+        }
+    }
+    catch(error) {
+        alert(error);
+        return false;
+    }
+}

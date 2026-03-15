@@ -14,14 +14,15 @@ class GridQuestion(Question):
 class TextQuestion(Question):
     maxChars:int
 
-class Submission(BaseModel):
-    answers:list[GridAnswer|TextAnswer]
-
 class GridAnswer(BaseModel):
     choices:list[int]
 
 class TextAnswer(BaseModel):
     text:str
+
+class Submission(BaseModel):
+    answers:list[GridAnswer|TextAnswer]
+
 
 class Form(BaseModel):
     name:str

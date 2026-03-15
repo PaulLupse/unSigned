@@ -2,7 +2,7 @@ import React, {use} from 'react'
 import {createRoot} from "react-dom/client";
 import configFile from './config.json'
 
-import {auto_login, get_forms, logout} from "./user/back-end-connection";
+import {auto_login, get_forms, logout, delete_form} from "./user/back-end-connection";
 
 import {Table} from "./components/Table";
 
@@ -12,7 +12,6 @@ import {BrowserRouter, useNavigate, Route, Routes, Link} from "react-router-dom"
 
 import {CreateNewFormRoot} from "./user/create-new-item";
 
-import type {pair} from "./components/Utilities";
 import {makePair} from "./components/Utilities";
 
 
@@ -68,12 +67,18 @@ function DataDisplay(props:DataProps) {
 
             <div id="display" style={props.divStyle}>
 
-                <h3 style={{padding:'5px'}}>My Items</h3>
+                <h3 style={{padding:'5px', textAlign:'center'}}>My Forms</h3>
 
                 <Table<FormInfo> columns={["Name", "Date created", "Date updated", "Submissions"]}
                                  dataFields={['name', 'dateCreated', 'dateUpdated', makePair('submissions',
                                      (subs:Array<Submission>):number=>subs?subs.length:0)]}
-                                 data={formList} />
+                                 data={formList}
+                                 setData={setFormList}
+                                 deleteButtonCallback=
+                                     {(form_name:string):void => {
+                                         delete_form(form_name);
+                                     }}
+                />
 
                 <a href={baseURL + '/create-new-form'} className="sneaky-anchor">
                     <div style={{display:"flex", justifyContent:'center'}} className="table-button">
@@ -160,9 +165,9 @@ function Main() {
                     <DataDisplay username={username} isLoggedIn={isLoggedIn}
                                  // div style reprezinta stilul div-urilor din fiecare celula a grid-ului
                         divStyle={{display:'flex', flexDirection:'column', alignItems:'stretch', padding:'10px',
-                            flexGrow:'1', justifyContent:'start', borderStyle:'dotted', overflow:'auto'}}
+                            flexGrow:'1', justifyContent:'start', overflow:'auto'}}
 
-                        gridStyle={{display:'grid', gridTemplateColumns:'1fr', width:'90%', height:'100%', alignItems:'start',
+                        gridStyle={{display:'grid', gridTemplateColumns:'1fr', width:'70%', height:'100%', alignItems:'start',
                             gap:'10px'}} />
                     :
                     <NotLoggedInPanel divStyle={{display:'flex', flexDirection:'column', alignItems:'center', paddingTop:'10px',
