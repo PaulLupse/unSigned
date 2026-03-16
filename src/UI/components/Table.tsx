@@ -90,7 +90,7 @@ interface TableProps<lineInterface extends Object> {
     data: Array<lineInterface>
     setData: any
     dataFields: Array<string| pair<string, (arg:any)=>any>>
-    deleteButtonCallback: (formName:string)=>void
+    deleteButtonCallback: (line:lineInterface)=>void
     viewButtonCallback?: ()=>void
     style?: any
 }
@@ -114,9 +114,11 @@ export function Table<lineInterface extends Object>(props:TableProps<lineInterfa
                         }
                     )
                 }
-                <th style={{width:'0.1%', whiteSpace:'nowrap'}}>
+                <th style={{width:'0.1%', whiteSpace:'nowrap', color:'#dbdbdb', padding:'14px'}}>
+                    Delete
                 </th>
-                <th style={{width:'0.1%', whiteSpace:'nowrap'}}>
+                <th style={{width:'0.1%', whiteSpace:'nowrap', color:'#dbdbdb', padding:'14px'}}>
+                    View
                 </th>
             </tr>
 
@@ -150,16 +152,7 @@ export function Table<lineInterface extends Object>(props:TableProps<lineInterfa
                                     )
                                 }
                                 <td>
-                                    <button
-                                        onClick={
-                                            ()=>{
-                                                props.deleteButtonCallback(getValue(line, 'name'))
-                                                const newData = structuredClone(props.data);
-                                                newData.splice(index, 1);
-                                                props.setData(newData);
-                                            }
-                                        }
-                                    >
+                                    <button onClick={()=>{props.deleteButtonCallback(line)}}>
                                         Delete
                                     </button>
                                 </td>

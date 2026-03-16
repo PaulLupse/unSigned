@@ -1,22 +1,26 @@
 import React, {use} from 'react'
 import {createRoot} from "react-dom/client";
+import {createBrowserRouter, RouterProvider} from "react-router-dom";
+
+
 import configFile from './config.json'
-
 import {auto_login, get_forms, logout, delete_form} from "./user/back-end-connection";
-
 import {Table} from "./components/Table";
-
 import type {FormInfo, Submission} from "./domain/types";
-
-import {BrowserRouter, useNavigate, Route, Routes, Link} from "react-router-dom"
-
 import {CreateNewFormRoot} from "./user/create-new-item";
-
 import {makePair} from "./components/Utilities";
 
 
 
 const baseURL:string = configFile.baseURL;
+
+const router = createBrowserRouter([
+    {
+        path:'/',
+        element:<Main />
+    }
+])
+
 
 interface DataProps {
     username:string
@@ -41,9 +45,6 @@ function NotLoggedInPanel(props:{divStyle:any}) {
 function DataDisplay(props:DataProps) {
 
     const [formList, setFormList] = React.useState(Array<FormInfo>);
-
-    const navigate = useNavigate();
-
 
     React.useEffect(()=> {
                     async function getItems ():Promise<void> {
@@ -75,8 +76,11 @@ function DataDisplay(props:DataProps) {
                                  data={formList}
                                  setData={setFormList}
                                  deleteButtonCallback=
-                                     {(form_name:string):void => {
-                                         delete_form(form_name);
+                                     {(form:FormInfo):void => {
+                                         delete_form(form.name);
+                                         const newData = structuredClone(formList);
+                                         newData.splice(formList.indexOf(form), 1);
+                                         setFormList(newData);
                                      }}
                 />
 
@@ -185,14 +189,7 @@ window.onload = ()=>{
     const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement
     const root = createRoot(rootDiv);
     root.render(
-        <BrowserRouter>
-
-            <Routes>
-                <Route path="/create-new-item" element={<CreateNewFormRoot />}/>
-            </Routes>
-
-            <Main />
-
-        </BrowserRouter>);
+        <Main />
+    );
 }
 
