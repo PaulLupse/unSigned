@@ -40,6 +40,10 @@ async def http_exception_handler(request:Request, exception : HTTPException):
 async def root():
     return FileResponse("static/html/index.html")
 
+@app.get("/ceva", response_class=HTMLResponse)
+async def ceva():
+    return FileResponse("static/html/index.html")
+
 @app.get("/login", response_class=FileResponse)
 async def login_page():
     return FileResponse("static/html/login.html")
@@ -50,6 +54,6 @@ async def register_page():
 
 @app.get("/create-new-form")
 async def create_new_form():
-    return FileResponse("static/html/create-new-form.html")
+    return FileResponse("static/html/index.html")
 
 

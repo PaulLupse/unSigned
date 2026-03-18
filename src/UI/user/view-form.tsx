@@ -8,7 +8,9 @@ interface ViewFormProps {
     form:FormInfo
 }
 
-export function ViewForm(props:ViewFormProps) {
+export default function ViewForm() {
+
+
     return (
         <>
             <div style={{display:'flex', flexDirection:'column', justifyContent:"start", alignContent:"center",

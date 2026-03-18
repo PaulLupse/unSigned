@@ -158,7 +158,7 @@ function CreateNewQuestion(props:CreateNewQuestionProps) {
     )
 }
 
-function CreateNewForm({username}:any) {
+export default function CreateNewForm() {
 
     const nameInput:RefObject<HTMLInputElement|null> = React.useRef(null);
     const keyInput:RefObject<HTMLInputElement|null> = React.useRef(null);
@@ -169,7 +169,7 @@ function CreateNewForm({username}:any) {
 
 
     return (
-        <>
+        <div id="Continut" style={{display:'flex', alignItems:'start', height:'100%', justifyContent:'center'}}>
             <div style={{display:'flex', flexDirection:'column', justifyContent:"start", alignContent:"center",
                     maxWidth:'600px', flexGrow:'1', gap:'5px', padding:'10px', overflow:'auto'}}>
 
@@ -242,90 +242,7 @@ function CreateNewForm({username}:any) {
                 }/>
             }
 
-        </>
+        </div>
 
     )
-}
-
-export function CreateNewFormRoot() {
-
-    const [username, setUsername] = React.useState('');
-    // isLoggedIn = {-1, daca nu se stie starea de logare; 0, daca nu este logat userul; 1, daca este logat userul}
-    const [isLoggedIn, setIsLoggedIn] = React.useState(false);
-
-
-    const navigate = useNavigate();
-
-    // folosim un effect pentru a returna utilizatorul curent
-    React.useEffect(()=> {
-            async function getUser ():Promise<void> {
-                const username:string|undefined = await auto_login();
-                if(username) {
-                    setUsername(username);
-                    setIsLoggedIn(true);
-                }
-                else {
-                    navigate(baseURL);
-                }
-            }
-            getUser();
-        },
-        []
-    );
-
-    return (
-        <div id="Pagina intreaga"
-            style={{display:"flex", flexDirection:"column", height:'100vh', minWidth:'300px', alignItems:'stretch',
-            gap:'10px'}}>
-
-            <div id="Bara de sus"
-                style={{display:'grid', gridTemplateColumns:'1fr auto 1fr', alignItems:'center',
-                borderBottom:'5px', borderBottomStyle:'double'}}>
-
-                <div style={{display:"flex", alignItems:'center', gap:'10px', marginLeft:'10px'}}>
-                    <p style={{textAlign:'center'}}>
-                        Current user: {isLoggedIn?username:'none'}
-                    </p>
-                    {
-                        isLoggedIn &&
-                        <button
-                            onClick={
-                                async()=> {
-                                    console.log("Logout button clicked")
-                                    if (await logout()) {
-                                        setUsername('');
-                                        setIsLoggedIn(false);
-                                        navigate(baseURL);
-                                    }
-                                }
-                            }
-                        >
-                            Log out
-                        </button>
-                    }
-                </div>
-
-                <div style={{flexGrow:'1'}}>
-                    <h1 style={{textAlign:'center'}}>
-                        Create new form
-                    </h1>
-                </div>
-
-            </div>
-
-            <div id="Continut" style={{display:'flex', alignItems:'start', height:'100%', justifyContent:'center'}}>
-
-                <CreateNewForm username={username}/>
-
-            </div>
-
-
-        </div>
-    );
-}
-
-window.onload = () => {
-    const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement
-    const root = createRoot(rootDiv);
-    root.render(<BrowserRouter><CreateNewFormRoot /></BrowserRouter>);
 }

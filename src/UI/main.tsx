@@ -1,25 +1,25 @@
-import React, {use} from 'react'
+import React from 'react'
 import {createRoot} from "react-dom/client";
-import {createBrowserRouter, RouterProvider} from "react-router-dom";
+import {
+    BrowserRouter,
+    Link,
+    Outlet,
+    Route,
+    Routes,
+    useOutletContext
+} from "react-router-dom";
 
 
 import configFile from './config.json'
 import {auto_login, get_forms, logout, delete_form} from "./user/back-end-connection";
 import {Table} from "./components/Table";
 import type {FormInfo, Submission} from "./domain/types";
-import {CreateNewFormRoot} from "./user/create-new-item";
 import {makePair} from "./components/Utilities";
-
+import CreateNewForm from "./user/create-new-form";
+import ViewForm from "./user/view-form";
 
 
 const baseURL:string = configFile.baseURL;
-
-const router = createBrowserRouter([
-    {
-        path:'/',
-        element:<Main />
-    }
-])
 
 
 interface DataProps {
@@ -57,7 +57,7 @@ function DataDisplay(props:DataProps) {
                     if(props.isLoggedIn)
                         getItems();
                 },
-                [props.isLoggedIn]
+                []
             );
 
 
@@ -84,17 +84,42 @@ function DataDisplay(props:DataProps) {
                                      }}
                 />
 
-                <a href={baseURL + '/create-new-form'} className="sneaky-anchor">
+
+                <Link to={baseURL + '/create-new-form'}>
                     <div style={{display:"flex", justifyContent:'center'}} className="table-button">
                         <p style={{margin:'0'}}>
                             New Form
                         </p>
                     </div>
-                </a>
+                </Link>
 
             </div>
         </div>
 
+    );
+}
+
+function DefaultContent() {
+
+    const {isLoggedIn, username}:{isLoggedIn:any, username:any} = useOutletContext();
+
+    return(
+        <div id="Continut" style={{display:'flex', alignItems:'center', height:'80%', justifyContent:'center'}}>
+
+                {isLoggedIn?
+                    <DataDisplay username={username} isLoggedIn={isLoggedIn}
+                                 // div style reprezinta stilul div-urilor din fiecare celula a grid-ului
+                        divStyle={{display:'flex', flexDirection:'column', alignItems:'stretch', padding:'10px',
+                            flexGrow:'1', justifyContent:'start', overflow:'auto'}}
+
+                        gridStyle={{display:'grid', gridTemplateColumns:'1fr', width:'70%', height:'100%', alignItems:'start',
+                            gap:'10px'}} />
+                    :
+                    <NotLoggedInPanel divStyle={{display:'flex', flexDirection:'column', alignItems:'center', paddingTop:'10px',
+                            paddingBottom:'10px', height:'90%', flexGrow:'1', justifyContent:'center'}} />
+                }
+
+            </div>
     );
 }
 
@@ -116,14 +141,6 @@ function Main() {
         },
         []
     );
-
-    React.useEffect(() => {
-       window.onpageshow = function(event) {
-         if (event.persisted) {
-           window.location.reload();
-         }
-       };
-    }, []);
 
     return (
         <div id="Pagina intreaga"
@@ -162,34 +179,26 @@ function Main() {
                 </div>
 
             </div>
-
-            <div id="Continut" style={{display:'flex', alignItems:'center', height:'100%', justifyContent:'center'}}>
-
-                {isLoggedIn?
-                    <DataDisplay username={username} isLoggedIn={isLoggedIn}
-                                 // div style reprezinta stilul div-urilor din fiecare celula a grid-ului
-                        divStyle={{display:'flex', flexDirection:'column', alignItems:'stretch', padding:'10px',
-                            flexGrow:'1', justifyContent:'start', overflow:'auto'}}
-
-                        gridStyle={{display:'grid', gridTemplateColumns:'1fr', width:'70%', height:'100%', alignItems:'start',
-                            gap:'10px'}} />
-                    :
-                    <NotLoggedInPanel divStyle={{display:'flex', flexDirection:'column', alignItems:'center', paddingTop:'10px',
-                            paddingBottom:'10px', height:'90%', flexGrow:'1', justifyContent:'center'}} />
-                }
-
-            </div>
-
+            <Outlet context={{username:username, isLoggedIn:isLoggedIn}}/>
 
         </div>
     );
 }
 
+
 window.onload = ()=>{
     const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement
     const root = createRoot(rootDiv);
     root.render(
-        <Main />
+        <BrowserRouter>
+            <Routes>
+                <Route path='/' element={<Main />}>
+                    <Route index element={<DefaultContent />}></Route>
+                    <Route path='create-new-form' element={<CreateNewForm />}></Route>
+                    <Route path='view-form' element={<ViewForm />}></Route>
+                </Route>
+            </Routes>
+        </BrowserRouter>
     );
 }
 
