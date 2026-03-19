@@ -2,6 +2,8 @@ from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 from pymongo.results import DeleteResult
 
+from typing import Tuple
+
 from src.Backend.Utilities import hash_password, verify_password
 from src.Backend.Domain.Models import Form, TextQuestion
 
@@ -93,6 +95,17 @@ class Database:
         if delete_result.deleted_count:
             return 200
 
-        return 4074
+        return 404
+
+    def get_form(self, owner:str, name:str)->Tuple[Form, int]|int:
+
+        form:Form = self.forms_table.find_one({"owner":owner,"name":name}, {"_id":0})
+
+        if form:
+            return form, 200
+
+        return 404
+
+
 
 

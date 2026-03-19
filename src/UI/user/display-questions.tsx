@@ -11,7 +11,9 @@ export interface TextQuestionProps {
 
 export function TextQuestionComponent(props:TextQuestionProps) {
     return (
-        <input type='text' maxLength={props.maxCharacters}/>
+        <div style={{display:'flex', justifyContent:'stretch'}}>
+            <input type='text' maxLength={props.maxCharacters} style={{flexGrow:'1'}}/>
+        </div>
     )
 }
 
@@ -48,10 +50,10 @@ export interface DisplayQuestionProps {
 
 export function DisplayQuestion(props:DisplayQuestionProps) {
 
-    const index:number = props.questionIndex
-    const question = props.question
+    const index:number = props.questionIndex;
+    const question = props.question;
     return(
-        <div key={index}>
+        <div id={"Intrebarea #" + index} key={index} style={{display:'grid', gridAutoFlow:'column'}}>
             <p style={{margin:'5px'}}>
                 {index}. {question.text}
             </p>

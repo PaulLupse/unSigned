@@ -105,7 +105,7 @@ function CreateNewQuestion(props:CreateNewQuestionProps) {
         <div id="CreateNewQuestionDiv" style={{display:'flex', flexGrow:'1', maxWidth:'400px', flexDirection:'column', alignItems:'stretch', gap:'5px', padding:'10px'}}>
 
             <input ref={inputQuestionText} type='text' placeholder="Question text" style={{border:'0px',
-                    borderBottom:'dashed 1px', maxWidth:'400px'}} maxLength={60}/>
+                    borderBottom:'dashed 1px', maxWidth:'400px'}} maxLength={200}/>
 
             <div style={{display:'flex', justifyContent:'space-between'}}>
                 <input ref={isOptionalCheckbox} type='checkbox' />

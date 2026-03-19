@@ -91,7 +91,7 @@ interface TableProps<lineInterface extends Object> {
     setData: any
     dataFields: Array<string| pair<string, (arg:any)=>any>>
     deleteButtonCallback: (line:lineInterface)=>void
-    viewButtonCallback?: ()=>void
+    viewButtonCallback: (lineName:string)=>void
     style?: any
 }
 
@@ -157,7 +157,7 @@ export function Table<lineInterface extends Object>(props:TableProps<lineInterfa
                                     </button>
                                 </td>
                                 <td>
-                                    <button style={{}}>
+                                    <button onClick={()=>{props.viewButtonCallback(getValue(line, 'name'));}}>
                                         View
                                     </button>
                                 </td>

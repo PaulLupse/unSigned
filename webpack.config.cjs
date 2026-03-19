@@ -6,9 +6,8 @@ module.exports = {
     context: __dirname,
     entry: {
         main:'./src/UI/main.tsx',
-        login:'./src/UI/user/login.tsx',
-        register:'./src/UI/user/register.tsx',
-        create_new:'./src/UI/user/create-new-item.tsx'
+        // login:'./src/UI/user/login.tsx',
+        // register:'./src/UI/user/register.tsx',
     },
     output: {
         path: path.join(__dirname, "/dist"),

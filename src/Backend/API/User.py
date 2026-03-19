@@ -7,7 +7,7 @@ from starlette.status import HTTP_200_OK
 
 from jwt import InvalidTokenError, ExpiredSignatureError
 from pydantic import BaseModel
-from typing import Annotated
+from typing import Annotated, Tuple
 import logging
 import jwt
 from datetime import timedelta
@@ -162,14 +162,25 @@ async def add_item(login_response:Annotated[str, Depends(authenticate)], new_for
 
     else: return JSONResponse(content={"message":"Item added successfully."},
                               status_code=status.HTTP_201_CREATED)
-@router.get("/me/items")
+@router.get("/me/forms")
 async def get_items(login_response:Annotated[str, Depends(authenticate)]):
 
     form_list:list[Form] = db_connector.get_forms(login_response)
 
     return JSONResponse(content={"message":"Returned successfully.", "forms":form_list}, status_code=status.HTTP_200_OK)
 
-@router.delete("/me/items/{name}", response_class=JSONResponse)
+@router.get("/me/form/{form_name}", response_class=JSONResponse)
+async def get_item_by_id(login_response:Annotated[str, Depends(authenticate)], form_name:str):
+
+    get_form_response: Tuple[Form, int]|int = db_connector.get_form(login_response, form_name)
+
+    if type(get_form_response) == tuple:
+        return JSONResponse(content={"message":"Queried successfully.", 'form':get_form_response[0]}, status_code=status.HTTP_200_OK)
+
+    return JSONResponse(content={"message":"Item not found."}, status_code=404)
+
+
+@router.delete("/me/forms/{name}", response_class=JSONResponse)
 async def delete_form(login_response:Annotated[str, Depends(authenticate)], name:str):
 
     delete_form_response: int = db_connector.delete_form(login_response, name)

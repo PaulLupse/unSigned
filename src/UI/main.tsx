@@ -5,7 +5,7 @@ import {
     Link,
     Outlet,
     Route,
-    Routes,
+    Routes, useLocation, useNavigate,
     useOutletContext
 } from "react-router-dom";
 
@@ -45,6 +45,7 @@ function NotLoggedInPanel(props:{divStyle:any}) {
 function DataDisplay(props:DataProps) {
 
     const [formList, setFormList] = React.useState(Array<FormInfo>);
+    const navigate = useNavigate();
 
     React.useEffect(()=> {
                     async function getItems ():Promise<void> {
@@ -59,6 +60,8 @@ function DataDisplay(props:DataProps) {
                 },
                 []
             );
+
+
 
 
     return(
@@ -82,6 +85,10 @@ function DataDisplay(props:DataProps) {
                                          newData.splice(formList.indexOf(form), 1);
                                          setFormList(newData);
                                      }}
+                                 viewButtonCallback=
+                                    {(formName:string):void => {
+                                        navigate(`view-form/${formName}`);
+                                    }}
                 />
 
 
@@ -127,6 +134,8 @@ function Main() {
 
     const [username, setUsername] = React.useState('');
     const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+    const loc = useLocation();
+    const nav = useNavigate();
 
     // folosim un effect pentru a returna utilizatorul curent
     React.useEffect(()=> {
@@ -136,6 +145,8 @@ function Main() {
                     setUsername(username);
                     setIsLoggedIn(true);
                 }
+                else if(loc.pathname !== '/')
+                    nav('/');
             }
             getUser();
         },
@@ -179,7 +190,9 @@ function Main() {
                 </div>
 
             </div>
+
             <Outlet context={{username:username, isLoggedIn:isLoggedIn}}/>
+
 
         </div>
     );
@@ -195,7 +208,7 @@ window.onload = ()=>{
                 <Route path='/' element={<Main />}>
                     <Route index element={<DefaultContent />}></Route>
                     <Route path='create-new-form' element={<CreateNewForm />}></Route>
-                    <Route path='view-form' element={<ViewForm />}></Route>
+                    <Route path='view-form/:formName' element={<ViewForm />}></Route>
                 </Route>
             </Routes>
         </BrowserRouter>

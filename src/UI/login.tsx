@@ -1,17 +1,18 @@
-import React from 'react'
-import {createRoot} from "react-dom/client";
-import {CredentialForm} from "../components/CredentialForm";
-import {register} from "./back-end-connection";
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import {CredentialForm} from "./components/CredentialForm";
 
-function RegisterPage() {
+import {login} from "./user/back-end-connection";
+
+function LoginPage() {
 
     return (
         <div style={{height:'100vh', display:"flex", flexDirection:'column', alignItems:'stretch', justifyContent:'center'}}>
             <div style={{justifyContent:'center', display:'flex'}}>
                 <CredentialForm
-                    type="Register"
+                    type="Login"
                     callback={
-                        register
+                        login
                     }
                 />
             </div>
@@ -20,7 +21,10 @@ function RegisterPage() {
 }
 
 window.onload = ()=>{
-    const rootDiv:HTMLDivElement = document.getElementById('root') as HTMLDivElement;
+    const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement;
     const root = createRoot(rootDiv);
-    root.render(<RegisterPage />);
+    root.render(
+        <LoginPage />
+    );
 }
+

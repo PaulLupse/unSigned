@@ -111,11 +111,39 @@ export async function auto_login():Promise<string|undefined>{
     }
 }
 
+export async function get_form(formName:string):Promise<FormInfo|undefined> {
+    try {
+
+        const getItemsRequest = new Request(
+            url+`/users/me/form/${formName}`,
+            {
+                method:'GET',
+                credentials:'include'
+            });
+
+        const requestResponse = await fetch(getItemsRequest);
+        if (requestResponse.ok) {
+
+            const data = await requestResponse.json();
+            if(Object.hasOwn(data, 'form'))
+            {
+                return data.form;
+            }
+            else
+                throw new Error('Get items request did not return items.')
+        }
+    }
+    catch (error) {
+        alert(error);
+        return undefined;
+    }
+}
+
 export async function get_forms():Promise<Array<FormInfo>|undefined> {
     try {
 
         const getItemsRequest = new Request(
-            url+'/users/me/items',
+            url+'/users/me/forms',
             {
                 method:'GET',
                 credentials:'include'
@@ -130,7 +158,6 @@ export async function get_forms():Promise<Array<FormInfo>|undefined> {
                 const newForms:Array<FormInfo> = new Array<FormInfo>;
                 for(let form of data.forms) {
 
-                    console.log(form);
                     newForms.push(form);
                 }
                 return newForms;
@@ -171,7 +198,6 @@ export async function add_form(form:FormInfo):Promise<boolean> {
             'Content-Type': "application/json"
         });
 
-        console.log(JSON.stringify(form))
 
         const createItemRequest = new Request(url+"/users/me/items",
             {
@@ -196,7 +222,7 @@ export async function add_form(form:FormInfo):Promise<boolean> {
 
 export async function delete_form(formName:string):Promise<boolean> {
     try {
-        const deleteRequest:Request = new Request(url+`/users/me/items/${formName}`,
+        const deleteRequest:Request = new Request(url+`/users/me/forms/${formName}`,
             {
                 method:'DELETE'
             }
@@ -210,7 +236,6 @@ export async function delete_form(formName:string):Promise<boolean> {
         }
         else {
             const deleteResponseData = await deleteResponse.json();
-            console.log(deleteResponseData)
             throw new Error("Could not delete form. Returned message: " + deleteResponseData.message)
         }
     }

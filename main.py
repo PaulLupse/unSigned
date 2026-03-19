@@ -56,4 +56,8 @@ async def register_page():
 async def create_new_form():
     return FileResponse("static/html/index.html")
 
+@app.get("/view-form/{formName}")
+async def view_form():
+    return FileResponse("static/html/index.html")
+
 
