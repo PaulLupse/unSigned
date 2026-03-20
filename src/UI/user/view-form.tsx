@@ -5,7 +5,8 @@ import React from "react";
 import {DisplayQuestion} from "./display-questions";
 import {useOutletContext, useParams} from "react-router-dom";
 
-export default function ViewForm() {
+export default function ViewForm()
+{
 
     const [form, setForm] = React.useState<FormInfo>();
     const formName = useParams().formName as string;

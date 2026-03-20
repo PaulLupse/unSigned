@@ -15,8 +15,11 @@ import {auto_login, get_forms, logout, delete_form} from "./user/back-end-connec
 import {Table} from "./components/Table";
 import type {FormInfo, Submission} from "./domain/types";
 import {makePair} from "./components/Utilities";
+
+
 import CreateNewForm from "./user/create-new-form";
 import ViewForm from "./user/view-form";
+import App from "./user/form-creator";
 
 
 const baseURL:string = configFile.baseURL;
@@ -168,7 +171,7 @@ function Main() {
                     </p>
                     {
                         isLoggedIn &&
-                        <button
+                        <button className={'elegant-button'}
                             onClick={
                                 async()=> {
                                     if (await logout()) {
@@ -207,7 +210,7 @@ window.onload = ()=>{
             <Routes>
                 <Route path='/' element={<Main />}>
                     <Route index element={<DefaultContent />}></Route>
-                    <Route path='create-new-form' element={<CreateNewForm />}></Route>
+                    <Route path='create-new-form' element={<App />}></Route>
                     <Route path='view-form/:formName' element={<ViewForm />}></Route>
                 </Route>
             </Routes>
