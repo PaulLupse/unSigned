@@ -23,6 +23,7 @@
     "@babel/preset-env": "^7.29.0",
     "@babel/preset-react": "^7.28.5",
     "@babel/preset-typescript": "^7.28.5",
+    "@hookform/error-message": "^2.0.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "babel-loader": "^10.0.0",
@@ -30,10 +31,12 @@
     "glob": "^13.0.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-form-hook": "^0.0.1",
     "react-hook-form": "^7.71.2",
     "react-hooks": "^1.0.1",
     "react-router-dom": "^7.13.1",
     "style-loader": "^4.0.0",
-    "webpack-dev-server": "^5.2.3"
+    "webpack-dev-server": "^5.2.3",
+    "zod": "^4.3.6"
   }
 }

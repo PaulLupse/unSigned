@@ -3,8 +3,6 @@ from fastapi.params import Depends
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
-from starlette.status import HTTP_200_OK
-
 from jwt import InvalidTokenError, ExpiredSignatureError
 from pydantic import BaseModel
 from typing import Annotated, Tuple
@@ -16,7 +14,7 @@ from src.Backend.DB.DBConnector import Database
 from src.Backend.Utilities import generate_access_token
 from src.Backend.API.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
 
-from src.Backend.Domain.Models import Form
+from src.Backend.Domain.Questions import Form
 
 MDB_URL = "mongodb://localhost:27017/"
 SK = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -35,7 +33,7 @@ def get_db(url:str)->Database:
 
 db_connector:Database = get_db(MDB_URL)
 
-router:APIRouter = APIRouter(prefix="/users")
+router:APIRouter = APIRouter(prefix="/users", tags=["users"])
 
 class TokenData(BaseModel):
     username:str
@@ -114,7 +112,7 @@ async def get_token(credentials: Annotated[OAuth2PasswordRequestForm, Depends()]
 @router.post("/me", response_class=JSONResponse)
 async def me(login_response:Annotated[str, Depends(authenticate)]):
 
-    return JSONResponse(content={"username":login_response, "message":"Logged in succesfully."}, status_code=HTTP_200_OK)
+    return JSONResponse(content={"username":login_response, "message":"Logged in succesfully."}, status_code=status.HTTP_200_OK)
 
 @router.put("/register", response_class=JSONResponse)
 async def register_user(register_data:RegisterData):

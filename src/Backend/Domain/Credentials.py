@@ -1,0 +1,6 @@
+from pydantic import BaseModel
+
+class Key(BaseModel):
+    key: str
+    formId: str
+    isUsed: bool

@@ -23,7 +23,6 @@ class TextAnswer(BaseModel):
 class Submission(BaseModel):
     answers:list[GridAnswer|TextAnswer]
 
-
 class Form(BaseModel):
     name:str
     questions:list[TextQuestion|GridQuestion]

@@ -1,11 +1,15 @@
+from bson import ObjectId
+from multipledispatch import dispatch
+
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 from pymongo.results import DeleteResult
 
-from typing import Tuple
+from typing import Tuple, overload
 
 from src.Backend.Utilities import hash_password, verify_password
-from src.Backend.Domain.Models import Form, TextQuestion
+from src.Backend.Domain.Questions import Form, TextQuestion
+from src.Backend.Domain.Credentials import Key
 
 from datetime import date, datetime
 
@@ -13,9 +17,10 @@ class Database:
 
     def __init__(self, url:str):
         try:
-            database = MongoClient(url)["users"]
-            self.users_table = database["users"]
-            self.forms_table = database["forms"]
+            db = MongoClient(url)["users"]
+            self.users_table = db["users"]
+            self.forms_table = db["forms"]
+            self.keys_table = db["keys"]
         except ServerSelectionTimeoutError as e:
             print("ERROR: Server Selection Timeout. Check server connection.")
             raise e
@@ -97,15 +102,36 @@ class Database:
 
         return 404
 
+    @dispatch(str, str)
     def get_form(self, owner:str, name:str)->Tuple[Form, int]|int:
 
-        form:Form = self.forms_table.find_one({"owner":owner,"name":name}, {"_id":0})
+        form:Form = Form.model_validate(self.forms_table.find_one({"owner":owner,"name":name}, {"_id":0}))
 
         if form:
             return form, 200
 
         return 404
 
+    @dispatch(str)
+    def get_form(self, form_id:str)->Tuple[Form|None, int]:
 
+        form:Form = Form.model_validate( self.forms_table.find_one(ObjectId(form_id), {"_id":0}) )
 
+        if form:
+            return form, 200
+        return None, 410
+
+    def use_key(self, key:str)->Tuple[Form|None, int]:
+
+        key_in_db:Key = Key.model_validate(self.keys_table.find_one({"key":key}, {"_id":0}))
+
+        if not key_in_db:
+            return None, 404
+
+        if key_in_db.isUsed:
+            return None, 409
+
+        #self.keys_table.update_one({"key":key}, {"$set":{"isUsed":True}})
+
+        return self.get_form(key_in_db.formId)
 

@@ -10,16 +10,16 @@ import {
 } from "react-router-dom";
 
 
-import configFile from './config.json'
-import {auto_login, get_forms, logout, delete_form} from "./user/back-end-connection";
-import {Table} from "./components/Table";
-import type {FormInfo, Submission} from "./domain/types";
-import {makePair} from "./components/Utilities";
+import configFile from '../config.json'
+import {auto_login, get_forms, logout, delete_form} from "./back-end-connection";
+import {Table} from "../components/Table";
+import type {FormInfo, Submission} from "../domain/types";
+import {makePair} from "../components/Utilities";
 
 
-import CreateNewForm from "./user/create-new-form";
-import ViewForm from "./user/view-form";
-import App from "./user/form-creator";
+import CreateNewForm from "./create-new-form";
+import ViewForm from "./view-form";
+import App from "./form-creator";
 
 
 const baseURL:string = configFile.baseURL;
