@@ -13,6 +13,21 @@ button:active {
     background: #ababab;
 }
 
+.plain-button {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 16px;
+    background: white;
+    border: solid 1px;
+}
+
+.plain-button:hover {
+    background: #cfcfcf;
+}
+
+.plain-button:active {
+    background: #ababab;
+}
+
 .form-frame {
     display: flex;
     justify-content: center;
@@ -27,6 +42,8 @@ button:active {
 
 .form-title {
     text-align: center;
+    margin: 0 0 30px;
+    font-size: 32px;
 }
 
 .form-question-list {

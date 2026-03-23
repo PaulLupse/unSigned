@@ -5,11 +5,11 @@ import {ErrorMessage} from "@hookform/error-message";
 import type {SubmitHandler} from "react-hook-form";
 import React from "react";
 import {z} from 'zod'
-import {formInfoSchema} from '../domain/schemas'
+import {formInfoSchema, gridAnswerSchema, submissionSchema, textAnswerSchema} from '../domain/schemas'
+import { zodResolver } from '@hookform/resolvers/zod';
 
 import {use_key, submit_form} from "./back-end-connection";
-import {FormInfo, GridQuestion, TextQuestion} from "../domain/types";
-import {DisplayQuestion} from "../common/display-questions";
+import {FormInfo, GridQuestion, type Submission, TextQuestion} from "../domain/types";
 
 interface KeyFormInput {
     key:string
@@ -18,45 +18,137 @@ interface ShowFormComponentState {
     form:FormInfo
 }
 
+type SubmissionType = z.infer<typeof submissionSchema>
+type FormInfoType = z.infer<typeof formInfoSchema>
+
+// creeaza o schema de validare in functie de tipurile intrebarilor din formular
+// function createSchema(form:FormInfo) {
+//
+//     const questions:Array<TextQuestion|GridQuestion> = form.questions;
+//     const shape:any = {};
+//     let index = 1;
+//     questions.forEach((question, index)=>{
+//         if (question instanceof TextQuestion) {
+//             shape[index] = z.string("Required!").max(question.maxChars)
+//         } else {
+//             if(question.isMultipleChoice)
+//                 shape[index] = z.array(z.coerce.number("Required!"));
+//             else z.coerce.number();
+//         }
+//     })
+//     z.string()
+//     return z.object(shape)
+// }
+//
+// function createNullDefaults(form:FormInfo) {
+//     const defaults:any = {};
+//     form.questions.map((question, index)=>{defaults[index]=null;})
+//     return defaults;
+// }
+
+
 function ShowFormComponent() {
+
     const locationState = useLocation().state;
     const locForm = formInfoSchema.parse(locationState.form);
     const key = locationState.key;
-    const {register, formState:{errors}, handleSubmit} = useForm();
 
+
+
+    // creeaza un nou obiect de tip formular bazat pe state-ul 'form', deoarece state-ul 'form' e de tip 'any'
     const form = new FormInfo(locForm.name, locForm.questions, locForm.dateCreated, locForm.dateUpdated, locForm.submissions)
 
-    const onSubmit:SubmitHandler<any> = (data)=>{
-        console.log(Object.values(data));
+    const {register, formState:{errors}, handleSubmit} = useForm();
 
+    const onSubmit:SubmitHandler<any> = async (data)=>{
+        try {
+            const answers:any[] = Object.values(data)
+            const submision:SubmissionType = submissionSchema.parse({answers:[]})
+
+            for(const [key, value] of answers.entries()) {
+
+                submision.answers.push(
+                    form.questions[key] instanceof TextQuestion ?
+                        textAnswerSchema.parse({text: value})
+                        :
+                        form.questions[key] instanceof GridQuestion && form.questions[key].isMultipleChoice?
+                            gridAnswerSchema.parse({choices: value})
+                            :
+                            gridAnswerSchema.parse({choices: [value]})
+                );
+            }
+
+            console.log(submision);
+            const submitResponse = await submit_form(key, submision);
+            if(submitResponse)
+                alert("Form submitted succesfully.")
+            else alert("Could not submit form.")
+        }
+        catch(error) {
+            alert(error)
+        }
     }
 
     return (
     <div className={'form-frame'}>
 
-        <h2 className={'form-title'}>
-            {form.name}
-        </h2>
-
         <form onSubmit={handleSubmit(onSubmit)}>
 
             <ol className={'form-question-list'}>
-            {
-                form.questions.map((question:TextQuestion|GridQuestion, index:number)=>{
+                <h2 className={'form-title'}>
+                    {form.name}
+                </h2>
+                {
+                    form.questions.map((question:TextQuestion|GridQuestion, index:number)=>{
 
-                    return (
-                        <DisplayQuestion question={question} questionIndex={index} />
-                    );
-                })
-            }
+                        return (
+                            <>
+                            <li className={'form-question'}>
+                                <div id={"Intrebarea #" + index} key={index} style={{display:'flex', flexDirection:'column'}}>
+                                    {question.text}
+                                    {
+                                       (question instanceof TextQuestion)?
+                                           <div style={{display:'flex', justifyContent:'stretch'}} key={index}>
+                                                <input {...register(`${index}`, {required:{value:!question.isOptional, message:"Required!"}})} type='text' style={{flexGrow:'1'}}/>
+                                           </div>
+                                           :
+                                           <div className={'form-grid-question-choices-frame'} key={index}>
+                                            {
+                                                question.choices.map((choice:string, choiceIndex:number)=>{
+                                                    return (
+                                                        question.isMultipleChoice?
+                                                        <div key={choiceIndex}>
+                                                            <input {...register(`${index}`, {required:{value:!question.isOptional, message:"Required!"}})} type={'checkbox'} value={choiceIndex}/>
+                                                            {choice}
+                                                        </div>
+                                                        :
+                                                        <div key={choiceIndex}>
+                                                            <input {...register(`${index}`, {required:{value:!question.isOptional, message:"Required!"}})} type={'radio'} value={choiceIndex}/>
+                                                            {choice}
+                                                        </div>
 
+                                                    )
+                                                })
+                                            }
+                                            </div>
+                                    }
+                                </div>
+                            </li>
 
-            </ol><
-            div style={{display:"flex", justifyContent:'center', marginTop:'30px'}}>
-                <input style={{background:'white', border:'solid 1px'}} type={"submit"} />
+                            <ErrorMessage name={`${index}`} errors={errors} render={({message})=>
+                                <p style={{color:'red'}}>
+                                    {message}
+                                </p>
+                            } />
+                            </>
+                        );
+                    })
+                }
+            </ol>
+            <div style={{display:"flex", justifyContent:'center', marginTop:'30px'}}>
+                <input className={'plain-button'} type={"submit"} />
             </div>
         </form>
-
     </div>
     );
 }

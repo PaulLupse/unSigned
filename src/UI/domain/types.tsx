@@ -43,6 +43,7 @@ export interface TextQuestion extends FormQuestion{
 }
 
 
+
 export class FormQuestion implements FormQuestion{
     constructor(text:string, isOptional:boolean) {
         this.text = text;

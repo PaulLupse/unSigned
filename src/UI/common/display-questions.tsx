@@ -6,7 +6,7 @@ import React from "react";
 export function TextQuestionComponent({question, index}:{question:TextQuestion, index:number}) {
     return (
         <div style={{display:'flex', justifyContent:'stretch'}} key={index}>
-            <input type='text' style={{flexGrow:'1'}} readOnly={true}/>
+            <input type='text' style={{flexGrow:'1'}}/>
         </div>
     )
 }
@@ -19,12 +19,12 @@ export function GridQuestionComponent({question, index}:{question:GridQuestion, 
                 return (
                     question.isMultipleChoice?
                     <div key={choiceIndex}>
-                        <input type={'checkbox'} readOnly={true} value={choiceIndex}/>
+                        <input type={'checkbox'} value={choiceIndex}/>
                         {choice}
                     </div>
                     :
                     <div key={choiceIndex}>
-                        <input readOnly={true} type={'radio'} value={choiceIndex}/>
+                        <input type={'radio'} value={choiceIndex}/>
                         {choice}
                     </div>
 

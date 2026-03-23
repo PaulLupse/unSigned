@@ -40,24 +40,24 @@ export default function ViewForm()
 
         form &&
         <div style={{display:'flex', justifyContent:'center', height:'100%'}}>
-            <div style={{display:'flex', flexDirection:'column', alignItems:'stretch', paddingTop:'10px',
-                            paddingBottom:'10px', flexGrow:'1', justifyContent:'start', maxWidth:'600px'}}>
+            <div className={'form-frame'}>
 
-                <div style={{display:'flex', justifyContent:'center'}}>
-                    <h1>
-                        {form.name}
-                    </h1>
-                </div>
+                <ol className={'form-question-list'}>
 
+                    <div style={{display:'flex', justifyContent:'center'}}>
+                        <h1 className={'form-title'}>
+                            {form.name}
+                        </h1>
+                    </div>
 
-                {
-                    formQuestions.length>0?
-                    formQuestions.map(
-                        (question:TextQuestion|GridQuestion, index:number)=> {
-                            return(
-                                <DisplayQuestion questionIndex={index+1} question={question} />
-                            )
-                        }
+                    {
+                        formQuestions.length>0?
+                        formQuestions.map(
+                            (question:TextQuestion|GridQuestion, index:number)=> {
+                                return(
+                                    <DisplayQuestion questionIndex={index+1} question={question} />
+                                )
+                            }
                     ):
                     <div style={{display:'flex', justifyContent:'center'}}>
                         <h3>
@@ -65,6 +65,7 @@ export default function ViewForm()
                         </h3>
                     </div>
                 }
+                </ol>
 
             </div>
         </div>

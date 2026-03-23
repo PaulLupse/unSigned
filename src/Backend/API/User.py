@@ -177,7 +177,7 @@ async def get_item_by_id(login_response:Annotated[str, Depends(authenticate)], f
     get_form_response: Tuple[Form, int]|int = db_connector.get_form(login_response, form_name)
 
     if type(get_form_response) == tuple:
-        return JSONResponse(content={"message":"Queried successfully.", 'form':get_form_response[0]}, status_code=status.HTTP_200_OK)
+        return JSONResponse(content={"message":"Queried successfully.", 'form':jsonable_encoder(get_form_response[0])}, status_code=status.HTTP_200_OK)
 
     return JSONResponse(content={"message":"Item not found."}, status_code=404)
 

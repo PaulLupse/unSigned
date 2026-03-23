@@ -2,7 +2,7 @@
 import { z } from "zod";
 
 export const gridAnswerSchema = z.object({
-    choices: z.array(z.number())
+    choices: z.array(z.coerce.number())
 });
 
 export const textAnswerSchema = z.object({
