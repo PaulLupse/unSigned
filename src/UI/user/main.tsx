@@ -17,9 +17,8 @@ import type {FormInfo, Submission} from "../domain/types";
 import {makePair} from "../components/Utilities";
 
 
-import CreateNewForm from "./create-new-form";
+import FormCreator from "./form-creator";
 import ViewForm from "./view-form";
-import App from "./form-creator";
 
 
 const baseURL:string = configFile.baseURL;
@@ -65,8 +64,6 @@ function DataDisplay(props:DataProps) {
             );
 
 
-
-
     return(
         // folosim un grid pentru a aseza sectiunile din continut
         // o sectiune va fii dedicata vizualizarea chestionarelor create de utilizator
@@ -77,8 +74,10 @@ function DataDisplay(props:DataProps) {
                 <h3 style={{padding:'5px', textAlign:'center'}}>My Forms</h3>
 
                 <Table<FormInfo> columns={["Name", "Date created", "Date updated", "Submissions"]}
-                                 dataFields={['name', 'dateCreated', 'dateUpdated', makePair('submissions',
-                                     (subs:Array<Submission>):number=>subs?subs.length:0)]}
+                                 dataFields={['name',
+                                     makePair('dateCreated', (date:Date):string|undefined=>date.toString().split('T')[0]),
+                                     makePair('dateUpdated', (date:Date):string|undefined=>date.toString().split('T')[0]),
+                                     makePair('submissions', (subs:Array<Submission>):number=>subs?subs.length:0)]}
                                  data={formList}
                                  setData={setFormList}
                                  deleteButtonCallback=
@@ -102,7 +101,6 @@ function DataDisplay(props:DataProps) {
                         </p>
                     </div>
                 </Link>
-
             </div>
         </div>
 
@@ -171,7 +169,7 @@ function Main() {
                     </p>
                     {
                         isLoggedIn &&
-                        <button className={'elegant-button'}
+                        <button
                             onClick={
                                 async()=> {
                                     if (await logout()) {
@@ -210,7 +208,7 @@ window.onload = ()=>{
             <Routes>
                 <Route path='/' element={<Main />}>
                     <Route index element={<DefaultContent />}></Route>
-                    <Route path='create-new-form' element={<App />}></Route>
+                    <Route path='create-new-form' element={<FormCreator />}></Route>
                     <Route path='view-form/:formName' element={<ViewForm />}></Route>
                 </Route>
             </Routes>

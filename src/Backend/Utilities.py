@@ -40,3 +40,9 @@ def generate_access_token(data : dict, expiration_time : timedelta | None = None
     data_copy.update({"exp":expiration_date})
 
     return jwt.encode(payload=data_copy, key=SK, algorithm=ALG)
+
+def json_serial(obj):
+
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError ("Type %s not serializable" % type(obj))

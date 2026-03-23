@@ -1,5 +1,48 @@
 button {
     font-family: Arial, Helvetica, sans-serif;
     font-size: 16px;
+    background: white;
+    border: solid 1px;
+}
+
+button:hover {
+    background: #cfcfcf;
+}
+
+button:active {
+    background: #ababab;
+}
+
+.form-frame {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    flex-direction: column;
+    padding: 30px;
+    flex-grow: 1;
+    max-width: 600px;
+
+    gap:10px;
+}
+
+.form-title {
+    text-align: center;
+}
+
+.form-question-list {
+    border: 1px solid;
+    padding: 30px;
+    margin: 0;
+}
+
+.form-question {
+    margin: 5px;
+    border: 1px solid;
+    padding: 5px
+}
+
+.form-grid-question-choices-frame {
+    display: flex;
+    justify-content: space-evenly;
 }
 

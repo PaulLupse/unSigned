@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import datetime, date
 from typing import Optional, List
 
 from pydantic import BaseModel
@@ -21,12 +21,11 @@ class TextAnswer(BaseModel):
     text:str
 
 class Submission(BaseModel):
-    answers:list[GridAnswer|TextAnswer]
+    answers:list[TextAnswer|GridAnswer]
 
 class Form(BaseModel):
     name:str
     questions:list[TextQuestion|GridQuestion]
-    key: str
 
     dateCreated:Optional[date] = None
     dateUpdated:Optional[date] = None

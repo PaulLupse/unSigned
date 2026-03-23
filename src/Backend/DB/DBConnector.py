@@ -8,7 +8,7 @@ from pymongo.results import DeleteResult
 from typing import Tuple, overload
 
 from src.Backend.Utilities import hash_password, verify_password
-from src.Backend.Domain.Questions import Form, TextQuestion
+from src.Backend.Domain.Questions import Form, Submission, GridAnswer, TextAnswer, TextQuestion
 from src.Backend.Domain.Credentials import Key
 
 from datetime import date, datetime
@@ -82,6 +82,8 @@ class Database:
         new_form.dateCreated = current_date
         new_form.dateUpdated = current_date
 
+        new_form.submissions = []
+
         new_form_dict = new_form.model_dump(mode="json")
         new_form_dict["owner"] = owner
 
@@ -115,7 +117,8 @@ class Database:
     @dispatch(str)
     def get_form(self, form_id:str)->Tuple[Form|None, int]:
 
-        form:Form = Form.model_validate( self.forms_table.find_one(ObjectId(form_id), {"_id":0}) )
+        form_from_db = self.forms_table.find_one(ObjectId(form_id), {"_id":0})
+        form:Form = Form.model_validate(form_from_db) if form_from_db else None
 
         if form:
             return form, 200
@@ -123,7 +126,8 @@ class Database:
 
     def use_key(self, key:str)->Tuple[Form|None, int]:
 
-        key_in_db:Key = Key.model_validate(self.keys_table.find_one({"key":key}, {"_id":0}))
+        key_in_db = self.keys_table.find_one({"key": key}, {"_id": 0})
+        key_in_db = Key.model_validate(key_in_db) if key_in_db else None
 
         if not key_in_db:
             return None, 404
@@ -134,4 +138,20 @@ class Database:
         #self.keys_table.update_one({"key":key}, {"$set":{"isUsed":True}})
 
         return self.get_form(key_in_db.formId)
+
+    def submit_form(self, key:str, submission:Submission)->int:
+
+        key_in_db = self.keys_table.find_one({"key": key}, {"_id": 0})
+        key_in_db = Key.model_validate(key_in_db) if key_in_db else None
+
+        if not key_in_db:
+            return 404
+
+        if key_in_db.isUsed:
+            return 409
+
+        # self.keys_table.update_one({"key": key}, {"$set": {"isUsed": True}})
+        self.forms_table.update_one({"_id": ObjectId(key_in_db.formId)}, {"$push": {"submissions": submission.model_dump(mode="json")}})
+
+        return 200
 

@@ -2,6 +2,7 @@ from fastapi import APIRouter, status, HTTPException
 from fastapi.params import Depends
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.encoders import jsonable_encoder
 
 from jwt import InvalidTokenError, ExpiredSignatureError
 from pydantic import BaseModel
@@ -9,9 +10,10 @@ from typing import Annotated, Tuple
 import logging
 import jwt
 from datetime import timedelta
+import json
 
 from src.Backend.DB.DBConnector import Database
-from src.Backend.Utilities import generate_access_token
+from src.Backend.Utilities import generate_access_token, json_serial
 from src.Backend.API.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
 
 from src.Backend.Domain.Questions import Form
@@ -165,7 +167,9 @@ async def get_items(login_response:Annotated[str, Depends(authenticate)]):
 
     form_list:list[Form] = db_connector.get_forms(login_response)
 
-    return JSONResponse(content={"message":"Returned successfully.", "forms":form_list}, status_code=status.HTTP_200_OK)
+    print(jsonable_encoder(form_list))
+
+    return JSONResponse(content={"message":"Returned successfully.", "forms":jsonable_encoder(form_list)}, status_code=status.HTTP_200_OK)
 
 @router.get("/me/form/{form_name}", response_class=JSONResponse)
 async def get_item_by_id(login_response:Annotated[str, Depends(authenticate)], form_name:str):

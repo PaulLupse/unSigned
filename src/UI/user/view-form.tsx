@@ -2,7 +2,7 @@ import {type FormInfo, GridQuestion, TextQuestion} from "../domain/types";
 import {add_form, get_form} from "./back-end-connection";
 import React from "react";
 
-import {DisplayQuestion} from "./display-questions";
+import {DisplayQuestion} from "../common/display-questions";
 import {useOutletContext, useParams} from "react-router-dom";
 
 export default function ViewForm()

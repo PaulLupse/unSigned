@@ -6,7 +6,7 @@ module.exports = {
     context: __dirname,
     entry: {
         complete_form:'./src/UI/sub-user/complete-form.tsx',
-        // main:'./src/UI/user/main.tsx',
+        main:'./src/UI/user/main.tsx',
         // login:'./src/UI/user/login.tsx',
         // register:'./src/UI/user/register.tsx',
     },
