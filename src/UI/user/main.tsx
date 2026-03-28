@@ -18,7 +18,7 @@ import {makePair} from "../components/Utilities";
 
 
 import FormCreator from "./form-creator";
-import ViewForm from "./view-form";
+import {ViewForm, DisplayFrom, DisplaySubmissionData} from "./view-form";
 
 
 const baseURL:string = configFile.baseURL;
@@ -71,7 +71,9 @@ function DataDisplay(props:DataProps) {
 
             <div id="display" style={props.divStyle}>
 
-                <h3 style={{padding:'5px', textAlign:'center'}}>My Forms</h3>
+                <h3 style={{
+                    padding:'5px', textAlign:'center'
+                }}>My Forms</h3>
 
                 <Table<FormInfo> columns={["Name", "Date created", "Date updated", "Submissions"]}
                                  dataFields={['name',
@@ -80,16 +82,9 @@ function DataDisplay(props:DataProps) {
                                      makePair('submissions', (subs:Array<Submission>):number=>subs?subs.length:0)]}
                                  data={formList}
                                  setData={setFormList}
-                                 deleteButtonCallback=
-                                     {(form:FormInfo):void => {
-                                         delete_form(form.name);
-                                         const newData = structuredClone(formList);
-                                         newData.splice(formList.indexOf(form), 1);
-                                         setFormList(newData);
-                                     }}
-                                 viewButtonCallback=
-                                    {(formName:string):void => {
-                                        navigate(`view-form/${formName}`);
+                                 rowOnClick=
+                                    {(form:FormInfo):void => {
+                                        navigate(`view-form/${form.name}`);
                                     }}
                 />
 
@@ -209,7 +204,11 @@ window.onload = ()=>{
                 <Route path='/' element={<Main />}>
                     <Route index element={<DefaultContent />}></Route>
                     <Route path='create-new-form' element={<FormCreator />}></Route>
-                    <Route path='view-form/:formName' element={<ViewForm />}></Route>
+                    <Route path='view-form/:formName' element={<ViewForm />}>
+                        <Route index element={<DisplayFrom />}></Route>
+                        <Route path='submissions' element={<DisplaySubmissionData />}></Route>
+                    </Route>
+
                 </Route>
             </Routes>
         </BrowserRouter>

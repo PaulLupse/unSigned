@@ -167,7 +167,6 @@ async def get_items(login_response:Annotated[str, Depends(authenticate)]):
 
     form_list:list[Form] = db_connector.get_forms(login_response)
 
-    print(jsonable_encoder(form_list))
 
     return JSONResponse(content={"message":"Returned successfully.", "forms":jsonable_encoder(form_list)}, status_code=status.HTTP_200_OK)
 

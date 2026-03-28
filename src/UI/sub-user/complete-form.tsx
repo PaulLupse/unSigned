@@ -21,42 +21,16 @@ interface ShowFormComponentState {
 type SubmissionType = z.infer<typeof submissionSchema>
 type FormInfoType = z.infer<typeof formInfoSchema>
 
-// creeaza o schema de validare in functie de tipurile intrebarilor din formular
-// function createSchema(form:FormInfo) {
-//
-//     const questions:Array<TextQuestion|GridQuestion> = form.questions;
-//     const shape:any = {};
-//     let index = 1;
-//     questions.forEach((question, index)=>{
-//         if (question instanceof TextQuestion) {
-//             shape[index] = z.string("Required!").max(question.maxChars)
-//         } else {
-//             if(question.isMultipleChoice)
-//                 shape[index] = z.array(z.coerce.number("Required!"));
-//             else z.coerce.number();
-//         }
-//     })
-//     z.string()
-//     return z.object(shape)
-// }
-//
-// function createNullDefaults(form:FormInfo) {
-//     const defaults:any = {};
-//     form.questions.map((question, index)=>{defaults[index]=null;})
-//     return defaults;
-// }
+
 
 
 function ShowFormComponent() {
 
     const locationState = useLocation().state;
-    const locForm = formInfoSchema.parse(locationState.form);
+    let form = locationState.form;
     const key = locationState.key;
 
-
-
-    // creeaza un nou obiect de tip formular bazat pe state-ul 'form', deoarece state-ul 'form' e de tip 'any'
-    const form = new FormInfo(locForm.name, locForm.questions, locForm.dateCreated, locForm.dateUpdated, locForm.submissions)
+    form = new FormInfo(form);
 
     const {register, formState:{errors}, handleSubmit} = useForm();
 

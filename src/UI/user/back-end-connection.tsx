@@ -127,7 +127,7 @@ export async function get_form(formName:string):Promise<FormInfo|undefined> {
             const data = await requestResponse.json();
             if(Object.hasOwn(data, 'form'))
             {
-                return data.form;
+                return new FormInfo(data.form);
             }
             else
                 throw new Error('Get items request did not return items.')
@@ -158,7 +158,7 @@ export async function get_forms():Promise<Array<FormInfo>|undefined> {
                 const newForms:Array<FormInfo> = new Array<FormInfo>;
                 for(let form of data.forms) {
 
-                    newForms.push(form);
+                    newForms.push(new FormInfo(form));
                 }
                 return newForms;
             }

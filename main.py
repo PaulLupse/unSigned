@@ -62,6 +62,10 @@ async def create_new_form():
 async def view_form():
     return FileResponse("static/html/index.html")
 
+@app.get("/view-form/{formName}/submissions")
+async def view_form():
+    return FileResponse("static/html/index.html")
+
 @app.get("/complete-form", response_class=HTMLResponse)
 async def sub_users_root():
     return FileResponse("static/html/complete-form.html")

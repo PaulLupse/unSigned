@@ -44,6 +44,25 @@ export interface TextQuestion extends FormQuestion{
 
 
 
+export class TextAnswer implements TextAnswer {
+    constructor(text:string) {
+        this.text = text;
+    }
+}
+
+export class GridAnswer implements GridAnswer {
+    constructor(choices:number[]) {
+        this.choices = choices;
+    }
+}
+
+export class Submission implements Submission {
+    constructor(answers:Array<TextAnswer|GridAnswer>) {
+        this.answers=answers
+    }
+
+}
+
 export class FormQuestion implements FormQuestion{
     constructor(text:string, isOptional:boolean) {
         this.text = text;
@@ -80,7 +99,9 @@ export interface FormInfo {
 }
 
 export class FormInfo implements FormInfo {
-    constructor(name:string, questions:Array<any>, dateCreated?:Date|null, dateUpdated?:Date|null, submissions?:Array<Submission>|null) {
+
+    // ar trebui sa fucntioneze ca un constructor de copiere
+    constructor({name, questions, dateCreated, dateUpdated, submissions}:{name:string, questions:Array<any>, dateCreated?:Date|null, dateUpdated?:Date|null, submissions?:Array<Submission>|null}) {
         this.name = name
 
         this.questions = new Array<TextQuestion|GridQuestion>
@@ -90,8 +111,20 @@ export class FormInfo implements FormInfo {
             else this.questions.push(new TextQuestion(question.text, question.isOptional, question.maxChars))
         }
 
+        this.submissions = new Array<Submission>
+        const cpSubmissions:any = submissions;
+        if(cpSubmissions)
+            for(let submission of cpSubmissions) {
+                let answers:Array<TextAnswer|GridAnswer> = new Array<TextAnswer|GridAnswer>
+                for(let answer of submission.answers) {
+                    if(Object.hasOwn(answer, 'text'))
+                        answers.push(new TextAnswer(answer.text))
+                    else answers.push(new GridAnswer(answer.choices))
+                }
+                this.submissions.push(new Submission(answers))
+            }
+
         this.dateCreated = dateCreated?dateCreated:null
         this.dateUpdated = dateUpdated?dateUpdated:null
-        this.submissions = submissions?submissions:null
     }
 }

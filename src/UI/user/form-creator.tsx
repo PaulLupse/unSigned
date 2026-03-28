@@ -16,13 +16,10 @@ import configFile from "../config.json"
 import {FormInfo, type Submission} from "../domain/types";
 import {TextQuestion, GridQuestion} from "../domain/types";
 import {DisplayQuestion} from "../common/display-questions";
+import {useNavigate} from "react-router-dom";
 
 const baseURL:string = configFile.baseURL
 
-interface GridQuestionOptionsProps {
-    setChoices: Dispatch<SetStateAction<any>>;
-    choices: Array<string>;
-}
 
 interface QuestionOptionsComponentProps {
     register:UseFormRegister<QuestionOptions>
@@ -36,10 +33,13 @@ interface NewQuestionPanelProps {
     addQuestionCallback:(question:GridQuestion|TextQuestion)=>void;
 }
 
+// Interfata folosita pentru a putea include variantele de raspuns in formularul de creare a unei intrebari noi.
+// Necesar intrucat campurile de tip array (utilizate cu useFieldArray) accepta doar tipuri non-primitive.
 interface GridChoice {
     text:string
 }
 
+// Interfata pentru definirea optiunilor unei intrebari.
 interface QuestionOptions {
     text:string
     isOptional:boolean
@@ -47,7 +47,7 @@ interface QuestionOptions {
     choices:GridChoice[]
 }
 
-
+// Componenta menita pentru afisarea optiunilor intrebarilor de tip text.
 function TextQuestionOptions(props:QuestionOptionsComponentProps) {
     return (
         <div style={{
@@ -60,16 +60,17 @@ function TextQuestionOptions(props:QuestionOptionsComponentProps) {
     )
 }
 
+// Componenta menita pentru afisarea optiunilor intrebarilor de tip grilă.
 function GridQuestionOptions(props:QuestionOptionsComponentProps) {
 
     // folosim un camp de tip array pentru a inregistra optiunile intrebarii grila
     const {fields, append, remove} = useFieldArray<QuestionOptions>({control:props.control, name:"choices"})
 
-    function addOption() {
+    function addChoice() {
         append({text:''});
     }
 
-    function removeOption(optionIndex:number) {
+    function removeChoice(optionIndex:number) {
         remove(optionIndex);
     }
 
@@ -101,18 +102,22 @@ function GridQuestionOptions(props:QuestionOptionsComponentProps) {
 
             {
                 fields.length>0 &&
-                <ol style={{margin:'0'}}>
+                <ol style={{
+                    margin:'0', paddingRight:'40px'
+                }}>
                     {
                         fields.map((option, index)=>{
                             return (
-                                <li key={option.id}>
+                                <li key={option.id} style={{
+                                    marginBottom:'5px',
+                                }}>
                                     <div style={{
                                         display:'grid',
                                         gridTemplateColumns:'1fr auto',
                                         gap:'5px'
                                     }}>
                                         <input {...props.register(`choices.${index}.text`)} />
-                                        <button type="button" onClick={()=>{removeOption(index)}}>
+                                        <button type="button" onClick={()=>{removeChoice(index)}}>
                                             -
                                         </button>
                                     </div>
@@ -124,7 +129,7 @@ function GridQuestionOptions(props:QuestionOptionsComponentProps) {
             }
 
             <div style={{display:'grid', alignItems:"center", justifyItems:'center'}}>
-                <button type="button" onClick={addOption} style={{
+                <button type="button" onClick={addChoice} style={{
                     width:'8rem'
                 }}>
                     Add option +
@@ -137,6 +142,7 @@ function GridQuestionOptions(props:QuestionOptionsComponentProps) {
     )
 }
 
+// Componenta ce afiseaza TOATE optiunile pentru adaugarea unei noi inmtrebari.
 function NewQuestionPanel(props:NewQuestionPanelProps) {
 
     const [questionType, setQuestionType] = React.useState('grid');
@@ -190,6 +196,7 @@ function NewQuestionPanel(props:NewQuestionPanelProps) {
                                         overflow:'scroll',
                                         resize:'none'}} />
 
+                        {/* selector al tipului de intrebare */}
                         <select onChange ={
                             (event) => {
                                 setQuestionType(event.target.value);
@@ -210,9 +217,9 @@ function NewQuestionPanel(props:NewQuestionPanelProps) {
                         <TextQuestionOptions register={register} watch={watch} formState={formState} control={control} />
                     }
 
-                    <div style={{display:'flex', justifyContent:'space-between'}}>
+                    <div style={{display:'flex', justifyContent:'space-evenly'}}>
                         <button type={"button"} onClick={()=>{props.setDisplayQuestionCreator(false);}} className="button" style={{width:'8rem'}}>Cancel</button>
-                        <input type="submit" value="Add question" className="plain-button" style={{width:'8rem'}}/>
+                        <input type="submit" value="Confirm" className="plain-button" style={{width:'8rem'}}/>
                     </div>
 
                 </div>
@@ -221,6 +228,8 @@ function NewQuestionPanel(props:NewQuestionPanelProps) {
     )
 }
 
+// Componenta de baza a creatorului de formulare.
+// Printre altele, afiseaza un preview al formularului.
 export default function FormCreator() {
 
     const nameInput:RefObject<HTMLInputElement|null> = React.useRef(null);
@@ -228,6 +237,8 @@ export default function FormCreator() {
 
     const [formQuestions, setFormQuestions] = useState(Array<TextQuestion|GridQuestion>);
     const [displayQuestionCreator, setDisplayQuestionCreator] = React.useState(false);
+
+    const navigate = useNavigate();
 
     const createNewForm = async() => {
         const newForm:FormInfo = {
@@ -288,7 +299,9 @@ export default function FormCreator() {
                                     <DisplayQuestion questionIndex={index+1} question={question} />
                                     <button style={{
                                         margin:'5px',
-                                        aspectRatio:'1/1'
+                                        aspectRatio:'1/1',
+                                        alignSelf:"center",
+                                        justifySelf:'center'
                                     }}>
                                         -
                                     </button>
@@ -300,22 +313,41 @@ export default function FormCreator() {
                 }
                 </ol>
 
-                <div style={{display:'flex', justifyContent:'center'}}>
+                <div style={{
+                    display:'flex', justifyContent:'center'
+                }}>
 
                     <button onClick={
                             async() => {
                                 setDisplayQuestionCreator(true)
                             }
-                    }   style={{maxWidth:'200px', flexGrow:'1'}}
+                    }   style={{
+                        maxWidth:'200px', flexGrow:'1'
+                    }}
                     >Add new question</button>
                 </div>
 
-                <div style={{display:'flex', justifyContent:'center'}}>
+                <div style={{
+                    display:'flex', justifyContent:'center'
+                }}>
                     {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}
-                    <button onClick={createNewForm}
-                     style={{maxWidth:'200px', flexGrow:'1'}}
-                    >
+                    <button onClick={createNewForm} style={{
+                         maxWidth:'200px',
+                         flexGrow:'1'
+                    }}>
                         Create
+                    </button>
+                </div>
+
+                <div style={{
+                    display:'flex', justifyContent:'center'
+                }}>
+                    {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}
+                    <button onClick={()=>{navigate(-1);}} style={{
+                         maxWidth:'200px',
+                         flexGrow:'1'
+                    }}>
+                        Back
                     </button>
                 </div>
 

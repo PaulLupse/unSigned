@@ -90,8 +90,7 @@ interface TableProps<lineInterface extends Object> {
     data: Array<lineInterface>
     setData: any
     dataFields: Array<string| pair<string, (arg:any)=>any>>
-    deleteButtonCallback: (line:lineInterface)=>void
-    viewButtonCallback: (lineName:string)=>void
+    rowOnClick: (arg1:lineInterface)=>void
     style?: any
 }
 
@@ -114,12 +113,12 @@ export function Table<lineInterface extends Object>(props:TableProps<lineInterfa
                         }
                     )
                 }
-                <th style={{width:'0.1%', whiteSpace:'nowrap', color:'#dbdbdb', padding:'14px'}}>
-                    Delete
-                </th>
-                <th style={{width:'0.1%', whiteSpace:'nowrap', color:'#dbdbdb', padding:'14px'}}>
-                    View
-                </th>
+                {/*<th style={{width:'0.1%', whiteSpace:'nowrap', color:'#dbdbdb', padding:'14px'}}>*/}
+                {/*    Delete*/}
+                {/*</th>*/}
+                {/*<th style={{width:'0.1%', whiteSpace:'nowrap', color:'#dbdbdb', padding:'14px'}}>*/}
+                {/*    View*/}
+                {/*</th>*/}
             </tr>
 
             </thead>
@@ -128,7 +127,7 @@ export function Table<lineInterface extends Object>(props:TableProps<lineInterfa
                 props.data.map(
                     (line:lineInterface, index:number)=>{
                         return (
-                            <tr key={index}>
+                            <tr key={index} onClick={()=>{props.rowOnClick(line);}}>
                                 {
                                     props.dataFields.map(
                                         (entry:string|pair<string, (arg:any)=>any>, index:number)=> {
@@ -151,16 +150,16 @@ export function Table<lineInterface extends Object>(props:TableProps<lineInterfa
                                         }
                                     )
                                 }
-                                <td>
-                                    <button onClick={()=>{props.deleteButtonCallback(line)}}>
-                                        Delete
-                                    </button>
-                                </td>
-                                <td>
-                                    <button onClick={()=>{props.viewButtonCallback(getValue(line, 'name'));}}>
-                                        View
-                                    </button>
-                                </td>
+                                {/*<td>*/}
+                                {/*    <button onClick={()=>{props.deleteButtonCallback(line)}}>*/}
+                                {/*        Delete*/}
+                                {/*    </button>*/}
+                                {/*</td>*/}
+                                {/*<td>*/}
+                                {/*    <button onClick={()=>{props.viewButtonCallback(getValue(line, 'name'));}}>*/}
+                                {/*        View*/}
+                                {/*    </button>*/}
+                                {/*</td>*/}
                             </tr>
                         )
                     }
