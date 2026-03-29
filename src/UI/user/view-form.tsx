@@ -7,11 +7,8 @@ import type {MouseEvent} from "react";
 import {DisplayQuestion} from "../common/display-questions";
 import {Outlet, useNavigate, useOutletContext, useParams} from "react-router-dom";
 
-interface TextAnswersDisplayComponentProps {
-    answers?: TextAnswer[]
-}
 
-function TextAnswersDisplayComponent({answers}:{answers: Array<TextAnswer>}) {
+function StatisticTextAnswersDisplayComponent({answers}:{answers: Array<TextAnswer>}) {
 
     const [displayAnswers, setDisplayAnswers] = React.useState(true);
 
@@ -59,7 +56,7 @@ function TextAnswersDisplayComponent({answers}:{answers: Array<TextAnswer>}) {
     )
 }
 
-function GridAnswersDisplayComponent({answers, choices}:{answers: Array<GridAnswer>, choices:Array<string>}) {
+function StatisticGridAnswersDisplayComponent({answers, choices}:{answers: Array<GridAnswer>, choices:Array<string>}) {
 
     function computeAverage(choiceIndex: number): number {
         let average: number = 0;
@@ -88,7 +85,150 @@ function GridAnswersDisplayComponent({answers, choices}:{answers: Array<GridAnsw
                             </div>
                         </li>
                     )
+                })
+            }
+            </ol>
+        </div>
+    )
+}
 
+function TextAnswerDisplayComponent(answer:TextAnswer) {
+    return (
+        <div style={{
+            display:'grid',
+            gridTemplateColumns:'auto 1fr',
+            gap:"5px",
+            margin:'5px'
+        }}>
+            <p  style={{margin:'0'}}>
+                Text:
+            </p>
+            <div>
+            {
+                <p style={{margin:'0'}}>
+                    {answer.text}
+                </p>
+            }
+            </div>
+        </div>
+    )
+}
+
+function GridAnswerDisplayComponent({choices, question}:{choices:Array<number>, question:GridQuestion}) {
+    return (
+        <div style={{
+            display:'grid',
+            gridTemplateColumns:'auto 1fr',
+            margin:'5px'
+        }}>
+            <p style={{margin:'0'}}>
+                Choices:
+            </p>
+            <div>
+                <ol>
+                    {choices.map((choice: number) => {
+                        return <li>{question.choices[choice]}</li>
+                    })}
+                </ol>
+            </div>
+        </div>
+    )
+}
+
+function IndividualDisplay({submissions, questions}:{submissions:Submission[], questions:Array<TextQuestion|GridQuestion>}) {
+    return(
+        submissions.map(
+            (submission, index) => {
+                return (
+                    <div key={index} style={{
+                        display:"flex",
+                        flexDirection:'column',
+                        justifyContent:'start',
+                        border:'1px solid',
+                        padding:'10px'
+                    }}>
+                        <h3 style={{margin:'0', marginLeft:'10px', padding:'10px'}}>
+                            {`Submission #${index}:`}
+                        </h3>
+                        <div>
+                            <ol style={{
+                                padding:'10px',
+                                margin:'0'
+                            }}>
+                            {
+                                questions.map(
+                                    (question, questionIndex) => {
+                                        return (
+                                            <li className={'form-question'} style={{marginLeft:'10px'}}>
+                                                <p style={{
+                                                    margin:"5px"
+                                                }}>
+                                                    {question.text}
+                                                </p>
+
+                                                {
+                                                    (question instanceof TextQuestion &&
+                                                    submission.answers[questionIndex] instanceof TextAnswer) &&
+                                                        <TextAnswerDisplayComponent text={submission.answers[questionIndex].text} />
+                                                }
+                                                {
+                                                    (question instanceof GridQuestion &&
+                                                    submission.answers[questionIndex] instanceof GridAnswer) &&
+                                                        <GridAnswerDisplayComponent choices={submission.answers[questionIndex].choices} question={question}/>
+                                                }
+
+                                            </li>
+                                        )
+                                    }
+                                )
+                            }
+                            </ol>
+                        </div>
+                    </div>
+                )
+            }
+        )
+    )
+}
+
+function StatisticDisplay({submissions, questions}:{submissions:Submission[], questions:Array<TextQuestion|GridQuestion>}) {
+
+    function mapTextSubmissions(submissions: Array<Submission>, index: number): TextAnswer[] {
+        return submissions.map((submission): TextAnswer => {
+            if (submission.answers[index] instanceof TextAnswer)
+                return submission.answers[index];
+            return new TextAnswer('');
+        })
+    }
+
+    function mapGridSubmissions(submissions: Array<Submission>, index: number): GridAnswer[] {
+        return submissions.map((submission): GridAnswer => {
+            if (submission.answers[index] instanceof GridAnswer)
+                return submission.answers[index];
+            return new GridAnswer([]);
+        })
+    }
+
+    return (
+        <div>
+            <ol className={'form-question-list'} style={{justifyContent:'start'}}>
+            {
+                questions.map((question, index) => {
+                    return (
+                        <li key={index} className={'form-question'}>
+                            <p style={{margin: '5px'}}>
+                                {question.text}
+                            </p>
+                            {
+                                question instanceof TextQuestion &&
+                                <StatisticTextAnswersDisplayComponent answers={mapTextSubmissions(submissions, index)} />
+                            }
+                            {
+                                question instanceof GridQuestion &&
+                                <StatisticGridAnswersDisplayComponent answers={mapGridSubmissions(submissions, index)} choices={question.choices}/>
+                            }
+                        </li>
+                    )
                 })
             }
             </ol>
@@ -105,130 +245,69 @@ export function DisplaySubmissionData() {
     let submissions;
     let questions:Array<TextQuestion|GridQuestion>;
 
-
     submissions = form.submissions;
     questions = form.questions;
 
-
-
     const [displayMode, setDisplayMode] = React.useState('statistic');
 
-    function mapTextSubmissions(submissions: Array<Submission>, index: number): TextAnswer[] {
-        const mappedSubmissions: TextAnswer[] = submissions.map((submission, submissionIndex): TextAnswer => {
-            if (submission.answers[index] instanceof TextAnswer)
-                return submission.answers[index];
-            return new TextAnswer('');
-        })
-        return mappedSubmissions
-    }
-
-    function mapGridSubmissions(submissions: Array<Submission>, index: number): GridAnswer[] {
-        const mappedSubmissions: GridAnswer[] = submissions.map((submission, submissionIndex): GridAnswer => {
-            if (submission.answers[index] instanceof GridAnswer)
-                return submission.answers[index];
-            return new GridAnswer([]);
-        })
-        return mappedSubmissions
-    }
-
     return (
-        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+        <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'start',
+            overflowY:"scroll"
+        }}>
 
             <div className={'form-frame'}>
 
-                <select onChange={(selectEvent) => {
-                    setDisplayMode(selectEvent.target.value);
-                }} style={{
-                    alignSelf:'start'
+                <h1 style={{
+                    textAlign:'center'
                 }}>
-                    <option value={'statistic'}>Individual</option>
-                    <option value={'individual'}>Statistic</option>
-                </select>
+                    Submissions for form {form.name}
+                </h1>
+
+                <div style={{
+                    display:"flex",
+                    justifyContent:'space-between'
+                }}>
+
+                    <button onClick={()=>{navigate(-1);}}>
+                        Back
+                    </button>
+
+                    <div style={{
+                        display:'flex',
+                        alignItems:'center',
+                        justifyContent:'center',
+                        gap:'5px'
+                    }}>
+                        <p style={{margin:'0'}}>
+                            Display:
+                        </p>
+                        <div>
+                            <select onChange={(selectEvent) => {
+                                setDisplayMode(selectEvent.target.value);
+                            }} style={{
+                                alignSelf:'start'
+                            }}>
+                                <option value={'statistic'}>Statistic</option>
+                                <option value={'individual'}>Individual</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                </div>
+
 
                 {
-
-                    submissions ?
+                    submissions && submissions.length ?
                         displayMode === 'individual' ?
-                            submissions.map(
-                                (submission, index) => {
-                                    return (
-                                        <div key={index}>
-                                            <h3>
-                                                {`Submission #${index}:`}
-                                            </h3>
-                                            <div>
-                                                {
-                                                    questions.map(
-                                                        (question, questionIndex) => {
-                                                            return (
-                                                                <div>
-                                                                    <h5>
-                                                                        {`Question #${index}:`}
-                                                                    </h5>
-                                                                    <div>
-                                                                        <p>Answer:</p>
-                                                                        {
-                                                                            (submission.answers[questionIndex] instanceof TextAnswer) &&
-                                                                            <div>
-                                                                                <p>
-                                                                                    Text:
-                                                                                </p>
-                                                                                {submission.answers[questionIndex].text}
-                                                                            </div>
-                                                                        }
-                                                                        {
-                                                                            (submission.answers[questionIndex] instanceof GridAnswer
-                                                                                && question instanceof GridQuestion) &&
-                                                                            <div>
-                                                                                <p>
-                                                                                    Choices:
-                                                                                </p>
-                                                                                <ol>
-                                                                                    {submission.answers[questionIndex].choices.map((choice: number) => {
-                                                                                        return <li>{question.choices[choice]}</li>
-                                                                                    })}
-                                                                                </ol>
-
-                                                                            </div>
-                                                                        }
-                                                                    </div>
-
-                                                                </div>
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            </div>
-                                        </div>
-                                    )
-                                }
-                            )
+                            <IndividualDisplay submissions={submissions} questions={questions} />
                             :
-                            <div>
-                                <ol className={'form-question-list'}>
-                                {
-                                    form.questions.map((question, index) => {
-                                        return (
-                                            <li key={index} className={'form-question'}>
-                                                <p style={{margin: '5px'}}>
-                                                    {question.text}
-                                                </p>
-                                                {
-                                                    question instanceof TextQuestion &&
-                                                    <TextAnswersDisplayComponent answers={mapTextSubmissions(submissions, index)} />
-                                                }
-                                                {
-                                                    question instanceof GridQuestion &&
-                                                    <GridAnswersDisplayComponent answers={mapGridSubmissions(submissions, index)} choices={question.choices}/>
-                                                }
-                                            </li>
-                                        )
-                                    })
-                                }
-                                </ol>
-                            </div>
+                            <StatisticDisplay  submissions={submissions} questions={questions} />
                         :
-                        <h2>
+                        <h2 style={{textAlign:'center'}}>
                             This form does not have any submissions yet!
                         </h2>
                 }
@@ -267,8 +346,37 @@ export function DisplayFrom() {
     return (
 
         form &&
-        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%'}}>
+        <div style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100%',
+            overflowY:"scroll"
+        }}>
             <div className={'form-frame'}>
+
+                <div style={{
+                    display: 'grid',
+                    gap: '10px',
+                    gridTemplateColumns: 'repeat(3, 1fr)'
+                }}>
+                    <button onClick={() => {
+                        navigate(-1);
+                    }} style={{}}>
+                        Back
+                    </button>
+
+                    <button onClick={() => {
+                        navigate('submissions')
+                    }}>
+                        See results
+                    </button>
+
+                    <button onClick={deleteForm}>
+                        Delete
+                    </button>
+                </div>
+
 
                 <ol className={'form-question-list'}>
 
@@ -295,28 +403,7 @@ export function DisplayFrom() {
                     }
                 </ol>
 
-                <div style={{
-                    display: 'grid',
-                    gap: '10px',
-                    gridTemplateColumns: 'repeat(3, 1fr)'
-                }}>
-                    <button onClick={() => {
-                        navigate(-1);
-                    }} style={{}}>
-                        Back
-                    </button>
 
-                    <button onClick={() => {
-                        navigate('submissions')
-                    }}>
-                        See results
-                    </button>
-
-                    <button onClick={deleteForm}>
-                        Delete
-                    </button>
-
-                </div>
 
 
             </div>
