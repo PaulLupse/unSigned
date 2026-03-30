@@ -1,0 +1,5 @@
+.error-popup {
+    position:absolute;
+    color:red;
+    border:1px solid;
+}

@@ -159,7 +159,7 @@ function IndividualDisplay({submissions, questions}:{submissions:Submission[], q
                                 questions.map(
                                     (question, questionIndex) => {
                                         return (
-                                            <li className={'form-question'} style={{marginLeft:'10px'}}>
+                                            <li className={'form-question'} >
                                                 <p style={{
                                                     margin:"5px"
                                                 }}>
@@ -211,7 +211,7 @@ function StatisticDisplay({submissions, questions}:{submissions:Submission[], qu
 
     return (
         <div>
-            <ol className={'form-question-list'} style={{justifyContent:'start'}}>
+            <ol className={'form-question-list'} style={{justifyContent:'start', padding:'20px'}}>
             {
                 questions.map((question, index) => {
                     return (

@@ -13,6 +13,7 @@
     "build": "webpack --mode development"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.24",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",
     "webpack": "^5.105.2",
@@ -30,12 +31,15 @@
     "babel-loader": "^10.0.0",
     "css-loader": "^7.1.4",
     "glob": "^13.0.6",
+    "lodash": "^4.17.23",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-form-hook": "^0.0.1",
     "react-hook-form": "^7.71.2",
     "react-hooks": "^1.0.1",
+    "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.13.1",
+    "react-tooltip": "^5.30.0",
     "style-loader": "^4.0.0",
     "ts-to-zod": "^5.1.0",
     "webpack-dev-server": "^5.2.3",

@@ -68,3 +68,10 @@ button:active {
     justify-content: space-evenly;
 }
 
+.error-popup {
+    margin:0;
+    color:red;
+    border:1px solid;
+    top:100%;
+    position:absolute;
+}

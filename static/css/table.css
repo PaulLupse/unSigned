@@ -1,7 +1,7 @@
 table {
   font-family: Arial, Helvetica, sans-serif;
   border-collapse: collapse;
-  border: 2px solid #dbdbdb;
+  border: 2px solid;
 }
 
 td, th {
@@ -9,7 +9,8 @@ td, th {
 }
 
 td {
-  border-top: 1px solid #dbdbdb;
+  border-top: 1px solid ;
+  text-align: center;
 }
 
 tr:hover {background-color: #ddd;}
@@ -17,14 +18,14 @@ tr:hover {background-color: #ddd;}
 th {
   padding-top: 12px;
   padding-bottom: 12px;
-  text-align: left;
+  text-align: center;
   background: #dbdbdb;
 }
 
 .table-button {
   background: #f2f2f2;
   padding:8px;
-  border: 2px solid #dbdbdb;
+  border: 2px solid;
   border-top:0;
 }
 
