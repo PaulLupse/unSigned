@@ -12,11 +12,12 @@ import jwt
 from datetime import timedelta
 import json
 
+from src.Backend.Domain.General import MinimalFormInfo, TextQuestion, GridQuestion, NewForm
 from src.Backend.DB.DBConnector import Database
 from src.Backend.Utilities import generate_access_token, json_serial
 from src.Backend.API.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
 
-from src.Backend.Domain.Questions import Form
+from src.Backend.Domain.General import Form
 
 MDB_URL = "mongodb://localhost:27017/"
 SK = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -43,7 +44,6 @@ class TokenData(BaseModel):
 class RegisterData(BaseModel):
     username:str
     password:str
-
 
 async def authenticate(token : Annotated[str, Depends(oauth2_scheme)])->str:
 
@@ -126,7 +126,7 @@ async def register_user(register_data:RegisterData):
         return JSONResponse(content={"message":"User already exists."},
                             status_code=status.HTTP_409_CONFLICT)
 
-    elif register_response == 201:
+    else:
         return JSONResponse(content={"message":"Registered succesfuly."},
                             status_code=status.HTTP_201_CREATED)
 
@@ -146,9 +146,14 @@ async def delete_user(login_response:Annotated[str, Depends(authenticate)]):
     if delete_response == 200:
         return JSONResponse(content={"message":"Deleted user succesfully."}, status_code=200)
     else: return JSONResponse(content={"message":"Could not delete user."}, status_code=400)
+@router.get("/me/forms")
+async def get_forms(login_response:Annotated[str, Depends(authenticate)]):
 
-@router.post("/me/items", response_class=JSONResponse)
-async def add_item(login_response:Annotated[str, Depends(authenticate)], new_form:Form):
+    form_list:list[MinimalFormInfo] = db_connector.get_forms(login_response)
+    return JSONResponse(content={"message":"Returned successfully.", "forms":jsonable_encoder(form_list)}, status_code=status.HTTP_200_OK)
+
+@router.post("/me/form/add", response_class=JSONResponse)
+async def create_form(login_response:Annotated[str, Depends(authenticate)], new_form:NewForm):
 
     add_response = db_connector.add_form(new_form, login_response)
     if add_response == 409:
@@ -162,29 +167,20 @@ async def add_item(login_response:Annotated[str, Depends(authenticate)], new_for
 
     else: return JSONResponse(content={"message":"Item added successfully."},
                               status_code=status.HTTP_201_CREATED)
-@router.get("/me/forms")
-async def get_items(login_response:Annotated[str, Depends(authenticate)]):
+@router.get("/me/form/{form_id}", response_class=JSONResponse)
+async def get_form_by_id(login_response:Annotated[str, Depends(authenticate)], form_id:str):
 
-    form_list:list[Form] = db_connector.get_forms(login_response)
-
-
-    return JSONResponse(content={"message":"Returned successfully.", "forms":jsonable_encoder(form_list)}, status_code=status.HTTP_200_OK)
-
-@router.get("/me/form/{form_name}", response_class=JSONResponse)
-async def get_item_by_id(login_response:Annotated[str, Depends(authenticate)], form_name:str):
-
-    get_form_response: Tuple[Form, int]|int = db_connector.get_form(login_response, form_name)
+    get_form_response: Tuple[Form, int]|int = db_connector.get_form(form_id)
 
     if type(get_form_response) == tuple:
         return JSONResponse(content={"message":"Queried successfully.", 'form':jsonable_encoder(get_form_response[0])}, status_code=status.HTTP_200_OK)
 
     return JSONResponse(content={"message":"Item not found."}, status_code=404)
 
+@router.delete("/me/form/{form_id}/delete", response_class=JSONResponse)
+async def delete_form(login_response:Annotated[str, Depends(authenticate)], form_id:str):
 
-@router.delete("/me/forms/{name}", response_class=JSONResponse)
-async def delete_form(login_response:Annotated[str, Depends(authenticate)], name:str):
-
-    delete_form_response: int = db_connector.delete_form(login_response, name)
+    delete_form_response: int = db_connector.delete_form(form_id)
     if delete_form_response == 200:
         return JSONResponse(content={"message": "Deleted form succesfully."}, status_code=200)
 

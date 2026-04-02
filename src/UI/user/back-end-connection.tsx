@@ -4,8 +4,9 @@ import config from '../config.json'
 
 const url:string = config.baseURL;
 
-import {LoginInfo, FormInfo} from "../domain/types";
+import {LoginInfo, type FormInfo, type NewForm, type MinimalFormInfo} from "../domain/types";
 import type {TextAnswer, GridAnswer, Submission} from "../domain/types";
+import {formInfoSchema, minimalFormInfoSchema} from "../domain/schemas";
 
 export async function getAccessToken(loginInfo:LoginInfo) {
 
@@ -111,67 +112,6 @@ export async function auto_login():Promise<string|undefined>{
     }
 }
 
-export async function get_form(formName:string):Promise<FormInfo|undefined> {
-    try {
-
-        const getItemsRequest = new Request(
-            url+`/users/me/form/${formName}`,
-            {
-                method:'GET',
-                credentials:'include'
-            });
-
-        const requestResponse = await fetch(getItemsRequest);
-        if (requestResponse.ok) {
-
-            const data = await requestResponse.json();
-            if(Object.hasOwn(data, 'form'))
-            {
-                return new FormInfo(data.form);
-            }
-            else
-                throw new Error('Get items request did not return items.')
-        }
-    }
-    catch (error) {
-        alert(error);
-        return undefined;
-    }
-}
-
-export async function get_forms():Promise<Array<FormInfo>|undefined> {
-    try {
-
-        const getItemsRequest = new Request(
-            url+'/users/me/forms',
-            {
-                method:'GET',
-                credentials:'include'
-            });
-
-        const requestResponse = await fetch(getItemsRequest);
-        if (requestResponse.ok) {
-
-            const data = await requestResponse.json();
-            if(Object.hasOwn(data, 'forms'))
-            {
-                const newForms:Array<FormInfo> = new Array<FormInfo>;
-                for(let form of data.forms) {
-
-                    newForms.push(new FormInfo(form));
-                }
-                return newForms;
-            }
-            else
-                throw new Error('Get items request did not return items.')
-        }
-    }
-    catch (error) {
-        alert(error);
-        return undefined;
-    }
-}
-
 export async function logout():Promise<boolean> {
     try {
         const logoutRequest = new Request(url+"/users/me/logout",
@@ -190,7 +130,75 @@ export async function logout():Promise<boolean> {
     }
 }
 
-export async function add_form(form:FormInfo):Promise<boolean> {
+export async function get_form(formId:string):Promise<FormInfo|undefined> {
+    try {
+        const getItemsRequest = new Request(
+            url+`/users/me/form/${formId}`,
+            {
+                method:'GET',
+                credentials:'include'
+            });
+
+        const requestResponse = await fetch(getItemsRequest);
+        if (requestResponse.ok) {
+
+            const data = await requestResponse.json();
+            if(Object.hasOwn(data, 'form'))
+            {
+                const dataParseResult = formInfoSchema.safeParse(data.form);
+                if(dataParseResult.success) {
+                    return dataParseResult.data;
+                } else {
+                    console.log("Wrong json coming from server:" + dataParseResult.error)
+                    return undefined;
+                }
+
+            }
+            else
+                throw new Error('Get items request did not return items.')
+        }
+    }
+    catch (error) {
+        alert(error);
+        return undefined;
+    }
+}
+
+export async function get_forms():Promise<Array<MinimalFormInfo>|undefined> {
+    try {
+
+        const getItemsRequest = new Request(
+            url+'/users/me/forms',
+            {
+                method:'GET',
+                credentials:'include'
+            });
+
+        const requestResponse = await fetch(getItemsRequest);
+        if (requestResponse.ok) {
+
+            const data = await requestResponse.json();
+            if(Object.hasOwn(data, 'forms'))
+            {
+                const parseResult = minimalFormInfoSchema.array().safeParse(data.forms);
+                if(parseResult.success) {
+                    return parseResult.data;
+                } else {
+                    console.log("Wrong json coming from server:" + parseResult.error);
+                    return undefined;
+                }
+            }
+            else
+                throw new Error('Get items request did not return items.')
+        }
+    }
+    catch (error) {
+        alert(error);
+        return undefined;
+    }
+}
+
+export async function add_form(form:NewForm):Promise<boolean> {
     try {
 
         const requestHeader = new Headers({
@@ -199,7 +207,7 @@ export async function add_form(form:FormInfo):Promise<boolean> {
         });
 
 
-        const createItemRequest = new Request(url+"/users/me/items",
+        const createItemRequest = new Request(url+"/users/me/form/add",
             {
                 method:"POST",
                 headers:requestHeader,
@@ -220,9 +228,9 @@ export async function add_form(form:FormInfo):Promise<boolean> {
 
 }
 
-export async function delete_form(formName:string):Promise<boolean> {
+export async function delete_form(formId:string):Promise<boolean> {
     try {
-        const deleteRequest:Request = new Request(url+`/users/me/forms/${formName}`,
+        const deleteRequest:Request = new Request(url+`/users/me/form/${formId}/delete`,
             {
                 method:'DELETE'
             }
@@ -231,7 +239,6 @@ export async function delete_form(formName:string):Promise<boolean> {
         const deleteResponse = await fetch(deleteRequest);
 
         if(deleteResponse.ok) {
-            alert("Item deleted successfully.");
             return true;
         }
         else {

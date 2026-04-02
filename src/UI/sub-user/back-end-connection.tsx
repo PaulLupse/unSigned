@@ -1,5 +1,5 @@
 import config from '../config.json'
-import {FormInfo, type Submission} from "../domain/types";
+import {type FormInfo, type Submission} from "../domain/types";
 import {z} from 'zod'
 import {formInfoSchema, submissionSchema} from "../domain/schemas";
 
@@ -12,11 +12,38 @@ const UseKeyResponseSchema = z.object(
     }
 );
 type UseKeyResponseType = z.TypeOf<typeof UseKeyResponseSchema>;
-type formInfoSchemaType = z.TypeOf<typeof formInfoSchema>
-type SubmissionSchemaType = z.TypeOf<typeof submissionSchema>
 
 
-export async function use_key(key:string):Promise<undefined|FormInfo> {
+export async function check_form_id(formId:string):Promise<boolean> {
+    const checkFormIdRequest = new Request(baseURL + `/sub-users/check/${formId}`, {
+        method:'POST',
+        body:JSON.stringify({formId:formId}),
+        headers:{
+            'Accept': "application/json",
+            'Content-Type': "application/json"
+        },
+    })
+    const checkFormIdResponse = await fetch(checkFormIdRequest);
+    return checkFormIdResponse.ok
+}
+
+export async function check_key(key:string, formId:string):Promise<boolean|string> {
+    const checkKeyRequest = new Request(baseURL + '/sub-users/check-key', {
+        method:'POST',
+        body:JSON.stringify({key:key, formId:formId}),
+        headers:{
+            'Accept': "application/json",
+            'Content-Type': "application/json"
+        },
+    })
+    const checkKeyResponse = await fetch(checkKeyRequest);
+    if(checkKeyResponse.ok)
+        return true;
+    return (await checkKeyResponse.json()).message
+}
+
+export async function use_key(k:string, formId:string):Promise<undefined|FormInfo> {
+
     try {
         const useKeyRequest :Request = new Request(baseURL+'/sub-users/use-key',
             {
@@ -26,7 +53,8 @@ export async function use_key(key:string):Promise<undefined|FormInfo> {
                     'Content-Type': "application/json"
                 },
                 body:JSON.stringify({
-                    key:key
+                    key: k,
+                    formId:formId
                 })
             }
         );
@@ -50,12 +78,18 @@ export async function use_key(key:string):Promise<undefined|FormInfo> {
     }
 }
 
-export async function submit_form(key:string, submission:SubmissionSchemaType):Promise<boolean> {
+export async function submit_form(key:string, formId:string, submission:Submission):Promise<boolean> {
 
     try {
 
         // verificam daca submission-ul este de forma schemei de submission-uri
-        submissionSchema.parse(submission);
+        const parseResult = submissionSchema.safeParse(submission);
+        if(!parseResult.success) {
+            console.log(submission)
+            alert(parseResult.error)
+            return false;
+        }
+
 
         const submitFormRequest = new Request(baseURL+'/sub-users/submit-form',
             {
@@ -66,7 +100,8 @@ export async function submit_form(key:string, submission:SubmissionSchemaType):P
                 },
                 body:JSON.stringify({
                     key:key,
-                    submission:submission
+                    submission:submission,
+                    formId:formId
                 })
             })
 

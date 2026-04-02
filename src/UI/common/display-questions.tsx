@@ -1,6 +1,6 @@
 // acest script contine componente folosite pentru afisarea intrebarilor
 
-import {GridQuestion, TextQuestion} from "../domain/types";
+import type {GridQuestion, TextQuestion} from "../domain/types";
 import React from "react";
 
 export function TextQuestionComponent({question, index}:{question:TextQuestion, index:number}) {
@@ -45,11 +45,11 @@ export function DisplayQuestion(props:DisplayQuestionProps) {
     const index:number = props.questionIndex;
     const question = props.question;
     return(
-        <li className={'form-question'}>
+        <li key={props.questionIndex} className={'form-question'}>
             <div id={"Intrebarea #" + index} key={index} style={{display:'flex', flexDirection:'column'}}>
                 {question.text}
                 {
-                   (question instanceof TextQuestion)?
+                   question.type=='text'?
                        <TextQuestionComponent question={question} index={index}/>
                        :
                        <GridQuestionComponent question={question} index={index}/>

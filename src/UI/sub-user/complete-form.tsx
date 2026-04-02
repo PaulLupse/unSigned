@@ -1,15 +1,26 @@
 import {createRoot} from "react-dom/client";
-import {Route, Routes, BrowserRouter, Outlet, useLocation, useNavigate} from "react-router-dom";
+import {
+    Route,
+    Routes,
+    BrowserRouter,
+    Outlet,
+    useLocation,
+    useNavigate,
+    type Register,
+    useParams
+} from "react-router-dom";
+import {useOutletContext} from "react-router-dom";
 import {useForm} from "react-hook-form";
 import {ErrorMessage} from "@hookform/error-message";
 import type {SubmitHandler} from "react-hook-form";
-import React from "react";
+import React, {useContext, useEffect} from "react";
 import {z} from 'zod'
 import {formInfoSchema, gridAnswerSchema, submissionSchema, textAnswerSchema} from '../domain/schemas'
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import {use_key, submit_form} from "./back-end-connection";
-import {FormInfo, GridQuestion, type Submission, TextQuestion} from "../domain/types";
+import {use_key, submit_form, check_form_id, check_key} from "./back-end-connection";
+import type {FormInfo, GridQuestion, TextQuestion} from "../domain/types";
+import ErrorPopup from "../common/error-popup/error-popup";
 
 interface KeyFormInput {
     key:string
@@ -22,38 +33,85 @@ type SubmissionType = z.infer<typeof submissionSchema>
 type FormInfoType = z.infer<typeof formInfoSchema>
 
 
+function TextQuestionDisplayComponent({index, question, register}:{index:number, question:TextQuestion, register:any}) {
+    return (
+        <div style={{display:'flex', justifyContent:'stretch'}} key={index}>
+            <input {...register(`${index}`, {required:{value:!question.isOptional, message:"Required!"}})} type='text' style={{flexGrow:'1'}}/>
+       </div>
+    )
+}
 
+function GridQuestionDisplayComponent({index, question, register}:{index:number, question:GridQuestion, register:any}) {
+    return (
+        <div className={'form-grid-question-choices-frame'} key={index}>
+        {
+            question.choices.map((choice:string, choiceIndex:number)=>{
+                return (
+                    question.isMultipleChoice?
+                    <div key={choiceIndex}>
+                        <input {...register(`${index}`, {required:{value:!question.isOptional, message:"Required!"}})} type={'checkbox'} value={choiceIndex}/>
+                        {choice}
+                    </div>
+                    :
+                    <div key={choiceIndex}>
+                        <input {...register(`${index}`, {required:{value:!question.isOptional, message:"Required!"}})} type={'radio'} value={choiceIndex}/>
+                        {choice}
+                    </div>
+                )
+            })
+        }
+        </div>
+    )
+
+}
+
+function parseGridChoices (choices:string[]) {
+    return choices.map(choice=>parseInt(choice))
+}
 
 function ShowFormComponent() {
 
-    const locationState = useLocation().state;
-    let form = locationState.form;
-    const key = locationState.key;
+    const context:any = useOutletContext();
+    const key:string = context.key;
+    const formId = context.formId;
 
-    form = new FormInfo(form);
+    const navigate = useNavigate();
+
+    const [form, setForm] = React.useState<FormInfo>()
+
+    useEffect(()=> {
+        const getForm = async () => {
+            if(key) {
+                const form:FormInfo|undefined = await use_key(key, formId);
+                if(form) {
+                    setForm(form);
+                }
+            } else navigate(`/complete-form/${formId}`);
+        }
+        getForm();
+    }, [])
+
 
     const {register, formState:{errors}, handleSubmit} = useForm();
 
     const onSubmit:SubmitHandler<any> = async (data)=>{
+        if(!form)
+            return;
         try {
             const answers:any[] = Object.values(data)
-            const submision:SubmissionType = submissionSchema.parse({answers:[]})
+            const submision:SubmissionType = {answers:[]}
 
             for(const [key, value] of answers.entries()) {
 
                 submision.answers.push(
-                    form.questions[key] instanceof TextQuestion ?
-                        textAnswerSchema.parse({text: value})
+                    form.questions[key]?.type == 'text' ?
+                        textAnswerSchema.parse({text: value, type:'text'})
                         :
-                        form.questions[key] instanceof GridQuestion && form.questions[key].isMultipleChoice?
-                            gridAnswerSchema.parse({choices: value})
-                            :
-                            gridAnswerSchema.parse({choices: [value]})
+                        gridAnswerSchema.parse({choices: value?parseGridChoices([...value]):[], type:'grid'})
                 );
             }
 
-            console.log(submision);
-            const submitResponse = await submit_form(key, submision);
+            const submitResponse = await submit_form(key, formId, submision);
             if(submitResponse)
                 alert("Form submitted succesfully.")
             else alert("Could not submit form.")
@@ -65,6 +123,14 @@ function ShowFormComponent() {
 
     return (
     <div className={'form-frame'}>
+
+        {(form === undefined)?
+            <div>
+                <p>
+                    Loading...
+                </p>
+            </div>
+        :
 
         <form onSubmit={handleSubmit(onSubmit)}>
 
@@ -81,30 +147,12 @@ function ShowFormComponent() {
                                 <div id={"Intrebarea #" + index} key={index} style={{display:'flex', flexDirection:'column'}}>
                                     {question.text}
                                     {
-                                       (question instanceof TextQuestion)?
-                                           <div style={{display:'flex', justifyContent:'stretch'}} key={index}>
-                                                <input {...register(`${index}`, {required:{value:!question.isOptional, message:"Required!"}})} type='text' style={{flexGrow:'1'}}/>
-                                           </div>
-                                           :
-                                           <div className={'form-grid-question-choices-frame'} key={index}>
-                                            {
-                                                question.choices.map((choice:string, choiceIndex:number)=>{
-                                                    return (
-                                                        question.isMultipleChoice?
-                                                        <div key={choiceIndex}>
-                                                            <input {...register(`${index}`, {required:{value:!question.isOptional, message:"Required!"}})} type={'checkbox'} value={choiceIndex}/>
-                                                            {choice}
-                                                        </div>
-                                                        :
-                                                        <div key={choiceIndex}>
-                                                            <input {...register(`${index}`, {required:{value:!question.isOptional, message:"Required!"}})} type={'radio'} value={choiceIndex}/>
-                                                            {choice}
-                                                        </div>
-
-                                                    )
-                                                })
-                                            }
-                                            </div>
+                                       question.type === 'text' &&
+                                           <TextQuestionDisplayComponent index={index} question={question} register={register} />
+                                    }
+                                    {
+                                        question.type === 'grid' &&
+                                            <GridQuestionDisplayComponent index={index} question={question} register={register} />
                                     }
                                 </div>
                             </li>
@@ -123,6 +171,7 @@ function ShowFormComponent() {
                 <input className={'plain-button'} type={"submit"} />
             </div>
         </form>
+        }
     </div>
     );
 }
@@ -132,38 +181,80 @@ function KeyInputComponent() {
     const {register, handleSubmit, formState:{errors, isValidating}} = useForm<KeyFormInput>();
     const navigate = useNavigate();
 
+    const context:any = useOutletContext<any>();
+    const setKey = context.setKey;
+    const formId = context.formId;
+
     // functia ia ca parametru o cheie si realizaeaza un apel la server
     // in caz fericit, returneaza datele unui chestionar
     const onSubmit:SubmitHandler<KeyFormInput> = async ({key}:KeyFormInput):Promise<void>=>{
 
-        const form:FormInfo|undefined = await use_key(key);
-        if(form) {
-            navigate("/complete-form/form", {state:{form:form, key:key}});
+        const checkKey = await check_key(key, formId)
+        if(typeof checkKey === 'boolean') {
+            setKey(key);
+            navigate(`/complete-form/${formId}/complete`);
         }
+        else alert(checkKey)
     }
 
     return(
         <div style={{display:'flex', justifyContent:'center', alignItems:'center'}}>
             <form onSubmit={handleSubmit(onSubmit)}>
-                <div style={{display:"flex", flexDirection:'column', gap:'5px'}}>
-                    <label style={{textAlign:'center'}}>Input form key here:</label>
-                    <input {...register("key", {required:"Field required", maxLength:{value:30, message:'Mai usor foamea!'}})} placeholder={"Form key"}/>
+                <div style={{display:"flex", flexDirection:'column', gap:'5px', padding:'10px', border:'1px solid'}}>
+                    <label style={{textAlign:'center'}}>Input access key here:</label>
+                    <input data-tooltip-id={'key'} {...register("key", {required:"Field required", maxLength:30})} placeholder={"Enter access key"}/>
                     <input type={"submit"} value={'Open'}/>
 
                     {isValidating&&"Aveti putintica rabdare . . ."}
-                    <ErrorMessage name={"key"} errors={errors} render={(data)=>
-                        {
-                            return(
-                                <div style={{margin:'0 auto', color:'red'}}>
-                                    {data.message}
-                                </div>
-                            );
-                        }
-                    } />
+                    <ErrorPopup name={'key'} errors={errors} place={'left'} />
 
                 </div>
             </form>
         </div>
+    )
+}
+
+function BaseFormComponent() {
+
+    const [key, setKey] = React.useState('');
+    const params = useParams();
+    const formId = params.formId;
+
+    return (
+        <Outlet context={{key: key, setKey:setKey, formId:formId}} />
+    )
+}
+
+function FormIdInputComponent () {
+
+    const {register, handleSubmit, formState:{errors}} = useForm();
+    const navigate = useNavigate();
+
+    const redirect:SubmitHandler<any> = async (date:any)=> {
+        navigate(`/complete-form/${date.formId}`)
+    }
+
+    return (
+        <form onSubmit={handleSubmit(redirect)}>
+            <div style={{display:'grid', gridTemplateColumns:'1fr', gap:'5px'}}>
+                <p style={{textAlign:'center'}}>
+                    Input form id
+                </p>
+                <input size={24} {...register('formId', {validate:async(value:string):Promise<boolean|string>=> {
+
+                    if(value.length != 24 || (! /^[0-9a-fA-F]+$/.test(value)))
+                        return "Invalid form id"
+                    const foundForm = await check_form_id(value);
+                    if(foundForm)
+                        return true;
+                    return "Could not find form."
+                }
+                })} />
+                <ErrorPopup name={'formId'} errors={errors} place={"top"} />
+                <input style={{justifySelf:'center'}} type='submit' value={'Go to form'} />
+            </div>
+
+        </form>
     )
 }
 
@@ -191,8 +282,11 @@ window.onload = ()=>{
         <BrowserRouter>
             <Routes>
                 <Route path={'complete-form'} element={<Base />}>
-                    <Route index element={<KeyInputComponent />}></Route>
-                    <Route path={"form"} element={<ShowFormComponent />}></Route>
+                    <Route index element={<FormIdInputComponent />}></Route>
+                    <Route path={":formId"} element={<BaseFormComponent />}>
+                        <Route index element={<KeyInputComponent />} ></Route>
+                        <Route path={"complete"} element={<ShowFormComponent />} ></Route>
+                    </Route>
                 </Route>
             </Routes>
         </BrowserRouter>

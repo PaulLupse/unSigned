@@ -1,4 +1,4 @@
-import {type FormInfo, GridAnswer, GridQuestion, type Submission, TextAnswer, TextQuestion} from "../domain/types";
+import type { FormInfo,  GridAnswer,  GridQuestion,  Submission, TextAnswer, TextQuestion} from "../domain/types";
 import {add_form, get_form, delete_form} from "./back-end-connection";
 import React from "react";
 
@@ -6,6 +6,7 @@ import type {MouseEvent} from "react";
 
 import {DisplayQuestion} from "../common/display-questions";
 import {Outlet, useNavigate, useOutletContext, useParams} from "react-router-dom";
+import {formInfoSchema, gridAnswerSchema, textAnswerSchema} from "../domain/schemas";
 
 
 function StatisticTextAnswersDisplayComponent({answers}:{answers: Array<TextAnswer>}) {
@@ -92,7 +93,7 @@ function StatisticGridAnswersDisplayComponent({answers, choices}:{answers: Array
     )
 }
 
-function TextAnswerDisplayComponent(answer:TextAnswer) {
+function IndividualTextAnswerDisplayComponent({answer}:{answer:TextAnswer}) {
     return (
         <div style={{
             display:'grid',
@@ -114,7 +115,7 @@ function TextAnswerDisplayComponent(answer:TextAnswer) {
     )
 }
 
-function GridAnswerDisplayComponent({choices, question}:{choices:Array<number>, question:GridQuestion}) {
+function IndividualGridAnswerDisplayComponent({answer, question}:{answer:GridAnswer, question:GridQuestion}) {
     return (
         <div style={{
             display:'grid',
@@ -126,7 +127,7 @@ function GridAnswerDisplayComponent({choices, question}:{choices:Array<number>, 
             </p>
             <div>
                 <ol>
-                    {choices.map((choice: number) => {
+                    {answer.choices.map((choice: number) => {
                         return <li>{question.choices[choice]}</li>
                     })}
                 </ol>
@@ -156,25 +157,29 @@ function IndividualDisplay({submissions, questions}:{submissions:Submission[], q
                                 margin:'0'
                             }}>
                             {
-                                questions.map(
-                                    (question, questionIndex) => {
+                                submission.answers.map(
+                                    (answer:TextAnswer|GridAnswer, answerIndex) => {
+
+                                        if(!questions[answerIndex]) {
+                                            throw new Error("Too many answers!");
+                                        }
+                                        const question = questions[answerIndex];
+
                                         return (
                                             <li className={'form-question'} >
                                                 <p style={{
                                                     margin:"5px"
                                                 }}>
-                                                    {question.text}
+                                                    {questions[answerIndex]?.text}
                                                 </p>
 
                                                 {
-                                                    (question instanceof TextQuestion &&
-                                                    submission.answers[questionIndex] instanceof TextAnswer) &&
-                                                        <TextAnswerDisplayComponent text={submission.answers[questionIndex].text} />
+                                                    answer.type=='text' &&
+                                                        <IndividualTextAnswerDisplayComponent answer={answer}/>
                                                 }
                                                 {
-                                                    (question instanceof GridQuestion &&
-                                                    submission.answers[questionIndex] instanceof GridAnswer) &&
-                                                        <GridAnswerDisplayComponent choices={submission.answers[questionIndex].choices} question={question}/>
+                                                    answer.type=='grid'  &&  question.type == 'grid' &&
+                                                        <IndividualGridAnswerDisplayComponent answer={answer} question={question}/>
                                                 }
 
                                             </li>
@@ -195,17 +200,17 @@ function StatisticDisplay({submissions, questions}:{submissions:Submission[], qu
 
     function mapTextSubmissions(submissions: Array<Submission>, index: number): TextAnswer[] {
         return submissions.map((submission): TextAnswer => {
-            if (submission.answers[index] instanceof TextAnswer)
+            if(submission.answers[index]?.type == 'text')
                 return submission.answers[index];
-            return new TextAnswer('');
+            return textAnswerSchema.parse({text:'', type:'text'});
         })
     }
 
     function mapGridSubmissions(submissions: Array<Submission>, index: number): GridAnswer[] {
         return submissions.map((submission): GridAnswer => {
-            if (submission.answers[index] instanceof GridAnswer)
+            if (submission.answers[index]?.type == 'grid')
                 return submission.answers[index];
-            return new GridAnswer([]);
+            return gridAnswerSchema.parse({choices:[], type:'grid'});
         })
     }
 
@@ -220,11 +225,11 @@ function StatisticDisplay({submissions, questions}:{submissions:Submission[], qu
                                 {question.text}
                             </p>
                             {
-                                question instanceof TextQuestion &&
+                                question.type == 'text' &&
                                 <StatisticTextAnswersDisplayComponent answers={mapTextSubmissions(submissions, index)} />
                             }
                             {
-                                question instanceof GridQuestion &&
+                                question.type == 'grid' &&
                                 <StatisticGridAnswersDisplayComponent answers={mapGridSubmissions(submissions, index)} choices={question.choices}/>
                             }
                         </li>
@@ -319,24 +324,11 @@ export function DisplaySubmissionData() {
 
 export function DisplayFrom() {
 
-    const form: FormInfo = useOutletContext();
+    const form: FormInfo = formInfoSchema.parse(useOutletContext());
     const navigate = useNavigate();
 
-
-    let formQuestions: Array<TextQuestion | GridQuestion> = new Array<TextQuestion | GridQuestion>()
-    if (form) {
-        formQuestions = form.questions.map(
-            (question: any) => {
-                if (Object.hasOwn(question, 'choices'))
-                    return new GridQuestion(question.text, question.isOptional, question.isMultipleChoice, question.choices)
-                return new TextQuestion(question.text, question.isOptional, question.maxChars);
-            }
-        );
-        console.log(formQuestions);
-    }
-
     async function deleteForm() {
-        const deleteFormResponse: boolean = await delete_form(form.name);
+        const deleteFormResponse: boolean = await delete_form(form.id);
         if (deleteFormResponse) {
             alert("Form deleted succesfully")
             navigate('/');
@@ -387,11 +379,11 @@ export function DisplayFrom() {
                     </div>
 
                     {
-                        formQuestions.length > 0 ?
-                            formQuestions.map(
+                        form.questions.length > 0 ?
+                            form.questions.map(
                                 (question: TextQuestion | GridQuestion, index: number) => {
                                     return (
-                                        <DisplayQuestion questionIndex={index + 1} question={question}/>
+                                        <DisplayQuestion key={index} questionIndex={index + 1} question={question}/>
                                     )
                                 }
                             ) :
@@ -402,10 +394,6 @@ export function DisplayFrom() {
                             </div>
                     }
                 </ol>
-
-
-
-
             </div>
         </div>
 
@@ -418,13 +406,13 @@ export function ViewForm() {
 
     const [form, setForm] = React.useState<FormInfo>();
     const [loading, setLoading] = React.useState(true)
-    const formName = useParams().formName as string;
+    const formId = useParams().formId as string;
     const navigate = useNavigate();
 
     React.useEffect(
         () => {
             async function f(): Promise<void> {
-                const newForm: FormInfo | undefined = await get_form(formName);
+                const newForm: FormInfo | undefined = await get_form(formId);
                 if (newForm) {
                     setForm(newForm);
                     setLoading(false);

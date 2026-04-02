@@ -69,8 +69,11 @@ async def view_form():
 @app.get("/complete-form", response_class=HTMLResponse)
 async def sub_users_root():
     return FileResponse("static/html/complete-form.html")
+@app.get("/complete-form/{form_id}", response_class=HTMLResponse)
+async def access_form():
+    return FileResponse("static/html/complete-form.html")
 
-@app.get("/complete-form/form", response_class=HTMLResponse)
+@app.get("/complete-form/{form_id}/complete", response_class=HTMLResponse)
 async def complete_form():
     return FileResponse("static/html/complete-form.html")
 

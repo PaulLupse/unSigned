@@ -1,8 +1,6 @@
 import React from "react";
-import type {FormInfo} from "../domain/types";
 import {getValue, validateKey} from "./Utilities";
 import type {pair} from "./Utilities";
-import {delete_form} from "../user/back-end-connection";
 
 // model de data pentru a se folosi impreuna cu TableView
 export class TableModel {
@@ -113,12 +111,6 @@ export function Table<lineInterface extends Object>(props:TableProps<lineInterfa
                         }
                     )
                 }
-                {/*<th style={{width:'0.1%', whiteSpace:'nowrap', color:'#dbdbdb', padding:'14px'}}>*/}
-                {/*    Delete*/}
-                {/*</th>*/}
-                {/*<th style={{width:'0.1%', whiteSpace:'nowrap', color:'#dbdbdb', padding:'14px'}}>*/}
-                {/*    View*/}
-                {/*</th>*/}
             </tr>
 
             </thead>
@@ -150,16 +142,6 @@ export function Table<lineInterface extends Object>(props:TableProps<lineInterfa
                                         }
                                     )
                                 }
-                                {/*<td>*/}
-                                {/*    <button onClick={()=>{props.deleteButtonCallback(line)}}>*/}
-                                {/*        Delete*/}
-                                {/*    </button>*/}
-                                {/*</td>*/}
-                                {/*<td>*/}
-                                {/*    <button onClick={()=>{props.viewButtonCallback(getValue(line, 'name'));}}>*/}
-                                {/*        View*/}
-                                {/*    </button>*/}
-                                {/*</td>*/}
                             </tr>
                         )
                     }

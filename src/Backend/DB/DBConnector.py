@@ -1,14 +1,14 @@
 from bson import ObjectId
-from multipledispatch import dispatch
+from pydantic import TypeAdapter
 
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 from pymongo.results import DeleteResult
 
-from typing import Tuple, overload
+from typing import Tuple
 
 from src.Backend.Utilities import hash_password, verify_password
-from src.Backend.Domain.Questions import Form, Submission, GridAnswer, TextAnswer, TextQuestion
+from src.Backend.Domain.General import Form, Submission, MinimalFormInfo, NewForm
 from src.Backend.Domain.Credentials import Key
 
 from datetime import date, datetime
@@ -73,85 +73,89 @@ class Database:
 
         return 200
 
-    def add_form(self, new_form:Form, owner:str)->int:
+    def add_form(self, new_form:NewForm, owner:str)->int:
 
         if self.forms_table.find_one({"name":new_form.name, "owner":owner}):
             return 409
 
         current_date:date = datetime.now().date()
-        new_form.dateCreated = current_date
-        new_form.dateUpdated = current_date
-
-        new_form.submissions = []
 
         new_form_dict = new_form.model_dump(mode="json")
-        new_form_dict["owner"] = owner
+        new_form_dict['dateCreated'] = current_date.isoformat()
+        new_form_dict['submissions'] = []
+        new_form_dict['owner'] = owner
 
         self.forms_table.insert_one(new_form_dict)
 
         return 200
 
-    def get_forms(self, owner:str)->list[Form]:
+    # returneaza o lista de date minimale ale formularelor
+    def get_forms(self, owner:str)->list[MinimalFormInfo]:
 
-        form_list = list(self.forms_table.find({"owner":owner}, {"_id":0}))
-        return form_list
+        # validam lista de formulare returnata de baza de date
+        forms_from_db = list(self.forms_table.find({"owner":owner}))
 
-    def delete_form(self, owner:str, name:str):
+        # necesar sa schimbam numele campului id
+        for form in forms_from_db:
+            form['id'] = str(form.pop('_id'))
 
-        delete_result:DeleteResult = self.forms_table.delete_one({"owner":owner,"name":name})
+        forms_from_db = TypeAdapter(list[Form]).validate_python(forms_from_db)
+
+        minimal_forms:list[MinimalFormInfo] = TypeAdapter(list[MinimalFormInfo]).validate_python([MinimalFormInfo(name=form.name,
+                                                               dateClosed=None,
+                                                               dateCreated=form.dateCreated,
+                                                               datePublished=None,
+                                                               submissionsCount=len(form.submissions),
+                                                                id=form.id)
+                                                                for form in forms_from_db])
+
+        return minimal_forms
+
+    def delete_form(self, form_id:str)->int:
+
+        delete_result:DeleteResult = self.forms_table.delete_one({'_id': ObjectId(form_id)})
         if delete_result.deleted_count:
             return 200
 
         return 404
 
-    @dispatch(str, str)
-    def get_form(self, owner:str, name:str)->Tuple[Form, int]|int:
-
-        form:Form = Form.model_validate(self.forms_table.find_one({"owner":owner,"name":name}, {"_id":0}))
-
-        if form:
-            return form, 200
-
-        return 404
-
-    @dispatch(str)
     def get_form(self, form_id:str)->Tuple[Form|None, int]:
 
-        form_from_db = self.forms_table.find_one(ObjectId(form_id), {"_id":0})
-        form:Form = Form.model_validate(form_from_db) if form_from_db else None
+        form_from_db = self.forms_table.find_one(ObjectId(form_id))
 
-        if form:
+        if form_from_db:
+            form_from_db['id'] = str(form_from_db.pop('_id'))
+            form:Form = Form.model_validate(form_from_db) if form_from_db else None
+
+            if form.dateClosed is not None and form.dateClosed < datetime.now():
+                return form, 423
+
             return form, 200
-        return None, 410
 
-    def use_key(self, key:str)->Tuple[Form|None, int]:
+        return None, 404
 
-        key_in_db = self.keys_table.find_one({"key": key}, {"_id": 0})
-        key_in_db = Key.model_validate(key_in_db) if key_in_db else None
+    def check_key_usage(self, key:Key)->bool:
+        found_key = self.keys_table.find_one({"keyId":key.keyId})
 
-        if not key_in_db:
-            return None, 404
+        if found_key:
+            return True
+        return False
 
-        if key_in_db.isUsed:
-            return None, 409
+    def submit_form_answer(self, key:Key, submission:Submission)->int:
 
-        #self.keys_table.update_one({"key":key}, {"$set":{"isUsed":True}})
+        try :
+            self.forms_table.update_one({"_id": ObjectId(key.formId)}, {"$push": {"submissions": submission.model_dump(mode="json")}})
+            return 200
+        except:
+            return 500
 
-        return self.get_form(key_in_db.formId)
+    def check_form_existence(self, form_id:str)->int:
 
-    def submit_form(self, key:str, submission:Submission)->int:
+        if self.forms_table.find_one({"_id":ObjectId(form_id)}):
+            return 200
+        return 404
 
-        key_in_db = self.keys_table.find_one({"key": key}, {"_id": 0})
-        key_in_db = Key.model_validate(key_in_db) if key_in_db else None
+if __name__ == '__main__':
+    db = Database("mongodb://localhost:27017/")
 
-        if not key_in_db:
-            return 404
-
-        if key_in_db.isUsed:
-            return 409
-
-        # self.keys_table.update_one({"key": key}, {"$set": {"isUsed": True}})
-        self.forms_table.update_one({"_id": ObjectId(key_in_db.formId)}, {"$push": {"submissions": submission.model_dump(mode="json")}})
-
-        return 200
 

@@ -13,7 +13,7 @@ import {
 import configFile from '../config.json'
 import {auto_login, get_forms, logout, delete_form} from "./back-end-connection";
 import {Table} from "../components/Table";
-import type {FormInfo, Submission} from "../domain/types";
+import type {FormInfo, MinimalFormInfo, Submission} from "../domain/types";
 import {makePair} from "../components/Utilities";
 
 
@@ -46,15 +46,15 @@ function NotLoggedInPanel(props:{divStyle:any}) {
 
 function DataDisplay(props:DataProps) {
 
-    const [formList, setFormList] = React.useState(Array<FormInfo>);
+    const [formList, setFormList] = React.useState(Array<MinimalFormInfo>);
     const navigate = useNavigate();
 
     React.useEffect(()=> {
                     async function getItems ():Promise<void> {
-                        const newItems:Array<FormInfo>|undefined = await get_forms();
+                        const forms:Array<MinimalFormInfo>|undefined = await get_forms();
 
-                        if(newItems) {
-                            setFormList(newItems);
+                        if(forms) {
+                            setFormList(forms);
                         }
                     }
                     if(props.isLoggedIn)
@@ -62,7 +62,6 @@ function DataDisplay(props:DataProps) {
                 },
                 []
             );
-
 
     return(
         // folosim un grid pentru a aseza sectiunile din continut
@@ -75,16 +74,17 @@ function DataDisplay(props:DataProps) {
                     padding:'5px', textAlign:'center'
                 }}>My Forms</h3>
 
-                <Table<FormInfo> columns={["Name", "Date created", "Date updated", "Submissions"]}
+                <Table<MinimalFormInfo> columns={["Name", "Date created", "Date published", "Date closed" , "Submissions"]}
                                  dataFields={['name',
-                                     makePair('dateCreated', (date:Date):string|undefined=>date.toString().split('T')[0]),
-                                     makePair('dateUpdated', (date:Date):string|undefined=>date.toString().split('T')[0]),
-                                     makePair('submissions', (subs:Array<Submission>):number=>subs?subs.length:0)]}
+                                     makePair('dateCreated', (date:Date)=>date?date.toISOString().split('T')[0]:'-'),
+                                     makePair('datePublished', (date:Date|null)=>date?date.toISOString().split('T')[0]:'-'),
+                                     makePair('dateClosed', (date:Date|null)=>date?date.toISOString().split('T')[0]:'-'),
+                                     'submissionsCount']}
                                  data={formList}
                                  setData={setFormList}
                                  rowOnClick=
-                                    {(form:FormInfo):void => {
-                                        navigate(`view-form/${form.name}`);
+                                    {(form:MinimalFormInfo):void => {
+                                        navigate(`view-form/${form.id}`);
                                     }}
                 />
 
@@ -204,7 +204,7 @@ window.onload = ()=>{
                 <Route path='/' element={<Main />}>
                     <Route index element={<DefaultContent />}></Route>
                     <Route path='create-new-form' element={<FormCreator />}></Route>
-                    <Route path='view-form/:formName' element={<ViewForm />}>
+                    <Route path='view-form/:formId' element={<ViewForm />}>
                         <Route index element={<DisplayFrom />}></Route>
                         <Route path='submissions' element={<DisplaySubmissionData />}></Route>
                     </Route>

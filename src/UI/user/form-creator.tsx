@@ -17,8 +17,8 @@ import { Tooltip } from 'react-tooltip'
 
 import {logout, auto_login, add_form} from "./back-end-connection";
 import configFile from "../config.json"
-import {FormInfo, type Submission} from "../domain/types";
-import {TextQuestion, GridQuestion} from "../domain/types";
+import type {FormInfo, MinimalFormInfo, NewForm, Submission} from "../domain/types";
+import type {TextQuestion, GridQuestion} from "../domain/types";
 import {DisplayQuestion} from "../common/display-questions";
 import {useNavigate} from "react-router-dom";
 import ErrorPopup from "../common/error-popup/error-popup";
@@ -26,6 +26,7 @@ import ErrorPopup from "../common/error-popup/error-popup";
 const baseURL:string = configFile.baseURL
 
 import {ErrorMessage} from "@hookform/error-message";
+import {gridQuestionSchema, minimalFormInfoSchema, newFormSchema, textQuestionSchema} from "../domain/schemas";
 
 
 interface QuestionOptionsComponentProps {
@@ -166,10 +167,25 @@ function NewQuestionPanel(props:NewQuestionPanelProps) {
     const submit:SubmitHandler<QuestionOptions> = async (data:QuestionOptions)=>{
 
         if(questionType==='grid') {
-            props.addQuestionCallback(new GridQuestion(data.text, data.isOptional, data.isMultipleChoice, data.choices.map(choice=>choice.text)));
+            const gridQuestion:GridQuestion =
+                gridQuestionSchema.parse({text:data.text,
+                type:'grid',
+                choices:data.choices.map(choice => choice.text),
+                isOptional:data.isOptional,
+                isMultipleChoice:data.isMultipleChoice})
+
+            props.addQuestionCallback(gridQuestion);
         }
-        else if(questionType==='text')
-            props.addQuestionCallback(new TextQuestion(data.text, data.isOptional, 30));
+        else if(questionType==='text') {
+
+            const textQuestion:TextQuestion =
+                textQuestionSchema.parse({text:data.text,
+                type:'text',
+                    isOptional:data.isOptional
+                })
+
+            props.addQuestionCallback(textQuestion);
+        }
 
         // panoul de creat intrebare noua dispare atunci cand este adaugata o noua intrebare
         props.setDisplayQuestionCreator(false);
@@ -266,13 +282,10 @@ export default function FormCreator() {
 
         console.log(data);
 
-        const newForm:FormInfo = {
+        const newForm:NewForm = newFormSchema.parse({
                                 name:data.formName,
                                 questions:data.formQuestions,
-                                dateCreated:null,
-                                dateUpdated:null,
-                                submissions:null
-                            }
+                            })
 
             console.log(formQuestions)
             const addResponse:boolean = await add_form(newForm);
@@ -280,7 +293,6 @@ export default function FormCreator() {
                 alert("Form created successfuly.")
             }
             else alert("Could not create form.")
-
     }
 
     return (
@@ -345,14 +357,13 @@ export default function FormCreator() {
                             }}/>
                             <ErrorPopup name={'formName'} errors={errors} place={"bottom"}/>
 
-
                         </div>
 
                     {
                         formQuestions.map(
                             (question:TextQuestion|GridQuestion, index:number)=> {
                                 return(
-                                    <div style={{
+                                    <div key={index} style={{
                                         display: 'grid',
                                         gridTemplateColumns:'1fr auto'
                                     }}>
