@@ -44,6 +44,7 @@ function StatisticTextAnswersDisplayComponent({answers}:{answers: Array<TextAnsw
                         {
                             answers.map((answer: TextAnswer, index) => {
                                 return (
+                                    answer.text &&
                                     <li key={index} style={{marginBottom:'5px'}}>
                                         {answer.text}
                                     </li>
@@ -61,12 +62,14 @@ function StatisticGridAnswersDisplayComponent({answers, choices}:{answers: Array
 
     function computeAverage(choiceIndex: number): number {
         let average: number = 0;
+
         if (answers)
             for (let answer of answers) {
-                if (choiceIndex in answer.choices)
+                if (answer.choices.includes(choiceIndex))
                     average += 1
             }
-        return (average / answers.length * 100)
+
+        return Number((average / answers.length * 100).toFixed(2))
     }
 
     return (
@@ -128,7 +131,7 @@ function IndividualGridAnswerDisplayComponent({answer, question}:{answer:GridAns
             <div>
                 <ol>
                     {answer.choices.map((choice: number) => {
-                        return <li>{question.choices[choice]}</li>
+                        return <li value={choice}>{question.choices[choice]}</li>
                     })}
                 </ol>
             </div>
@@ -198,19 +201,19 @@ function IndividualDisplay({submissions, questions}:{submissions:Submission[], q
 
 function StatisticDisplay({submissions, questions}:{submissions:Submission[], questions:Array<TextQuestion|GridQuestion>}) {
 
-    function mapTextSubmissions(submissions: Array<Submission>, index: number): TextAnswer[] {
+    function mapTextSubmissions(submissions: Array<Submission>, questionIndex: number): TextAnswer[] {
         return submissions.map((submission): TextAnswer => {
-            if(submission.answers[index]?.type == 'text')
-                return submission.answers[index];
-            return textAnswerSchema.parse({text:'', type:'text'});
+            if(submission.answers[questionIndex]?.type == 'text')
+                return submission.answers[questionIndex];
+            else throw new Error("Wrong answer type. Expected text.")
         })
     }
 
-    function mapGridSubmissions(submissions: Array<Submission>, index: number): GridAnswer[] {
+    function mapGridSubmissions(submissions: Array<Submission>, questionIndex: number): GridAnswer[] {
         return submissions.map((submission): GridAnswer => {
-            if (submission.answers[index]?.type == 'grid')
-                return submission.answers[index];
-            return gridAnswerSchema.parse({choices:[], type:'grid'});
+            if (submission.answers[questionIndex]?.type == 'grid')
+                return submission.answers[questionIndex];
+            else throw new Error("Wrong answer type. Expected grid.")
         })
     }
 

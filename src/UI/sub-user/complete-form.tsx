@@ -92,7 +92,7 @@ function ShowFormComponent() {
     }, [])
 
 
-    const {register, formState:{errors}, handleSubmit} = useForm();
+    const {register, formState:{errors}, handleSubmit, reset} = useForm();
 
     const onSubmit:SubmitHandler<any> = async (data)=>{
         if(!form)
@@ -142,7 +142,7 @@ function ShowFormComponent() {
                     form.questions.map((question:TextQuestion|GridQuestion, index:number)=>{
 
                         return (
-                            <>
+                            <div key={index} >
                             <li className={'form-question'}>
                                 <div id={"Intrebarea #" + index} key={index} style={{display:'flex', flexDirection:'column'}}>
                                     {question.text}
@@ -162,14 +162,22 @@ function ShowFormComponent() {
                                     {message}
                                 </p>
                             } />
-                            </>
+                            </div>
                         );
                     })
                 }
             </ol>
-            <div style={{display:"flex", justifyContent:'center', marginTop:'30px'}}>
+            <div style={{display:"grid", gridTemplateColumns:'repeat(3, 1fr)', gap:'10px', marginTop:'10px', flexGrow:'1'}}>
+                <button type={'button'} className={'plain-button'} onClick={()=>{navigate(-1)}}>
+                    Back
+                </button>
+                <button type={'button'} className={'plain-button'} onClick={()=>{reset()}}>
+                    Clear choices
+                </button>
                 <input className={'plain-button'} type={"submit"} />
+
             </div>
+
         </form>
         }
     </div>
@@ -203,7 +211,7 @@ function KeyInputComponent() {
                 <div style={{display:"flex", flexDirection:'column', gap:'5px', padding:'10px', border:'1px solid'}}>
                     <label style={{textAlign:'center'}}>Input access key here:</label>
                     <input data-tooltip-id={'key'} {...register("key", {required:"Field required", maxLength:30})} placeholder={"Enter access key"}/>
-                    <input type={"submit"} value={'Open'}/>
+                    <input className={'plain-button'} type={"submit"} value={'Open'}/>
 
                     {isValidating&&"Aveti putintica rabdare . . ."}
                     <ErrorPopup name={'key'} errors={errors} place={'left'} />
@@ -236,11 +244,11 @@ function FormIdInputComponent () {
 
     return (
         <form onSubmit={handleSubmit(redirect)}>
-            <div style={{display:'grid', gridTemplateColumns:'1fr', gap:'5px'}}>
-                <p style={{textAlign:'center'}}>
-                    Input form id
-                </p>
-                <input size={24} {...register('formId', {validate:async(value:string):Promise<boolean|string>=> {
+            <div style={{display:'grid', gridTemplateColumns:'1fr', gap:'5px', border:'1px solid', padding:'10px'}}>
+                <label style={{textAlign:'center'}}>
+                    Input form ID
+                </label>
+                <input data-tooltip-id={'formId'} size={24} placeholder={"Form ID"} {...register('formId', {validate:async(value:string):Promise<boolean|string>=> {
 
                     if(value.length != 24 || (! /^[0-9a-fA-F]+$/.test(value)))
                         return "Invalid form id"
@@ -250,8 +258,8 @@ function FormIdInputComponent () {
                     return "Could not find form."
                 }
                 })} />
-                <ErrorPopup name={'formId'} errors={errors} place={"top"} />
-                <input style={{justifySelf:'center'}} type='submit' value={'Go to form'} />
+                <ErrorPopup name={'formId'} errors={errors} place={"left"} />
+                <input className={'plain-button'} style={{justifySelf:'stretch'}} type='submit' value={'Go to form'} />
             </div>
 
         </form>
