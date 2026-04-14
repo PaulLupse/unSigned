@@ -1,0 +1,23 @@
+.nav-bar {
+    display:grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    border-bottom:solid 2px;
+    text-align:center;
+    position:sticky;
+    top:0;
+    z-index: 1000;
+    background: white;
+    min-height:100px
+}
+
+.nav-bar h1 {
+    text-align: center;
+}
+
+.nav-bar .left {
+    display:flex;
+    align-items: center;
+    gap: 10px;
+    margin-left:10px
+}

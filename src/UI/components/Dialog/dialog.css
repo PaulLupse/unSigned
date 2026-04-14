@@ -1,0 +1,12 @@
+dialog {
+    border:2px solid
+}
+
+dialog .actions-div {
+    display:flex;
+    gap:10px
+}
+
+dialog.actions-div button {
+    flex-grow: 1;
+}

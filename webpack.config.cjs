@@ -1,14 +1,11 @@
 var path = require('path');
 var glob = require('glob')
-const reactMatch = /\.(ts|js)x$/
+const reactMatch = /\.(ts|js)x?$/
 
 module.exports = {
     context: __dirname,
     entry: {
-        complete_form:'./src/UI/sub-user/complete-form.tsx',
-        main:'./src/UI/user/main.tsx',
-        // login:'./src/UI/user/login.tsx',
-        // register:'./src/UI/user/register.tsx',
+        main:'./src/UI/index.tsx'
     },
     output: {
         path: path.join(__dirname, "/dist"),
@@ -35,13 +32,6 @@ module.exports = {
                         },
                     },
                 ],
-            },
-            {
-                test: /\.ts$/,
-                exclude: /node_modules/,
-                use: {
-                    loader: "ts-loader"
-                }
             },
             {
                 test: /\.css$/i,

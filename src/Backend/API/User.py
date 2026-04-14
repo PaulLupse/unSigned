@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from fastapi import APIRouter, status, HTTPException
 from fastapi.params import Depends
 from fastapi.responses import JSONResponse
@@ -13,7 +15,7 @@ from datetime import timedelta
 import json
 
 from src.Backend.Domain.General import MinimalFormInfo, TextQuestion, GridQuestion, NewForm
-from src.Backend.DB.DBConnector import Database
+from src.Backend.DB.DBConnector import DBConnector, get_db
 from src.Backend.Utilities import generate_access_token, json_serial
 from src.Backend.API.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
 
@@ -28,13 +30,7 @@ logger.setLevel(logging.DEBUG)
 
 oauth2_scheme = OAuth2PasswordBearerWithCookies(tokenUrl="users/token")
 
-def get_db(url:str)->Database:
-    try:
-        return Database(url)
-    except:
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
-db_connector:Database = get_db(MDB_URL)
+db_connector:DBConnector = get_db()
 
 router:APIRouter = APIRouter(prefix="/users", tags=["users"])
 
@@ -90,11 +86,11 @@ async def get_token(credentials: Annotated[OAuth2PasswordRequestForm, Depends()]
 
     # daca nu a fost gasit un utilizator cu username-ul specificat
     if db_response == 404:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found.", headers={"WWW-Authenticate": "Bearer"})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.", headers={"WWW-Authenticate": "Bearer"})
 
     # daca a fost gasit, dar parola nu corespunde
     if db_response == 400:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password.", headers={"WWW-Authenticate": "Bearer"})
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid password.", headers={"WWW-Authenticate": "Bearer"})
 
     # generam un jeton de acces
     access_token:str=generate_access_token({"sub": credentials.username}, expiration_time=timedelta(minutes=EXP))
@@ -155,25 +151,29 @@ async def get_forms(login_response:Annotated[str, Depends(authenticate)]):
 @router.post("/me/form/add", response_class=JSONResponse)
 async def create_form(login_response:Annotated[str, Depends(authenticate)], new_form:NewForm):
 
-    add_response = db_connector.add_form(new_form, login_response)
+    add_response, form_id = db_connector.add_form(new_form, login_response)
     if add_response == 409:
-        return JSONResponse(content={"message":"Item with this name already exists."},
+        return JSONResponse(content={"message":"Form with this name already exists."},
                             status_code=status.HTTP_409_CONFLICT)
 
     if add_response == 400:
-        return JSONResponse(content={"message":"Invalid item fields."},
+        return JSONResponse(content={"message":"Invalid form fields."},
                             status_code=status.HTTP_400_BAD_REQUEST)
 
-
-    else: return JSONResponse(content={"message":"Item added successfully."},
+    else:
+        print(add_response)
+        return JSONResponse(content={"message":"Form added successfully.", "formId":str(form_id)},
                               status_code=status.HTTP_201_CREATED)
 @router.get("/me/form/{form_id}", response_class=JSONResponse)
 async def get_form_by_id(login_response:Annotated[str, Depends(authenticate)], form_id:str):
 
-    get_form_response: Tuple[Form, int]|int = db_connector.get_form(form_id)
+    if len(form_id)!=24:
+        return JSONResponse(content={"message":"Invalid form id."},status_code=status.HTTP_404_NOT_FOUND)
 
-    if type(get_form_response) == tuple:
-        return JSONResponse(content={"message":"Queried successfully.", 'form':jsonable_encoder(get_form_response[0])}, status_code=status.HTTP_200_OK)
+    get_form_response: Tuple[int, Form|None] = db_connector.get_form(form_id)
+
+    if get_form_response[0] == 200 or get_form_response[1] == 423:
+        return JSONResponse(content={"message":"Queried successfully.", 'form':jsonable_encoder(get_form_response[1])}, status_code=status.HTTP_200_OK)
 
     return JSONResponse(content={"message":"Item not found."}, status_code=404)
 

@@ -1,4 +1,4 @@
-import React, {type SetStateAction, use, useState} from "react";
+import React, {type SetStateAction, use, useRef, useState} from "react";
 import {createRoot} from "react-dom/client";
 import type {RefObject, Dispatch} from "react";
 import {
@@ -19,14 +19,16 @@ import {logout, auto_login, add_form} from "./back-end-connection";
 import configFile from "../config.json"
 import type {FormInfo, MinimalFormInfo, NewForm, Submission} from "../domain/types";
 import type {TextQuestion, GridQuestion} from "../domain/types";
-import {DisplayQuestion} from "../common/display-questions";
+import {DisplayQuestion} from "../common/DisplayQuestion";
 import {type NavigateFunction, type Navigation, useNavigate} from "react-router-dom";
-import ErrorPopup from "../common/error-popup/error-popup";
+import FormInputErrorPopup from "../common/error-popups";
 
 const baseURL:string = configFile.baseURL
 
 import {ErrorMessage} from "@hookform/error-message";
 import {gridQuestionSchema, minimalFormInfoSchema, newFormSchema, textQuestionSchema} from "../domain/schemas";
+import {DialogWithButton} from "../components/Dialog/Dialog";
+import {useAlert} from "../components/AlertProvider";
 
 
 interface QuestionOptionsComponentProps {
@@ -73,7 +75,7 @@ interface GridQuestionChoiceComponentProps {
 // Componenta menita pentru afisarea optiunilor intrebarilor de tip text.
 function TextQuestionOptions(props:QuestionOptionsComponentProps) {
     return (
-        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', justifyItems:'center', alignItems:'center'}}>
+        <div style={{display:'grid', gridTemplateColumns:'1fr', justifyItems:'center', alignItems:'center'}}>
 
             <div style={{
                 display:'flex',
@@ -84,14 +86,14 @@ function TextQuestionOptions(props:QuestionOptionsComponentProps) {
             </div>
 
             <div style={{
-                display:'grid',
-                justifyContent:'center',
+                display:'flex',
                 gap:'5px'
             }}>
                 <label>
-                    Maximum characters:
+                    Maximum answer characters:
                 </label>
-                <input {...props.register("maxChars")} type={'number'} />
+                <input data-tooltip-id={'maxChars'} style={{width: '4rem'}} {...props.register("maxChars", {max:{value:10000, message:"Answers should not have more than 10000 characters"}})} defaultValue={30}  type={'number'} />
+                <FormInputErrorPopup name={"maxChars"} errors={props.errors} place={'top'} />
             </div>
 
 
@@ -111,12 +113,12 @@ function GridQuestionChoiceComponent ({option, register, removeChoice, index, er
                 gridTemplateColumns:'1fr auto',
                 gap:'5px'
             }}>
-                <input value={`Choice #${index}`} {...register(`choices.${index}.text`,
+                <input defaultValue={`Choice #${index}`} {...register(`choices.${index}.text`,
                         {required:'Option cannot be null.'})}
                        data-tooltip-id={`choices.${index}.text`}
                         type={'text'}/>
 
-                <ErrorPopup name={`choices.${index+1}.text`} errors={errors} place={'left'} />
+                <FormInputErrorPopup name={`choices.${index+1}.text`} errors={errors} place={'left'} />
 
                 <button style={{aspectRatio:'1/1', fontWeight:'bold'}} type="button" onClick={()=>{removeChoice(index)}}>
                     -
@@ -224,10 +226,12 @@ function NewQuestionPanel(props:NewQuestionPanelProps) {
         }
         else if(questionType==='text') {
 
-            const textQuestion:TextQuestion =
-                textQuestionSchema.parse({text:data.text,
-                type:'text',
-                    isOptional:data.isOptional
+            const textQuestion:TextQuestion = textQuestionSchema.parse(
+                {
+                    text:data.text,
+                    type:'text',
+                    isOptional:data.isOptional,
+                    maxChars:data.maxChars
                 })
 
             props.addQuestionCallback(textQuestion);
@@ -244,7 +248,10 @@ function NewQuestionPanel(props:NewQuestionPanelProps) {
                 flexGrow:'1',
                 maxWidth:'400px',
                 padding:'10px',
-                border:'1px solid'
+                border:'1px solid',
+                position:"sticky",
+                top:'130px',
+                margin:'30px'
             }}>
 
             <form onSubmit={handleSubmit(submit)}>
@@ -270,7 +277,7 @@ function NewQuestionPanel(props:NewQuestionPanelProps) {
                                         overflow:'scroll',
                                         resize:'none'}} />
 
-                        <ErrorPopup name={'text'} errors={errors} place={"bottom"}/>
+                        <FormInputErrorPopup name={'text'} errors={errors} place={"bottom"}/>
 
                         {/* selector al tipului de intrebare */}
                         <select onChange ={
@@ -312,9 +319,10 @@ interface PreviewPanelProps {
     navigate:NavigateFunction
     setDisplayQuestionCreator:Dispatch<SetStateAction<boolean>>
     formQuestions:Array<GridQuestion|TextQuestion>
+    deleteQuestion:(questionIndex:number)=>void
 }
 
-function PreviewPanel({handleSubmit, createNewForm, navigate, setDisplayQuestionCreator, register, errors, formQuestions}:PreviewPanelProps) {
+function PreviewPanel({handleSubmit, createNewForm, navigate, setDisplayQuestionCreator, register, errors, formQuestions, deleteQuestion}:PreviewPanelProps) {
     return (
         <div className={'form-frame'}>
 
@@ -358,7 +366,7 @@ function PreviewPanel({handleSubmit, createNewForm, navigate, setDisplayQuestion
                         justifyContent:'center'
                     }}>
 
-                        <input value={"New Form"}
+                        <input defaultValue={"New Form"}
                                 type='text'
                                data-tooltip-id={'formName'}
                                {...register('formName', {required:'Form name required!'})} placeholder="Form name" style={{
@@ -367,8 +375,8 @@ function PreviewPanel({handleSubmit, createNewForm, navigate, setDisplayQuestion
                             maxWidth:'200px',
                             textAlign:'center',
                             flexGrow:'1'
-                        }}/>
-                        <ErrorPopup name={'formName'} errors={errors} place={"bottom"}/>
+                        }} readOnly={false}/>
+                        <FormInputErrorPopup name={'formName'} errors={errors} place={"bottom"}/>
 
                     </div>
 
@@ -381,14 +389,18 @@ function PreviewPanel({handleSubmit, createNewForm, navigate, setDisplayQuestion
                                     gridTemplateColumns:'1fr auto'
                                 }}>
                                     <DisplayQuestion questionIndex={index+1} question={question} />
-                                    <button style={{
+
+                                    <DialogWithButton buttonStyle={{
                                         margin:'5px',
                                         aspectRatio:'1/1',
                                         alignSelf:"center",
-                                        justifySelf:'center'
-                                    }}>
-                                        -
-                                    </button>
+                                        justifySelf:'center',
+                                        height:'3rem'
+                                    }}
+                                        buttonText={'-'}
+                                        buttonOnClick={()=>deleteQuestion(index)}
+                                        text={"Are you sure you want to delete this question?"} />
+
                                 </div>
                             )
                         }
@@ -405,30 +417,37 @@ function PreviewPanel({handleSubmit, createNewForm, navigate, setDisplayQuestion
 // Printre altele, afiseaza un preview al formularului.
 export default function FormCreator() {
 
-    const nameInput:RefObject<HTMLInputElement|null> = React.useRef(null);
-    const keyInput:RefObject<HTMLInputElement|null> = React.useRef(null);
-
     const [displayQuestionCreator, setDisplayQuestionCreator] = React.useState(false);
+    const {showAlert} = useAlert()
 
     const navigate = useNavigate();
+
 
     const {register, formState:{errors}, handleSubmit, control, watch} = useForm<newForm>({defaultValues:{formQuestions:[]}});
     const {append, remove} = useFieldArray({control, name:'formQuestions'});
     const formQuestions = watch("formQuestions");
 
+    const deleteQuestion = (questionIndex:number) => {
+        remove(questionIndex);
+    }
+
     const createNewForm:SubmitHandler<newForm> = async(data:newForm) => {
 
-        console.log(data);
 
         const newForm:NewForm = newFormSchema.parse({
                                 name:data.formName,
                                 questions:data.formQuestions,
                             })
 
-            console.log(formQuestions)
-            const addResponse:boolean = await add_form(newForm);
-            if(addResponse) {
-                alert("Form created successfuly.")
+            const newFormId:string = await add_form(newForm);
+            if(newFormId) {
+                showAlert("Form created successfully",
+                    [
+                        {
+                            text:"OK",
+                            action:()=>navigate(`/view-form/${newFormId}`)
+                        }
+                    ]);
             }
             else alert("Could not create form.")
     }
@@ -436,10 +455,9 @@ export default function FormCreator() {
     return (
         <div id="Continut" style={{
             display:'flex',
-            alignItems:'center',
+            alignItems:'start',
             height:'100%',
-            justifyContent:'center',
-            overflowY:'scroll'
+            justifyContent:'center'
         }}>
 
             <PreviewPanel handleSubmit={handleSubmit}
@@ -448,7 +466,8 @@ export default function FormCreator() {
                           setDisplayQuestionCreator={setDisplayQuestionCreator}
                           register={register}
                           errors={errors}
-                          formQuestions={formQuestions} />
+                          formQuestions={formQuestions}
+                          deleteQuestion={deleteQuestion} />
 
             {
                 displayQuestionCreator &&
@@ -459,6 +478,7 @@ export default function FormCreator() {
                         }
                 }/>
             }
+
         </div>
 
     )

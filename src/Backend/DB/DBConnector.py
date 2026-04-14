@@ -1,4 +1,5 @@
 from bson import ObjectId
+from fastapi import HTTPException
 from pydantic import TypeAdapter
 
 from pymongo import MongoClient
@@ -13,21 +14,25 @@ from src.Backend.Domain.Credentials import Key
 
 from datetime import date, datetime
 
-class Database:
+mongo_client = MongoClient("mongodb://localhost:27017")
 
-    def __init__(self, url:str):
+class DBConnector:
+
+    def __init__(self):
         try:
-            db = MongoClient(url)["users"]
-            self.users_table = db["users"]
-            self.forms_table = db["forms"]
-            self.keys_table = db["keys"]
+            database = mongo_client.get_database("db-chestionare")
+
+            self.users_table = database["users"]
+            self.forms_table = database["forms"]
+            self.keys_table = database["keys"]
+
         except ServerSelectionTimeoutError as e:
             print("ERROR: Server Selection Timeout. Check server connection.")
             raise e
 
     def validate_credentials(self, username:str, password:str):
 
-        user = self.users_table.find_one({"username":username})
+        user = self.users_table.find_one({"username": username})
 
         if user:
 
@@ -73,10 +78,10 @@ class Database:
 
         return 200
 
-    def add_form(self, new_form:NewForm, owner:str)->int:
+    def add_form(self, new_form:NewForm, owner:str)->Tuple[int, str|None]:
 
         if self.forms_table.find_one({"name":new_form.name, "owner":owner}):
-            return 409
+            return 409, None
 
         current_date:date = datetime.now().date()
 
@@ -87,7 +92,9 @@ class Database:
 
         self.forms_table.insert_one(new_form_dict)
 
-        return 200
+        form_id:str = self.forms_table.find_one({"name":new_form.name, "owner":owner}, {"_id":1})['_id']
+
+        return 200, form_id
 
     # returneaza o lista de date minimale ale formularelor
     def get_forms(self, owner:str)->list[MinimalFormInfo]:
@@ -119,20 +126,20 @@ class Database:
 
         return 404
 
-    def get_form(self, form_id:str)->Tuple[Form|None, int]:
+    def get_form(self, form_id:str)->Tuple[int, Form|None]:
 
         form_from_db = self.forms_table.find_one(ObjectId(form_id))
 
         if form_from_db:
             form_from_db['id'] = str(form_from_db.pop('_id'))
-            form:Form = Form.model_validate(form_from_db) if form_from_db else None
+            form:Form = Form.model_validate(form_from_db)
 
             if form.dateClosed is not None and form.dateClosed < datetime.now():
-                return form, 423
+                return 423, form
 
-            return form, 200
+            return 200, form
 
-        return None, 404
+        return 404, None
 
     def check_key_usage(self, key:Key)->bool:
         found_key = self.keys_table.find_one({"keyId":key.keyId})
@@ -155,7 +162,13 @@ class Database:
             return 200
         return 404
 
-if __name__ == '__main__':
-    db = Database("mongodb://localhost:27017/")
+def get_db()->DBConnector:
+    try:
+        return DBConnector()
+    except:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
+
 
 

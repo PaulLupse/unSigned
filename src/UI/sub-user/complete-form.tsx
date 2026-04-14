@@ -20,7 +20,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import {use_key, submit_form, check_form_id, check_key} from "./back-end-connection";
 import type {FormInfo, GridQuestion, TextQuestion} from "../domain/types";
-import ErrorPopup from "../common/error-popup/error-popup";
+import FormInputErrorPopup from "../common/error-popups";
 
 interface KeyFormInput {
     key:string
@@ -33,7 +33,7 @@ type SubmissionType = z.infer<typeof submissionSchema>
 type FormInfoType = z.infer<typeof formInfoSchema>
 
 
-function TextQuestionDisplayComponent({index, question, register}:{index:number, question:TextQuestion, register:any}) {
+export function TextQuestionDisplayComponent({index, question, register}:{index:number, question:TextQuestion, register:any}) {
     return (
         <div style={{display:'flex', justifyContent:'stretch'}} key={index}>
             <input {...register(`${index}`, {required:{value:!question.isOptional, message:"Required!"}})} type='text' style={{flexGrow:'1'}}/>
@@ -41,7 +41,7 @@ function TextQuestionDisplayComponent({index, question, register}:{index:number,
     )
 }
 
-function GridQuestionDisplayComponent({index, question, register}:{index:number, question:GridQuestion, register:any}) {
+export function GridQuestionDisplayComponent({index, question, register}:{index:number, question:GridQuestion, register:any}) {
     return (
         <div className={'form-grid-question-choices-frame'} key={index}>
         {
@@ -65,11 +65,11 @@ function GridQuestionDisplayComponent({index, question, register}:{index:number,
 
 }
 
-function parseGridChoices (choices:string[]) {
+export function parseGridChoices (choices:string[]) {
     return choices.map(choice=>parseInt(choice))
 }
 
-function ShowFormComponent() {
+export function ShowFormComponent() {
 
     const context:any = useOutletContext();
     const key:string = context.key;
@@ -184,7 +184,7 @@ function ShowFormComponent() {
     );
 }
 
-function KeyInputComponent() {
+export function KeyInputComponent() {
 
     const {register, handleSubmit, formState:{errors, isValidating}} = useForm<KeyFormInput>();
     const navigate = useNavigate();
@@ -202,7 +202,10 @@ function KeyInputComponent() {
             setKey(key);
             navigate(`/complete-form/${formId}/complete`);
         }
-        else alert(checkKey)
+        else {
+            alert(checkKey)
+            navigate(`/complete-form`);
+        }
     }
 
     return(
@@ -214,7 +217,7 @@ function KeyInputComponent() {
                     <input className={'plain-button'} type={"submit"} value={'Open'}/>
 
                     {isValidating&&"Aveti putintica rabdare . . ."}
-                    <ErrorPopup name={'key'} errors={errors} place={'left'} />
+                    <FormInputErrorPopup name={'key'} errors={errors} place={'left'} />
 
                 </div>
             </form>
@@ -222,7 +225,7 @@ function KeyInputComponent() {
     )
 }
 
-function BaseFormComponent() {
+export function BaseFormComponent() {
 
     const [key, setKey] = React.useState('');
     const params = useParams();
@@ -233,7 +236,7 @@ function BaseFormComponent() {
     )
 }
 
-function FormIdInputComponent () {
+export function FormIdInputComponent () {
 
     const {register, handleSubmit, formState:{errors}} = useForm();
     const navigate = useNavigate();
@@ -258,7 +261,7 @@ function FormIdInputComponent () {
                     return "Could not find form."
                 }
                 })} />
-                <ErrorPopup name={'formId'} errors={errors} place={"left"} />
+                <FormInputErrorPopup name={'formId'} errors={errors} place={"left"} />
                 <input className={'plain-button'} style={{justifySelf:'stretch'}} type='submit' value={'Go to form'} />
             </div>
 
@@ -266,13 +269,13 @@ function FormIdInputComponent () {
     )
 }
 
-function Base() {
+export function SubUsersMain() {
 
     return (
         <>
             <header style={{position:'fixed', width:'100%'}}>
                 <div style={{display:'flex', justifyContent:'center'}}>
-                    <h1>inFORMatica</h1>
+                    <h1>Secondary Page</h1>
                 </div>
             </header>
             <div id={"Toata pagina"} style={{height:'100vh', display:"flex", justifyContent:'center', alignItems:'center'}}>
@@ -281,22 +284,4 @@ function Base() {
         </>
 
     );
-}
-
-window.onload = ()=>{
-    const rootDivElement:HTMLDivElement = document.getElementById('root')  as HTMLDivElement
-    const rootComponent = createRoot(rootDivElement);
-    rootComponent.render(
-        <BrowserRouter>
-            <Routes>
-                <Route path={'complete-form'} element={<Base />}>
-                    <Route index element={<FormIdInputComponent />}></Route>
-                    <Route path={":formId"} element={<BaseFormComponent />}>
-                        <Route index element={<KeyInputComponent />} ></Route>
-                        <Route path={"complete"} element={<ShowFormComponent />} ></Route>
-                    </Route>
-                </Route>
-            </Routes>
-        </BrowserRouter>
-    )
 }

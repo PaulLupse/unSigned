@@ -1,30 +1,55 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import {CredentialForm} from "../components/CredentialForm";
+import {CredentialForm} from "../components/CredentialForm/CredentialForm";
 
-import {login} from "./back-end-connection";
+import {login, register} from "./back-end-connection";
+import { Link } from "react-router-dom";
 
-function LoginPage() {
+export function LoginComponent() {
 
     return (
-        <div style={{height:'100vh', display:"flex", flexDirection:'column', alignItems:'stretch', justifyContent:'center'}}>
-            <div style={{justifyContent:'center', display:'flex'}}>
+        <div id='login div' style={{height:'100%', display:"flex", alignItems:'center', justifyContent:'center'}}>
+            <div style={{justifyContent:'center', alignItems:'stretch', display:'flex', flexDirection:'column', flexGrow:'0.2'}}>
                 <CredentialForm
                     type="Login"
                     callback={
                         login
                     }
                 />
+                <div style={{display:'flex', gap:'5px', alignItems:'center', justifyContent:'center'}}>
+                    <p>
+                        Don't have an account?
+                    </p>
+                    <Link to={'/register'} style={{color:'green'}}>
+                        Register
+                    </Link>
+                </div>
             </div>
         </div>
     );
 }
 
-window.onload = ()=>{
-    const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement;
-    const root = createRoot(rootDiv);
-    root.render(
-        <LoginPage />
+export function RegisterComponent() {
+
+    return (
+        <div id='register div' style={{height:'100%', display:"flex", alignItems:'center', justifyContent:'center'}}>
+            <div style={{justifyContent:'center', alignItems:'stretch', display:'flex', flexDirection:'column', flexGrow:'0.2'}}>
+                <CredentialForm
+                    type="Register"
+                    callback={
+                        register
+                    }
+                />
+                <div style={{display:'flex', gap:'5px', alignItems:'center', justifyContent:'center'}}>
+                    <p>
+                        Already have an account?
+                    </p>
+                    <Link to={'/login'} style={{color:'green'}}>
+                        Login
+                    </Link>
+                </div>
+            </div>
+        </div>
     );
 }
 

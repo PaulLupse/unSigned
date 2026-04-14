@@ -47,7 +47,10 @@ export function DisplayQuestion(props:DisplayQuestionProps) {
     return(
         <li key={props.questionIndex} className={'form-question'}>
             <div id={"Intrebarea #" + index} key={index} style={{display:'flex', flexDirection:'column'}}>
-                {question.text}
+                <p style={{margin:'0', paddingLeft:'5px'}}>
+                    {question.text}
+                </p>
+
                 {
                    question.type=='text'?
                        <TextQuestionComponent question={question} index={index}/>

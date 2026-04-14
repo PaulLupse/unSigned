@@ -32,7 +32,7 @@ export const gridQuestionSchema = formQuestionSchema.extend({
 });
 
 export const textQuestionSchema = formQuestionSchema.extend({
-    maxChars: z.number(),
+    maxChars: z.coerce.number(),
     type: z.literal("text")
 });
 
@@ -59,3 +59,12 @@ export const newFormSchema = z.object({
     name: z.string(),
     questions: z.array(z.union([textQuestionSchema, gridQuestionSchema]))
 });
+
+export const credentialsSchema = z.object({
+    username:z.string().min(1, "This field is required!"),
+    password:z.string().min(1, "This field is required!")
+});
+
+export const emailSchema = z.object({
+    email:z.string().min(1, "Field required!").regex(/\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/, "Invalid email!")
+})

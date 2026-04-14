@@ -1,6 +1,6 @@
 import React from "react";
-import {getValue, validateKey} from "./Utilities";
-import type {pair} from "./Utilities";
+import {getValue, validateKey} from "../Utilities";
+import type {pair} from "../Utilities";
 
 // model de data pentru a se folosi impreuna cu TableView
 export class TableModel {
@@ -91,8 +91,6 @@ interface TableProps<lineInterface extends Object> {
     rowOnClick: (arg1:lineInterface)=>void
     style?: any
 }
-
-
 
 export function Table<lineInterface extends Object>(props:TableProps<lineInterface>) {
 

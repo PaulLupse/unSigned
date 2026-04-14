@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Path
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse
 
@@ -41,39 +41,7 @@ async def http_exception_handler(request:Request, exception : HTTPException):
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return FileResponse("static/html/index.html")
-
-@app.get("/complete-form", response_class=HTMLResponse)
-async def ceva():
-    return FileResponse("static/html/complete-form.html")
-
-@app.get("/login", response_class=FileResponse)
-async def login_page():
-    return FileResponse("static/html/login.html")
-
-@app.get("/register")
-async def register_page():
-    return FileResponse("static/html/register.html")
-
-@app.get("/create-new-form")
-async def create_new_form():
+@app.get("/{catchall:path}", response_class=HTMLResponse)
+async def not_found():
     return FileResponse("static/html/index.html")
-
-@app.get("/view-form/{formName}")
-async def view_form():
-    return FileResponse("static/html/index.html")
-
-@app.get("/view-form/{formName}/submissions")
-async def view_form():
-    return FileResponse("static/html/index.html")
-
-@app.get("/complete-form", response_class=HTMLResponse)
-async def sub_users_root():
-    return FileResponse("static/html/complete-form.html")
-@app.get("/complete-form/{form_id}", response_class=HTMLResponse)
-async def access_form():
-    return FileResponse("static/html/complete-form.html")
-
-@app.get("/complete-form/{form_id}/complete", response_class=HTMLResponse)
-async def complete_form():
-    return FileResponse("static/html/complete-form.html")
 

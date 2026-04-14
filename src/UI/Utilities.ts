@@ -1,4 +1,4 @@
-import type {FormInfo} from "../domain/types";
+import type {FormInfo} from "./domain/types";
 
 export interface pair<type1, type2> {
     obj1:type1

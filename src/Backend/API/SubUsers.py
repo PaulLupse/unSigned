@@ -7,18 +7,10 @@ from pydantic import BaseModel
 
 from src.Backend.Domain.General import Submission, Form
 from src.Backend.Domain.Credentials import Key
-from src.Backend.DB.DBConnector import Database
+from src.Backend.DB.DBConnector import DBConnector, get_db
 from src.Backend.API.key_validator import decode_key
 
-def get_db(url:str)->Database:
-    try:
-        return Database(url)
-    except:
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
-MDB_URL = "mongodb://localhost:27017/"
-
-db_connector:Database = get_db(MDB_URL)
+db_connector:DBConnector = get_db()
 
 router:APIRouter = APIRouter(prefix="/sub-users", tags=["sub-users"])
 

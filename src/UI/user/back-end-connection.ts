@@ -5,8 +5,13 @@ import config from '../config.json'
 const url:string = config.baseURL;
 
 import {LoginInfo, type FormInfo, type NewForm, type MinimalFormInfo} from "../domain/types";
-import type {TextAnswer, GridAnswer, Submission} from "../domain/types";
 import {formInfoSchema, minimalFormInfoSchema} from "../domain/schemas";
+import {use} from "react";
+
+export interface CredentialResult {
+    ok:true|false
+    errorMsg?:{username?:string, password?:string}|string
+}
 
 export async function getAccessToken(loginInfo:LoginInfo) {
 
@@ -18,35 +23,33 @@ export async function getAccessToken(loginInfo:LoginInfo) {
 }
 
 // functie pt login in urma introducerii credentialelor
-export async function login(username:string, password:string){
+export async function login(username:string, password:string):Promise<CredentialResult>{
 
     // initial citim datele introduse in formular
     const loginInfo:LoginInfo = new LoginInfo(username, password);
-
-    if(loginInfo === null)
-        return undefined;
 
     try {
 
         const tokenResponse:Response = await getAccessToken(new LoginInfo(loginInfo.username, loginInfo.password));
 
         if(tokenResponse.ok) {
-
-            console.log(`Logged in as ${loginInfo.username}.`);
-            alert(`Logged in succesfuly as ${loginInfo.username}. Returning to main page.`);
-            document.location.replace(url);
+            return {ok:true};
         }
         else {
-            const errorMsg = "Server responded with status: " + tokenResponse.status + ".\nReturned message: " + (await tokenResponse.json()).message;
-            throw new Error(errorMsg);
+            if(tokenResponse.status == 404) {
+                return {ok:false, errorMsg:"User not found."}
+            } else if (tokenResponse.status == 400) {
+                return {ok:false, errorMsg:{password:"Wrong password."}}
+            }  throw new Error("Unexpected error");
         }
     }
-    catch(error) {
+    catch(error:any) {
         alert(error);
+        return {ok:false, errorMsg:error.toString()};
     }
 }
 
-export async function register(username:string, password:string) {
+export async function register(username:string, password:string):Promise<CredentialResult> {
 
     try {
 
@@ -67,20 +70,20 @@ export async function register(username:string, password:string) {
 
         const response = await fetch(request);
         if (response.ok) {
-            const data = await response.json();
-            alert(data.message);
+            return {ok:true};
         } else {
-            const data = await response.json();
-            throw new Error("Server has responded with status: " + response.status
-                + ".\nReturned message: " + data.message);
+            if(response.status == 409) {
+                return {ok:false, errorMsg:{username:"User already exists."}}
+            } else throw new Error("Unexpected error");
         }
     } catch (error: any) {
         alert(error.toString());
+        return {ok:false, errorMsg:error.toString()};
     }
 }
 
 // functie pt login automat, daca utilizatorul s-a logat anterior
-export async function auto_login():Promise<string|undefined>{
+export async function auto_login():Promise<string>{
 
     const loginRequest = new Request(
         url + "/users/me",
@@ -89,27 +92,23 @@ export async function auto_login():Promise<string|undefined>{
             credentials:'include'
         });
 
-    try {
-        const loginResponse = await fetch(loginRequest);
 
-        if(loginResponse.ok)
-        {
-            const data:any = await loginResponse.json();
-            if(Object.hasOwn(data, 'username'))
-                return data.username;
-            else
-                throw new Error("Autologin did not return a username.");
+    const loginResponse = await fetch(loginRequest);
 
-        }
-        else {
-            console.log("Could not login automatically.");
-            return undefined;
-        }
+    if(loginResponse.ok)
+    {
+        const data:any = await loginResponse.json();
+        if(Object.hasOwn(data, 'username'))
+            return data.username;
+        else
+            throw new Error("Autologin did not return a username.");
+
     }
-    catch(error) {
-        alert(error);
-        return undefined;
+    else {
+        console.log("Could not login automatically.");
+        throw new Error("Could not login automatically.")
     }
+
 }
 
 export async function logout():Promise<boolean> {
@@ -130,8 +129,8 @@ export async function logout():Promise<boolean> {
     }
 }
 
-export async function get_form(formId:string):Promise<FormInfo|undefined> {
-    try {
+export async function get_form(formId:string):Promise<FormInfo> {
+    // try {
         const getItemsRequest = new Request(
             url+`/users/me/form/${formId}`,
             {
@@ -147,21 +146,15 @@ export async function get_form(formId:string):Promise<FormInfo|undefined> {
             {
                 const dataParseResult = formInfoSchema.safeParse(data.form);
                 if(dataParseResult.success) {
-                    return dataParseResult.data;
-                } else {
-                    console.log("Wrong json coming from server:" + dataParseResult.error)
-                    return undefined;
-                }
-
+                    return dataParseResult.data
+                } else console.log("Wrong json coming from server:" + dataParseResult.error)
             }
-            else
-                throw new Error('Get items request did not return items.')
+
+        } else if (requestResponse.status == 404) {
+            throw new Error("Form not found.")
         }
-    }
-    catch (error) {
-        alert(error);
-        return undefined;
-    }
+    // }
+    throw new Error("Internal server error.")
 }
 
 export async function get_forms():Promise<Array<MinimalFormInfo>|undefined> {
@@ -198,7 +191,7 @@ export async function get_forms():Promise<Array<MinimalFormInfo>|undefined> {
     }
 }
 
-export async function add_form(form:NewForm):Promise<boolean> {
+export async function add_form(form:NewForm):Promise<string> {
     try {
 
         const requestHeader = new Headers({
@@ -216,14 +209,13 @@ export async function add_form(form:NewForm):Promise<boolean> {
         )
         const createItemResponse = await fetch(createItemRequest);
         if(createItemResponse.ok) {
-            return true;
+            return (await createItemResponse.json()).formId;
         }
         const errorMsg:string = (await createItemResponse.json()).message;
         throw new Error(`Failed to create item. Returned message: ${errorMsg}`)
     }
     catch(Error) {
-        alert(Error);
-        return false;
+        return "";
     }
 
 }
