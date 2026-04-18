@@ -1,15 +1,20 @@
-from fastapi import FastAPI, HTTPException, Request, Path
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from slowapi.middleware import SlowAPIMiddleware
 
 from starlette.responses import FileResponse
-from starlette.staticfiles import StaticFiles
+
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
 
 import logging
 
 from src.Backend.API.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
 from src.Backend.API.User import router as users_routes
 from src.Backend.API.SubUsers import router as sub_users_routes
+from src.Backend.API.Limiter import limiter
 
 
 logger = logging.getLogger('uvicorn.error')
@@ -18,13 +23,20 @@ logger.setLevel(logging.DEBUG)
 oauth2_scheme = OAuth2PasswordBearerWithCookies(tokenUrl="token")
 
 app = FastAPI()
-app.mount("/static/html", StaticFiles(directory="static/html"), name="html") # HTML
-app.mount("/static/css", StaticFiles(directory="static/css"), name="css") # CSS
-app.mount("/dist", StaticFiles(directory="dist"), name="dist") # TSX
-app.include_router(users_routes)
-app.include_router(sub_users_routes)
+app.include_router(users_routes, prefix="/api")
+app.include_router(sub_users_routes, prefix="/api")
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 from src.Backend.API.Handlers import validation_exception_handler as vse
 @app.exception_handler(RequestValidationError)

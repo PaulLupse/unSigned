@@ -1,5 +1,3 @@
-from os import access
-
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Request, HTTPException
 

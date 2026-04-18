@@ -54,6 +54,7 @@ export interface DialogButtonProps {
 export interface DialogProps {
     text:string
     open:boolean
+    setClose:()=>void
     buttons:DialogButtonProps[]
 }
 
@@ -67,11 +68,11 @@ export function Dialog(props:DialogProps) {
 
     function closeModal() {
         ref.current?.close()
+        props.setClose();
     }
 
     useEffect(()=>{
         if(props.open) showModal()
-        else closeModal()
     }, [props.open])
 
     return (

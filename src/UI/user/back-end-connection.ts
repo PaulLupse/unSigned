@@ -1,92 +1,70 @@
 // acest script contine parte din logica de comunicare cu serverul web, precum logare, inregistrare si operati CRUD
 
-import config from '../config.json'
+import {CredentialError, CustomError} from "../Utilities";
 
-const url:string = config.baseURL;
+const url:string = '';
 
-import {LoginInfo, type FormInfo, type NewForm, type MinimalFormInfo} from "../domain/types";
+import {LoginInfo, type FormInfo, type NewForm, type MinimalFormInfo, type Email} from "../domain/types";
 import {formInfoSchema, minimalFormInfoSchema} from "../domain/schemas";
 import {use} from "react";
 
-export interface CredentialResult {
-    ok:true|false
-    errorMsg?:{username?:string, password?:string}|string
-}
-
-export async function getAccessToken(loginInfo:LoginInfo) {
+async function getAccessToken(loginInfo:LoginInfo) {
 
     const loginForm = new FormData();
     loginForm.append("username", loginInfo.username)
     loginForm.append("password", loginInfo.password)
 
-    return await fetch(url+"/users/token", {method:"POST", body:loginForm});
+    return await fetch(url+"/api/users/token", {method:"POST", body:loginForm});
 }
 
 // functie pt login in urma introducerii credentialelor
-export async function login(username:string, password:string):Promise<CredentialResult>{
+export async function login({username, password}:{username:string, password:string}):Promise<void>{
 
     // initial citim datele introduse in formular
     const loginInfo:LoginInfo = new LoginInfo(username, password);
 
-    try {
+    const tokenResponse: Response = await getAccessToken(new LoginInfo(loginInfo.username, loginInfo.password));
 
-        const tokenResponse:Response = await getAccessToken(new LoginInfo(loginInfo.username, loginInfo.password));
-
-        if(tokenResponse.ok) {
-            return {ok:true};
+    if (!tokenResponse.ok) {
+        if (tokenResponse.status == 404) {
+            throw new CredentialError("User not found.", {password:'', username:'User not found.'}, 404)
+        } else if (tokenResponse.status == 400) {
+            throw new CredentialError("Wrong password.", {username:'', password:'Wrong password.'}, 400)
         }
-        else {
-            if(tokenResponse.status == 404) {
-                return {ok:false, errorMsg:"User not found."}
-            } else if (tokenResponse.status == 400) {
-                return {ok:false, errorMsg:{password:"Wrong password."}}
-            }  throw new Error("Unexpected error");
-        }
-    }
-    catch(error:any) {
-        alert(error);
-        return {ok:false, errorMsg:error.toString()};
     }
 }
 
-export async function register(username:string, password:string):Promise<CredentialResult> {
+export async function register({username, password}:{username: string, password: string}):Promise<void> {
 
-    try {
+    const requestHeader = new Headers({
+        'Accept': "application/json",
+        'Content-Type': "application/json"
+    });
 
-        const requestHeader = new Headers({
-            'Accept': "application/json",
-            'Content-Type': "application/json"
-        });
+    const request = new Request(url + "/api/users/register", {
+        method: "PUT",
+        headers: requestHeader,
+        body: JSON.stringify({
+            username: username,
+            password: password,
+            email: (username != undefined) ? password : undefined
+        })
+    });
 
-        const request = new Request(url + "/users/register", {
-            method: "PUT",
-            headers: requestHeader,
-            body: JSON.stringify({
-                username: username,
-                password: password,
-                email: (username != undefined) ? password : undefined
-            })
-        });
-
-        const response = await fetch(request);
-        if (response.ok) {
-            return {ok:true};
-        } else {
-            if(response.status == 409) {
-                return {ok:false, errorMsg:{username:"User already exists."}}
-            } else throw new Error("Unexpected error");
+    const response = await fetch(request);
+    if (!response.ok)  {
+        if(response.status == 409) {
+            throw new CredentialError("User already exists.", {username:'User already exists.', password:''}, 409)
         }
-    } catch (error: any) {
-        alert(error.toString());
-        return {ok:false, errorMsg:error.toString()};
     }
+
 }
 
 // functie pt login automat, daca utilizatorul s-a logat anterior
 export async function auto_login():Promise<string>{
 
     const loginRequest = new Request(
-        url + "/users/me",
+        url + "/api/users/me",
         {
             method:"POST",
             credentials:'include'
@@ -101,67 +79,63 @@ export async function auto_login():Promise<string>{
         if(Object.hasOwn(data, 'username'))
             return data.username;
         else
-            throw new Error("Autologin did not return a username.");
+            throw new CustomError("Autologin did not return a username.", 500);
 
     }
     else {
         console.log("Could not login automatically.");
-        throw new Error("Could not login automatically.")
+        throw new CustomError("Could not login automatically.", 401)
     }
 
 }
 
 export async function logout():Promise<boolean> {
-    try {
-        const logoutRequest = new Request(url+"/users/me/logout",
-            {
-                method:"POST",
-                credentials:"include"
-            });
 
-        const logoutResponse = await fetch(logoutRequest);
-        return logoutResponse.ok;
+    const logoutRequest = new Request(url+"/api/users/me/logout",
+        {
+            method:"POST",
+            credentials:"include"
+        });
 
-    }
-    catch(error) {
-        alert(error);
-        return false;
-    }
+    const logoutResponse = await fetch(logoutRequest);
+    if(logoutResponse.ok)
+        return true
+    else throw new CustomError("Could not log out.", 500)
+
 }
 
-export async function get_form(formId:string):Promise<FormInfo> {
-    // try {
-        const getItemsRequest = new Request(
-            url+`/users/me/form/${formId}`,
-            {
-                method:'GET',
-                credentials:'include'
-            });
+export async function get_form(formId:string):Promise<FormInfo|undefined> {
 
-        const requestResponse = await fetch(getItemsRequest);
-        if (requestResponse.ok) {
+    const getItemsRequest = new Request(
+        url+`/api/users/me/form/${formId}`,
+        {
+            method:'GET',
+            credentials:'include'
+        });
 
-            const data = await requestResponse.json();
-            if(Object.hasOwn(data, 'form'))
-            {
-                const dataParseResult = formInfoSchema.safeParse(data.form);
-                if(dataParseResult.success) {
-                    return dataParseResult.data
-                } else console.log("Wrong json coming from server:" + dataParseResult.error)
-            }
+    const requestResponse = await fetch(getItemsRequest);
+    if (requestResponse.ok) {
 
-        } else if (requestResponse.status == 404) {
-            throw new Error("Form not found.")
+        const data = await requestResponse.json();
+        if(Object.hasOwn(data, 'form'))
+        {
+            const dataParseResult = formInfoSchema.safeParse(data.form);
+            if(dataParseResult.success) {
+                return dataParseResult.data
+            } else console.log("Wrong json coming from server:" + dataParseResult.error)
         }
-    // }
-    throw new Error("Internal server error.")
+
+    } else if (requestResponse.status == 404) {
+        throw new CustomError("Form not found.", 404)
+    }
+
 }
 
 export async function get_forms():Promise<Array<MinimalFormInfo>|undefined> {
     try {
 
         const getItemsRequest = new Request(
-            url+'/users/me/forms',
+            url+'/api/users/me/forms',
             {
                 method:'GET',
                 credentials:'include'
@@ -186,60 +160,77 @@ export async function get_forms():Promise<Array<MinimalFormInfo>|undefined> {
         }
     }
     catch (error) {
-        alert(error);
         return undefined;
     }
 }
 
-export async function add_form(form:NewForm):Promise<string> {
-    try {
+export async function add_form(form:NewForm):Promise<string|undefined> {
 
-        const requestHeader = new Headers({
-            'Accept': "application/json",
-            'Content-Type': "application/json"
-        });
+    const requestHeader = new Headers({
+        'Accept': "application/json",
+        'Content-Type': "application/json"
+    });
 
 
-        const createItemRequest = new Request(url+"/users/me/form/add",
-            {
-                method:"POST",
-                headers:requestHeader,
-                body:JSON.stringify(form)
-            }
-        )
-        const createItemResponse = await fetch(createItemRequest);
-        if(createItemResponse.ok) {
-            return (await createItemResponse.json()).formId;
+    const createItemRequest = new Request(url+"/api/users/me/form/add",
+        {
+            method:"POST",
+            headers:requestHeader,
+            body:JSON.stringify(form)
         }
-        const errorMsg:string = (await createItemResponse.json()).message;
-        throw new Error(`Failed to create item. Returned message: ${errorMsg}`)
+    )
+    const createItemResponse = await fetch(createItemRequest);
+    if(createItemResponse.ok) {
+        return (await createItemResponse.json()).formId;
     }
-    catch(Error) {
-        return "";
+    const errorMsg:string = (await createItemResponse.json()).message;
+
+    if(createItemResponse.status == 409)
+        throw new CustomError("Form with this name already exists.", 409)
+    if(createItemResponse.status == 400)
+        throw new CustomError("Invalid form structure.", 400)
+}
+
+export async function delete_form(formId:string):Promise<boolean|undefined> {
+
+    const deleteRequest:Request = new Request(url+`/api/users/me/form/${formId}/delete`,
+        {
+            method:'DELETE'
+        }
+    );
+
+    const deleteResponse = await fetch(deleteRequest);
+
+    if(deleteResponse.ok) {
+        return true;
+    }
+    else {
+        const deleteResponseData = await deleteResponse.json();
+        if(deleteResponse.status == 404)
+            throw new CustomError("Form does not exist.", 404)
     }
 
 }
 
-export async function delete_form(formId:string):Promise<boolean> {
-    try {
-        const deleteRequest:Request = new Request(url+`/users/me/form/${formId}/delete`,
-            {
-                method:'DELETE'
-            }
-        );
+export async function distribute_keys({emails, formId}:{emails: Email[], formId: string}):Promise<boolean> {
 
-        const deleteResponse = await fetch(deleteRequest);
+    const requestHeader = new Headers({
+            'Accept': "application/json",
+            'Content-Type': "application/json"
+        });
 
-        if(deleteResponse.ok) {
-            return true;
-        }
-        else {
-            const deleteResponseData = await deleteResponse.json();
-            throw new Error("Could not delete form. Returned message: " + deleteResponseData.message)
-        }
-    }
-    catch(error) {
-        alert(error);
-        return false;
+    const dist_keys_request = new Request(url+`/api/users/me/form/${formId}/distribute_keys`,
+        {
+            method:'POST',
+            headers: requestHeader,
+            body:JSON.stringify({emails:emails})
+        })
+
+    const dist_keys_response = await fetch(dist_keys_request);
+
+    if(dist_keys_response.ok)
+        return true
+    else {
+        throw new Error("Unexpected error while distributing keys.")
     }
 }

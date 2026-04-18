@@ -1,0 +1,35 @@
+.sidebar {
+    position:fixed;
+    height:100%;
+    display:none;
+    flex-direction: column;
+    padding: 100px 20px 20px 20px;
+    border:1px solid;
+    right:0;
+    background-color: var(--button-hover);
+    width:15rem;
+}
+
+.sidebar:active {
+
+}
+
+.sidebar .element {
+    margin:0;
+    padding:10px;
+}
+
+.sidebar hr {
+    border:1px solid black;
+    width:100%;
+    margin:0;
+}
+
+.sidebar h1, .sidebar h2, .sidebar h3, .sidebar h4, .sidebar h5 {
+    margin: 0;
+    text-align: center;
+}
+
+.sidebar p {
+    margin: 0;
+}

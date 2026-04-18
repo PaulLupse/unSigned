@@ -7,7 +7,10 @@ import type {MouseEvent} from "react";
 import {DisplayQuestion} from "../common/DisplayQuestion";
 import {Outlet, useNavigate, useOutletContext, useParams} from "react-router-dom";
 import {formInfoSchema, gridAnswerSchema, textAnswerSchema} from "../domain/schemas";
-import {useQuery, useQueryClient} from "@tanstack/react-query";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {BackButton, NavButton} from "../components/Buttons/Buttons";
+import {useAlert} from "../components/AlertProvider";
+import toast from "react-hot-toast";
 
 
 export function DisplayFrom() {
@@ -15,13 +18,22 @@ export function DisplayFrom() {
     const form: FormInfo = formInfoSchema.parse(useOutletContext());
     const navigate = useNavigate();
 
+    const {mutate} = useMutation({
+        mutationFn:delete_form,
+        onSuccess:()=>{
+            toast.success("Form deleted successfully!")
+            navigate('/')
+        },
+        onError:(error)=>{
+            toast.error("Could not delete form . . .")
+        }
+    })
+
     async function deleteForm() {
-        const deleteFormResponse: boolean = await delete_form(form.id);
-        if (deleteFormResponse) {
-            alert("Form deleted succesfully")
-            navigate('/', {replace: true});
-        } else alert("Could not delete form :(")
+        mutate(form.id)
     }
+
+    const status = form.datePublished?form.dateClosed?"Closed":"Published":"Not published"
 
     return (
 
@@ -33,30 +45,38 @@ export function DisplayFrom() {
             height: '100%',
             overflowY:"scroll"
         }}>
+
             <div className={'form-frame'}>
+
+                <div style={{display:"flex", justifyContent:'space-between', alignItems:'center'}}>
+
+                    <h3 style={{margin:0}}>
+                        {status}
+                    </h3>
+                    {
+                        status !== "Closed" &&
+                        <button>
+                            {status=="Published"?"Close":"Publish"}
+                        </button>
+                    }
+                </div>
 
                 <div style={{
                     display: 'grid',
                     gap: '10px',
                     gridTemplateColumns: 'repeat(4, 1fr)'
                 }}>
-                    <button onClick={() => {
-                        navigate(-1);
-                    }} style={{}}>
+                    <BackButton>
                         Back
-                    </button>
+                    </BackButton>
 
-                    <button onClick={()=>{
-                        navigate('keys')
-                    }}>
-                        Distribute access
-                    </button>
+                    <NavButton to={'keys'}>
+                        Distribute keys
+                    </NavButton>
 
-                    <button onClick={() => {
-                        navigate('submissions')
-                    }}>
+                    <NavButton to={'submissions'}>
                         See results
-                    </button>
+                    </NavButton>
 
                     <button onClick={deleteForm}>
                         Delete
@@ -98,7 +118,12 @@ export function ViewForm() {
     const formId = useParams().formId as string;
     const navigate = useNavigate();
 
-    let {data, isLoading, isError, error} = useQuery({queryKey:["form"], queryFn:async():Promise<FormInfo>=>get_form(formId), retry:1})
+    let {data, isLoading, isError, error} = useQuery({
+        queryKey:["form"],
+        queryFn:async():Promise<FormInfo|undefined>=>get_form(formId),
+        retry:1,
+        refetchOnWindowFocus:false
+    })
 
     console.log("Here!")
 

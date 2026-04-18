@@ -1,3 +1,5 @@
+from tkinter import BooleanVar
+
 from bson import ObjectId
 from fastapi import HTTPException
 from pydantic import TypeAdapter
@@ -8,13 +10,17 @@ from pymongo.results import DeleteResult
 
 from typing import Tuple
 
-from src.Backend.Utilities import hash_password, verify_password
+from src.Backend.API.Auth import hash_password, verify_password
 from src.Backend.Domain.General import Form, Submission, MinimalFormInfo, NewForm
 from src.Backend.Domain.Credentials import Key
 
 from datetime import date, datetime
 
-mongo_client = MongoClient("mongodb://localhost:27017")
+import dotenv, os
+
+dotenv.load_dotenv()
+
+mongo_client = MongoClient(os.getenv("DATABASE_URL"))
 
 class DBConnector:
 
@@ -46,6 +52,7 @@ class DBConnector:
         return 404
 
     def find_user(self, username:str):
+
 
         user = self.users_table.find_one({"username":username}, {"username":1})
 
@@ -96,6 +103,34 @@ class DBConnector:
 
         return 200, form_id
 
+    def publish_form(self, form_id:str)->int:
+
+        form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id)})
+        if not form_from_db:
+            return 404
+
+        form_from_db['id'] = str(form_from_db.pop('_id'))
+        form = Form.model_validate(form_from_db)
+        if form.dateClosed:
+            return 409
+
+        self.forms_table.update_one({"_id":ObjectId(form_id)}, update={"$set":{"datePublished":datetime.now().isoformat()}})
+        return 200
+
+    def close_form(self, form_id:str)->int:
+
+        form_from_db = self.forms_table.find_one({"_id": ObjectId(form_id)})
+        if not form_from_db:
+            return 404
+
+        form_from_db['id'] = str(form_from_db.pop('_id'))
+        form = Form.model_validate(form_from_db)
+        if form.datePublished is None:
+            return 409
+
+        self.forms_table.update_one({"_id": ObjectId(form_id)}, update={"$set": {"dateClosed": datetime.now().isoformat()}})
+        return 200
+
     # returneaza o lista de date minimale ale formularelor
     def get_forms(self, owner:str)->list[MinimalFormInfo]:
 
@@ -134,7 +169,7 @@ class DBConnector:
             form_from_db['id'] = str(form_from_db.pop('_id'))
             form:Form = Form.model_validate(form_from_db)
 
-            if form.dateClosed is not None and form.dateClosed < datetime.now():
+            if form.dateClosed is not None or form.datePublished is None:
                 return 423, form
 
             return 200, form
@@ -142,7 +177,7 @@ class DBConnector:
         return 404, None
 
     def check_key_usage(self, key:Key)->bool:
-        found_key = self.keys_table.find_one({"keyId":key.keyId})
+        found_key = self.keys_table.find_one({"keyId":key.footer.keyId})
 
         if found_key:
             return True
@@ -167,8 +202,6 @@ def get_db()->DBConnector:
         return DBConnector()
     except:
         raise HTTPException(status_code=500, detail="Internal Server Error")
-
-
 
 
 

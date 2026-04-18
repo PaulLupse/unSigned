@@ -3,34 +3,39 @@ import {logout} from "../../user/back-end-connection";
 import type {QueryClient} from "@tanstack/react-query";
 import {useNavigate} from "react-router-dom";
 
+import CollapsingDiv from "../CollapsingDiv/CollapsingDiv";
+
 import "./nav-bar.css"
+
 
 interface NavBarProps {
     isLoading:boolean,
     isSuccess:boolean,
     username:string|null,
     queryClient:QueryClient
+    sidebarIsOpen:boolean,
+    setSidebarIsOpen:(sidebarIsOpen:boolean)=>void
 }
 
-export default function NavBar ({isLoading, isSuccess, username, queryClient}:NavBarProps) {
+export default function NavBar ({isLoading, isSuccess, username, queryClient, sidebarIsOpen, setSidebarIsOpen}:NavBarProps) {
 
     const nav = useNavigate()
 
     return (
-        <div id="Bara de sus" className={'nav-bar'}>
+        <CollapsingDiv id="Bara de sus" className={'nav-bar'}>
             {
-                isLoading?
-                <div className={'loading'}>
-                    <h2>
-                        Loading...
-                    </h2>
-                </div>:
 
                 <div className={'left'}>
 
-                    <p>
-                        Current user: {isSuccess?username:'none'}
-                    </p>
+                    <div className={'userGroup'}>
+                        <button />
+                        <h2 style={{paddingLeft:'10px'}}>
+                            :
+                        </h2>
+                        <h3>
+                            {isSuccess?username:'Not logged in'}
+                        </h3>
+                    </div>
                     {
                         isSuccess &&
                         <button
@@ -50,10 +55,14 @@ export default function NavBar ({isLoading, isSuccess, username, queryClient}:Na
             }
             <div>
                 <h1>
-                    Main Page
+                    Signless
                 </h1>
             </div>
 
-        </div>
+            <div className={'right'}>
+                <button onClick={()=>{setSidebarIsOpen(!sidebarIsOpen)}} />
+            </div>
+
+        </CollapsingDiv>
     )
 }

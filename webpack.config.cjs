@@ -1,6 +1,7 @@
 var path = require('path');
-var glob = require('glob')
 const reactMatch = /\.(ts|js)x?$/
+require('dotenv').config();
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
     context: __dirname,
@@ -9,7 +10,8 @@ module.exports = {
     },
     output: {
         path: path.join(__dirname, "/dist"),
-        filename: '[name].js'
+        filename: '[name].js',
+        publicPath: '/'
     },
     resolve: {
         extensions: [".tsx", ".ts", ".js"],
@@ -42,5 +44,22 @@ module.exports = {
                 type: "asset/resource",
             },
         ]
+    },
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: "./static/html/index.html",
+            filename:'index.html'
+        })
+    ],
+    devServer: {
+        port: process.env.FRONTEND_PORT,
+        hot: true,
+        historyApiFallback: true,
+        proxy: [{
+            context: ['/api'],
+            target: process.env.FASTAPI_SERVER_ADDRESS,
+            changeOrigin: true,
+            secure: false
+        }]
     }
 }

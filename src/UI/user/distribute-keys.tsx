@@ -1,11 +1,15 @@
 import React from "react";
 import {type SubmitHandler, useFieldArray, useForm} from "react-hook-form";
-import type {Email} from "../domain/types";
+import type {Email, FormInfo} from "../domain/types";
 import {z} from "zod";
-import {emailSchema} from "../domain/schemas";
+import {emailSchema, formInfoSchema} from "../domain/schemas";
 import {zodResolver} from "@hookform/resolvers/zod";
 import FormInputErrorPopup from "../common/error-popups";
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useOutletContext} from "react-router-dom";
+import {distribute_keys} from "./back-end-connection";
+import {useAlert} from "../components/AlertProvider";
+import {useMutation} from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 
 interface EmailsList {
@@ -18,12 +22,25 @@ const emailsListSchema = z.object({
 
 export function DistributeKeys() {
 
+    const form: FormInfo = formInfoSchema.parse(useOutletContext());
+
     const {register, handleSubmit, formState:{errors}, control, watch} = useForm<EmailsList>({resolver:zodResolver(emailsListSchema)});
     const {append, remove, fields} = useFieldArray({control, name: "emails"})
     const navigate = useNavigate();
+    const {showAlert} = useAlert()
 
-    const onSubmit:SubmitHandler<EmailsList> = (data:EmailsList)=>{
-        console.log(data);
+    const {mutate} = useMutation({
+        mutationFn:distribute_keys,
+        onSuccess:()=>{
+            toast.success("Keys distributed successfully!")
+        },
+        onError:(error)=>{
+            toast.error("Could not distribute keys :(");
+        }
+    })
+
+    const onSubmit:SubmitHandler<EmailsList> = async (data:EmailsList)=>{
+        const result = await distribute_keys({emails:data.emails, formId:form.id});
     }
 
     const addEmailEntry = () => {

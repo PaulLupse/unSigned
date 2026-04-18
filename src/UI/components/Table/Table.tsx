@@ -1,6 +1,7 @@
 import React from "react";
-import {getValue, validateKey} from "../Utilities";
-import type {pair} from "../Utilities";
+import {getValue, validateKey} from "../../Utilities";
+import type {pair} from "../../Utilities";
+import './table.css'
 
 // model de data pentru a se folosi impreuna cu TableView
 export class TableModel {
@@ -78,6 +79,40 @@ export class TableModel {
 
 }
 
+interface TableRowProps<lineInterface extends Object> {
+    index:number
+    onClick:(arg:lineInterface)=>void
+    line:lineInterface
+    dataFields: Array<string| pair<string, (arg:any)=>any>>
+}
+
+function TableRow<lineInterface extends Object>({index, onClick, line, dataFields}:TableRowProps<lineInterface>) {
+    return (
+        <tr key={index} onClick={()=>{onClick(line);}}>
+            {
+                dataFields.map(
+                    (entry:string|pair<string, (arg:any)=>any>, index:number)=> {
+                        return (
+                            <td key={index}>
+                                {
+                                    // daca entry-ul e doar un stringm se verifica daca este valid
+                                    typeof entry === 'string'?
+                                        validateKey(entry, line)?
+                                            line[entry as keyof lineInterface]
+                                            :''
+                                    :
+                                        validateKey(entry.obj1, line)?
+                                            entry.obj2(line[entry.obj1 as keyof lineInterface])
+                                            :''
+                                }
+                            </td>
+                        )
+                    }
+                )
+            }
+        </tr>
+    )
+}
 
 // Interfata generica pentru componenta Table. Tipul 'lineInterface' reprezinta tipul elementelor vectorului de date.
 // Ia ca parametru numele coloanelor, datele ce trebuie sa populeze tabela si un
@@ -87,7 +122,7 @@ interface TableProps<lineInterface extends Object> {
     columns: Array<string>
     data: Array<lineInterface>
     setData: any
-    dataFields: Array<string| pair<string, (arg:any)=>any>>
+    columnNames: Array<string| pair<string, (arg:any)=>any>>
     rowOnClick: (arg1:lineInterface)=>void
     style?: any
 }
@@ -117,30 +152,7 @@ export function Table<lineInterface extends Object>(props:TableProps<lineInterfa
                 props.data.map(
                     (line:lineInterface, index:number)=>{
                         return (
-                            <tr key={index} onClick={()=>{props.rowOnClick(line);}}>
-                                {
-                                    props.dataFields.map(
-                                        (entry:string|pair<string, (arg:any)=>any>, index:number)=> {
-
-                                            return (
-                                                <td key={index}>
-                                                    {
-                                                        // daca entry-ul e doar un stringm se verifica daca este valid
-                                                        typeof entry === 'string'?
-                                                            validateKey(entry, line)?
-                                                                line[entry as keyof lineInterface]
-                                                                :''
-                                                        :
-                                                            validateKey(entry.obj1, line)?
-                                                                entry.obj2(line[entry.obj1 as keyof lineInterface])
-                                                                :''
-                                                    }
-                                                </td>
-                                            )
-                                        }
-                                    )
-                                }
-                            </tr>
+                            <TableRow index={index} onClick={props.rowOnClick} line={line} dataFields={props.columnNames} />
                         )
                     }
                 )

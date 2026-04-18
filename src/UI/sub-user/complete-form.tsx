@@ -19,8 +19,10 @@ import {formInfoSchema, gridAnswerSchema, submissionSchema, textAnswerSchema} fr
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import {use_key, submit_form, check_form_id, check_key} from "./back-end-connection";
-import type {FormInfo, GridQuestion, TextQuestion} from "../domain/types";
+import type {FormInfo, GridQuestion, Submission, TextQuestion} from "../domain/types";
 import FormInputErrorPopup from "../common/error-popups";
+import {useMutation, useQuery} from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 interface KeyFormInput {
     key:string
@@ -69,6 +71,22 @@ export function parseGridChoices (choices:string[]) {
     return choices.map(choice=>parseInt(choice))
 }
 
+function parseData(data:any, form:FormInfo):Submission {
+    const answers:any[] = Object.values(data)
+    const submission:SubmissionType = {answers:[]}
+
+    for(const [key, value] of answers.entries()) {
+
+        submission.answers.push(
+            form.questions[key]?.type == 'text' ?
+                textAnswerSchema.parse({text: value, type:'text'})
+                :
+                gridAnswerSchema.parse({choices: value?parseGridChoices([...value]):[], type:'grid'})
+        );
+    }
+    return submission
+}
+
 export function ShowFormComponent() {
 
     const context:any = useOutletContext();
@@ -79,14 +97,29 @@ export function ShowFormComponent() {
 
     const [form, setForm] = React.useState<FormInfo>()
 
+
+    const {mutate, data, error} = useMutation({
+        mutationFn:use_key,
+        onError:()=>{
+            if(error)
+                toast.error(error.message);
+            navigate(`/complete-form/${formId}`)
+        }
+    })
+
+    const submit = useMutation({
+        mutationFn:submit_form,
+        onSuccess:()=>{
+            toast.success("Form submitted successfully!");
+        },
+        onError:(error)=>{
+            toast.error("Could not submit error: " + error);
+        }
+    })
+
     useEffect(()=> {
         const getForm = async () => {
-            if(key) {
-                const form:FormInfo|undefined = await use_key(key, formId);
-                if(form) {
-                    setForm(form);
-                }
-            } else navigate(`/complete-form/${formId}`);
+            mutate({formId:formId, k:key})
         }
         getForm();
     }, [])
@@ -94,31 +127,12 @@ export function ShowFormComponent() {
 
     const {register, formState:{errors}, handleSubmit, reset} = useForm();
 
-    const onSubmit:SubmitHandler<any> = async (data)=>{
+    const onSubmit:SubmitHandler<any> = async (data:any)=>{
         if(!form)
             return;
-        try {
-            const answers:any[] = Object.values(data)
-            const submision:SubmissionType = {answers:[]}
 
-            for(const [key, value] of answers.entries()) {
-
-                submision.answers.push(
-                    form.questions[key]?.type == 'text' ?
-                        textAnswerSchema.parse({text: value, type:'text'})
-                        :
-                        gridAnswerSchema.parse({choices: value?parseGridChoices([...value]):[], type:'grid'})
-                );
-            }
-
-            const submitResponse = await submit_form(key, formId, submision);
-            if(submitResponse)
-                alert("Form submitted succesfully.")
-            else alert("Could not submit form.")
-        }
-        catch(error) {
-            alert(error)
-        }
+        const submission = parseData(data, form)
+        submit.mutate({key:key, formId:formId, submission:submission})
     }
 
     return (
@@ -193,19 +207,21 @@ export function KeyInputComponent() {
     const setKey = context.setKey;
     const formId = context.formId;
 
+    const {mutate, error} = useMutation({
+        mutationFn:check_key,
+        onSuccess:()=>{
+            navigate('complete')
+        },
+        onError:()=>{
+            if(error)
+                toast.error(error.message);
+        }
+    })
+
     // functia ia ca parametru o cheie si realizaeaza un apel la server
     // in caz fericit, returneaza datele unui chestionar
     const onSubmit:SubmitHandler<KeyFormInput> = async ({key}:KeyFormInput):Promise<void>=>{
-
-        const checkKey = await check_key(key, formId)
-        if(typeof checkKey === 'boolean') {
-            setKey(key);
-            navigate(`/complete-form/${formId}/complete`);
-        }
-        else {
-            alert(checkKey)
-            navigate(`/complete-form`);
-        }
+        mutate({key, formId})
     }
 
     return(
@@ -213,10 +229,9 @@ export function KeyInputComponent() {
             <form onSubmit={handleSubmit(onSubmit)}>
                 <div style={{display:"flex", flexDirection:'column', gap:'5px', padding:'10px', border:'1px solid'}}>
                     <label style={{textAlign:'center'}}>Input access key here:</label>
-                    <input data-tooltip-id={'key'} {...register("key", {required:"Field required", maxLength:30})} placeholder={"Enter access key"}/>
+                    <input data-tooltip-id={'key'} {...register("key", {required:"Field required"})} placeholder={"Enter access key"}/>
                     <input className={'plain-button'} type={"submit"} value={'Open'}/>
 
-                    {isValidating&&"Aveti putintica rabdare . . ."}
                     <FormInputErrorPopup name={'key'} errors={errors} place={'left'} />
 
                 </div>
@@ -225,7 +240,7 @@ export function KeyInputComponent() {
     )
 }
 
-export function BaseFormComponent() {
+export function BaseComponent() {
 
     const [key, setKey] = React.useState('');
     const params = useParams();

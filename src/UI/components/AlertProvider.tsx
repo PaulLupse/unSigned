@@ -26,7 +26,7 @@ export const AlertProvider = ({children}:AlertProviderProps) => {
     return (
         <AlertContext value={{showAlert}}>
             {children}
-            <Dialog text={text} open={isOpen} buttons={buttons} />
+            <Dialog text={text} open={isOpen} buttons={buttons} setClose={closeAlert} />
         </AlertContext>
     );
 };

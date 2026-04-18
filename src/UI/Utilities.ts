@@ -1,4 +1,4 @@
-import type {FormInfo} from "./domain/types";
+import type {Credentials, FormInfo} from "./domain/types";
 
 export interface pair<type1, type2> {
     obj1:type1
@@ -36,4 +36,23 @@ export function getValue<type>(obj:type, keyInObj:string):any {
         if(key===keyInObj)
             return obj[key]
     return null;
+}
+
+export class CustomError extends Error {
+    public status:number;
+    constructor(message:string, status:number) {
+        super(message);
+        this.status = status;
+    }
+}
+
+export class CredentialError extends Error {
+
+    public detail:Credentials;
+    public status:number;
+    constructor(message:string, detail:Credentials, status:number) {
+        super(message);
+        this.detail = detail;
+        this.status = status
+    }
 }

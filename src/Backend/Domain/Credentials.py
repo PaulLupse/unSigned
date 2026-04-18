@@ -2,7 +2,13 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
-class Key(BaseModel):
-    keyId: str
+class KeyPayload(BaseModel):
     formId: str
-    expires: datetime|None
+
+class KeyFooter(BaseModel):
+    keyId: Optional[str] = None
+
+class Key(BaseModel):
+    payload: KeyPayload
+    footer: Optional[KeyFooter] = KeyFooter()
+

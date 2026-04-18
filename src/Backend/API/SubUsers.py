@@ -1,39 +1,36 @@
-from datetime import datetime
-
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, Request
 from fastapi.encoders import jsonable_encoder
 from starlette.responses import HTMLResponse, FileResponse, JSONResponse
 from pydantic import BaseModel
 
+from src.Backend.API.Limiter import limiter
+from src.Backend.API.Auth import decode_key
 from src.Backend.Domain.General import Submission, Form
 from src.Backend.Domain.Credentials import Key
 from src.Backend.DB.DBConnector import DBConnector, get_db
-from src.Backend.API.key_validator import decode_key
 
 db_connector:DBConnector = get_db()
 
 router:APIRouter = APIRouter(prefix="/sub-users", tags=["sub-users"])
 
+
+def validate_key(key:str, form_id:str)->Key|None:
+    key:Key|None = decode_key(key)
+    if not key:
+        return None
+    if key.payload.formId != form_id:
+        return None
+    if db_connector.check_key_usage(key):
+        return None
+    return key
+
 class CheckKeyRequest(BaseModel):
     key:str
     formId:str
 
-def validate_key(key:str, form_id:str)->Key|None:
-
-    decoded_key:Key = decode_key(key)
-    if not decoded_key:
-        return None
-    if decoded_key.formId != form_id:
-        return None
-    if (decoded_key.expires is not None) and (decoded_key.expires < datetime.now()):
-        return None
-    if db_connector.check_key_usage(decoded_key):
-        return None
-
-    return decoded_key
-
 @router.post("/check/{form_id}", response_class=JSONResponse)
-async def check_form_id(form_id:str):
+@limiter.limit("5/minute")
+async def check_form_id(form_id:str, request: Request):
 
     status_code:int = db_connector.check_form_existence(form_id)
 
@@ -43,21 +40,36 @@ async def check_form_id(form_id:str):
         return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Form found."})
 
 @router.post("/check-key", response_class=HTMLResponse)
-async def check_key(request:CheckKeyRequest):
+@limiter.limit("5/minute")
+async def check_key(chk_key_req:CheckKeyRequest, request: Request):
 
-    if validate_key(request.key, request.formId):
-        return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Key verified."})
+    if validate_key(chk_key_req.key, chk_key_req.formId):
+
+        status_code, associated_form = db_connector.get_form(chk_key_req.formId)
+
+        if status_code == 404:
+            return JSONResponse(status_code=status.HTTP_410_GONE,
+                                content={"message": "Form doesn't exist or has been deleted."})
+
+        if status_code == 423:
+            return JSONResponse(status_code=status.HTTP_423_LOCKED, content={"message": "Form unavailable."})
+
+        if status_code == 200:
+            return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Key verified."})
+
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            content={"detail": "Internal Server Error."})
+
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Invalid Key."})
 
 @router.post("/use-key", response_class=JSONResponse)
-async def use_key(request:CheckKeyRequest):
+@limiter.limit("5/minute")
+async def use_key(chk_key_req:CheckKeyRequest, request: Request):
 
-    validation_response:Key|None = validate_key(request.key, request.formId)
+    key:Key|None = validate_key(chk_key_req.key, chk_key_req.formId)
 
-    if validation_response:
-        associated_form, status_code  = db_connector.get_form(validation_response.formId)
-
-        print(associated_form)
+    if key is not None:
+        status_code, associated_form  = db_connector.get_form(key.payload.formId)
 
         if status_code == 404:
             return JSONResponse(status_code=status.HTTP_410_GONE, content={"message": "Form doesn't exist or has been deleted."})
@@ -68,6 +80,9 @@ async def use_key(request:CheckKeyRequest):
         if status_code == 200:
             return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Key verified.", "form":jsonable_encoder(associated_form)})
 
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                            content={"detail": "Internal Server Error."})
+
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Invalid key."})
 
 class SubmitFormRequest(BaseModel):
@@ -76,7 +91,8 @@ class SubmitFormRequest(BaseModel):
     formId:str
 
 @router.post("/submit-form", response_class=JSONResponse)
-async def submit_form(submit_form_request:SubmitFormRequest):
+@limiter.limit("5/minute")
+async def submit_form(submit_form_request:SubmitFormRequest, request: Request):
 
     validation_response: Key | None = validate_key(submit_form_request.key, submit_form_request.formId)
     if validation_response:
@@ -89,5 +105,6 @@ async def submit_form(submit_form_request:SubmitFormRequest):
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"detail":"Internal Server Error."})
 
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Invalid key."})
+
 
 

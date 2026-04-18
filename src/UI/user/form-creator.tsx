@@ -16,19 +16,20 @@ import {
 import { Tooltip } from 'react-tooltip'
 
 import {logout, auto_login, add_form} from "./back-end-connection";
-import configFile from "../config.json"
 import type {FormInfo, MinimalFormInfo, NewForm, Submission} from "../domain/types";
 import type {TextQuestion, GridQuestion} from "../domain/types";
 import {DisplayQuestion} from "../common/DisplayQuestion";
 import {type NavigateFunction, type Navigation, useNavigate} from "react-router-dom";
 import FormInputErrorPopup from "../common/error-popups";
 
-const baseURL:string = configFile.baseURL
+const baseURL:string = ''
 
 import {ErrorMessage} from "@hookform/error-message";
 import {gridQuestionSchema, minimalFormInfoSchema, newFormSchema, textQuestionSchema} from "../domain/schemas";
 import {DialogWithButton} from "../components/Dialog/Dialog";
 import {useAlert} from "../components/AlertProvider";
+import {useMutation} from "@tanstack/react-query";
+import toast from "react-hot-toast";
 
 
 interface QuestionOptionsComponentProps {
@@ -427,6 +428,17 @@ export default function FormCreator() {
     const {append, remove} = useFieldArray({control, name:'formQuestions'});
     const formQuestions = watch("formQuestions");
 
+    const {mutate} = useMutation({
+        mutationFn:add_form,
+        onSuccess:()=>{
+            toast.success("Form added successfully!");
+            navigate("/")
+        },
+        onError:(error)=>{
+            toast.error("Could not create form. " + error?.message);
+        }
+    })
+
     const deleteQuestion = (questionIndex:number) => {
         remove(questionIndex);
     }
@@ -438,18 +450,7 @@ export default function FormCreator() {
                                 name:data.formName,
                                 questions:data.formQuestions,
                             })
-
-            const newFormId:string = await add_form(newForm);
-            if(newFormId) {
-                showAlert("Form created successfully",
-                    [
-                        {
-                            text:"OK",
-                            action:()=>navigate(`/view-form/${newFormId}`)
-                        }
-                    ]);
-            }
-            else alert("Could not create form.")
+        mutate(newForm);
     }
 
     return (

@@ -1,18 +1,18 @@
 import React, {useRef, useState} from 'react';
 import './credential-form.css'
 import {type SubmitHandler, useForm} from "react-hook-form";
-import type {Credentials} from "../../domain/types";
+import {useNavigate} from "react-router-dom";
+import {QueryClient, useMutation} from "@tanstack/react-query";
 import {zodResolver} from "@hookform/resolvers/zod";
+import type {Credentials} from "../../domain/types";
 import {credentialsSchema} from "../../domain/schemas";
 import FormInputErrorPopup from "../../common/error-popups";
-import {replace, useNavigate} from "react-router-dom";
-import {type CredentialResult} from "../../user/back-end-connection";
-import {useQueryClient} from "@tanstack/react-query";
-import {Dialog} from "../Dialog/Dialog";
+import toast from "react-hot-toast";
+import {CredentialError} from "../../Utilities";
 
 interface CredentialFormProps {
     type:string
-    callback:(username:string, password:string)=>Promise<CredentialResult>
+    callback: ({ username, password }:{username: string, password: string})=>Promise<void>
 }
 
 
@@ -20,9 +20,41 @@ export function CredentialForm(props: CredentialFormProps) {
 
     const {register, handleSubmit, formState:{errors}, setError} = useForm<Credentials>({resolver:zodResolver(credentialsSchema)})
     const navigate = useNavigate()
-    const queryClient = useQueryClient()
+
+    const queryClient = new QueryClient()
 
     const [passwordInputType, setPasswordInputType] = React.useState('password');
+
+    const {mutate} = useMutation({
+        mutationKey:['username'],
+        mutationFn:props.callback,
+        onSuccess: async ()=>{
+            if(props.type === "Login") {
+                await queryClient.invalidateQueries({queryKey:['username']})
+                toast.success("Logged in succesfully.")
+                navigate('/', {replace:true})
+
+            } else {
+                toast.success("Registered succesfully. Redirecting to login page . . .")
+                navigate('/login', {replace:true})
+            }
+        },
+        onError: (error)=>{
+            if(error instanceof CredentialError) {
+                if(error.detail.username !== '')
+                    setError("username", {
+                        type:"manual",
+                        message:error.detail.username
+                    })
+                if(error.detail.password !== '')
+                    setError("password", {
+                        type:"manual",
+                        message:error.detail.password
+                    })
+            } else if(error)
+                toast.error(`Could not ${props.type=="Login"?"login":"register"}: ` + error.message);
+        }
+    })
 
     async function togglePasswordInputType() {
         if(passwordInputType === 'password') {
@@ -32,37 +64,9 @@ export function CredentialForm(props: CredentialFormProps) {
         setPasswordInputType('password');
     }
 
-    const [showDialog, setShowDialog] = useState(false);
     const onSubmit:SubmitHandler<Credentials> = async (data:Credentials) => {
-        const result:CredentialResult = await props.callback(data.username, data.password)
-
-        if(result.ok) {
-            if(props.type == "Login") {
-                await queryClient.invalidateQueries({queryKey:['username']})
-                navigate('/', {replace:false});
-            } else
-                setShowDialog(true);
-        } else {
-            if(typeof result.errorMsg === "object") {
-
-                if(result.errorMsg.username != undefined)
-                    setError("username", {
-                        type:"manual",
-                        message:result.errorMsg.username
-                    })
-
-                if(result.errorMsg.password != undefined)
-                    setError("password", {
-                        type:"manual",
-                        message:result.errorMsg.password
-                    })
-            }
-            else
-                setError("root", {
-                    type:"manual",
-                    message:result.errorMsg
-                })
-        }
+        console.log('a');
+        mutate({username:data.username, password:data.password})
     }
 
 
@@ -95,23 +99,6 @@ export function CredentialForm(props: CredentialFormProps) {
                         Submit
                     </button>
                 </div>
-
-                {
-                    props.type==="Register" &&
-                    <Dialog
-                        text={"Registered in successfully. Go to login page?"}
-                        buttons={[
-                            {
-                                text:"Cancel",
-                                action:()=>{navigate('/')}
-                            },
-                            {
-                                text:"Confirm",
-                                action:()=>{navigate('/login')}
-                            }
-                        ]}
-                        open={showDialog} />
-                }
 
             </form>
             <FormInputErrorPopup name={'root'} errors={errors} place={'top'} />
