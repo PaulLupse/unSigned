@@ -2,7 +2,7 @@ import React, {useRef, useState} from 'react';
 import './credential-form.css'
 import {type SubmitHandler, useForm} from "react-hook-form";
 import {useNavigate} from "react-router-dom";
-import {QueryClient, useMutation} from "@tanstack/react-query";
+import {QueryClient, useMutation, useQueryClient} from "@tanstack/react-query";
 import {zodResolver} from "@hookform/resolvers/zod";
 import type {Credentials} from "../../domain/types";
 import {credentialsSchema} from "../../domain/schemas";
@@ -15,24 +15,22 @@ interface CredentialFormProps {
     callback: ({ username, password }:{username: string, password: string})=>Promise<void>
 }
 
-
 export function CredentialForm(props: CredentialFormProps) {
 
     const {register, handleSubmit, formState:{errors}, setError} = useForm<Credentials>({resolver:zodResolver(credentialsSchema)})
     const navigate = useNavigate()
-
-    const queryClient = new QueryClient()
-
+    const qC = useQueryClient();
     const [passwordInputType, setPasswordInputType] = React.useState('password');
 
     const {mutate} = useMutation({
-        mutationKey:['username'],
         mutationFn:props.callback,
         onSuccess: async ()=>{
             if(props.type === "Login") {
-                await queryClient.invalidateQueries({queryKey:['username']})
+
+                await qC.invalidateQueries({queryKey:['username'], refetchType:'all'})
+                await qC.refetchQueries({queryKey:['username']})
                 toast.success("Logged in succesfully.")
-                navigate('/', {replace:true})
+                navigate('/me', {replace:true})
 
             } else {
                 toast.success("Registered succesfully. Redirecting to login page . . .")

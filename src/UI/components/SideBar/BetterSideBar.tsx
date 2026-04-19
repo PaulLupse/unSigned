@@ -1,6 +1,7 @@
 import React from 'react'
 import {Drawer} from "@mui/material";
 import './BetterSideBar.css'
+import {Link} from "react-router-dom";
 
 interface SideBarProps {
     isOpen:boolean
@@ -14,28 +15,46 @@ export default function SideBar(props:SideBarProps) {
             paper: 'sidebar',
             root: 'sidebarRoot'
         }}
-            slotProps={{backdrop: {className:'sidebarBackdrop'}}}
+                variant={"temporary"}
+            slotProps={{backdrop: {className:'sidebarBackdrop'}, root:{className:'sidebarRoot'}}}
             anchor={props.anchor}
             open={props.isOpen}
-            onClose={()=>props.setIsOpen(false)} >
+            onClose={()=>props.setIsOpen(false)}
+            hideBackdrop={true}
+            >
+
+
             <h2>
                 Quick access
             </h2>
-            <p>
-                My accout
-            </p>
+            <Link to={'/me'}>
+                <p>
+                    My accout
+                </p>
+            </Link>
             <hr />
-            <p>
-                Forms
-            </p>
+            <Link to={'/me'}>
+                <p>
+                    Forms
+                </p>
+            </Link>
+
             <hr />
-            <p>
-                Submission data
-            </p>
+            <Link to={'/me'}>
+                <p>
+                    Submission data
+                </p>
+            </Link>
             <hr />
             <p>
                 Templates
             </p>
+            <hr />
+            <Link to={'/'}>
+                <p>
+                    Main page
+                </p>
+            </Link>
         </Drawer>
     )
 }

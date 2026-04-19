@@ -28,7 +28,8 @@ export default function NavBar ({isLoading, isSuccess, username, queryClient, si
                 <div className={'left'}>
 
                     <div className={'userGroup'}>
-                        <button />
+                        <button className={'profilePictureButton'} onClick={()=>{nav('/me')} }>
+                        </button>
                         <h2 style={{paddingLeft:'10px'}}>
                             :
                         </h2>
@@ -36,26 +37,26 @@ export default function NavBar ({isLoading, isSuccess, username, queryClient, si
                             {isSuccess?username:'Not logged in'}
                         </h3>
                     </div>
-                    {
-                        isSuccess &&
-                        <button
-                            onClick={
-                                async()=> {
-                                    if (await logout()) {
-                                        await queryClient.invalidateQueries({queryKey:['username']})
-                                        nav('/', {replace:true})
-                                    }
-                                }
-                            }
-                        >
-                            Log out
-                        </button>
-                    }
+                    {/*{*/}
+                    {/*    isSuccess &&*/}
+                    {/*    <button*/}
+                    {/*        onClick={*/}
+                    {/*            async()=> {*/}
+                    {/*                if (await logout()) {*/}
+                    {/*                    await queryClient.invalidateQueries({queryKey:['username']})*/}
+                    {/*                    nav('/me', {replace:true})*/}
+                    {/*                }*/}
+                    {/*            }*/}
+                    {/*        }*/}
+                    {/*    >*/}
+                    {/*        Log out*/}
+                    {/*    </button>*/}
+                    {/*}*/}
                 </div>
             }
             <div>
                 <h1>
-                    Signless
+                    unSigned
                 </h1>
             </div>
 

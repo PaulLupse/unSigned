@@ -17,12 +17,7 @@ import {AlertProvider} from "./components/AlertProvider";
 
 import '../../static/css/general.css'
 
-
-import {auto_login, get_forms, logout, delete_form} from "./user/back-end-connection";
-import {Table} from "./components/Table/Table";
-import type {FormInfo, MinimalFormInfo, Submission} from "./domain/types";
-import {makePair} from "./Utilities";
-
+import {auto_login} from "./user/back-end-connection";
 
 import FormCreator from "./user/form-creator";
 import {ViewForm, DisplayFrom} from "./user/view-form";
@@ -41,113 +36,42 @@ import NavBar from "./components/NavBar/NavBar";
 import {DistributeKeys} from "./user/distribute-keys";
 import SideBar from "./components/SideBar/BetterSideBar";
 import {Toaster} from "react-hot-toast";
+import {Profile} from "./user/profile";
 
 
-const baseURL:string = '';
-
-
-interface DataProps {
-    username:string
-}
-
-function NotLoggedInPanel() {
-    return (
-            <div
-                style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
-                <h3>
-                    You are not logged in.
-                </h3>
-                <Link to={'/login'}>Login</Link>
-                <Link to={'/register'}>Register</Link>
-            </div>
-        )
-}
-
-function DataDisplay(props:DataProps) {
-
-    const [formList, setFormList] = React.useState(Array<MinimalFormInfo>);
-    const navigate = useNavigate();
-
-    React.useEffect(()=> {
-                    async function getItems ():Promise<void> {
-                        const forms:Array<MinimalFormInfo>|undefined = await get_forms();
-
-                        if(forms) {
-                            setFormList(forms);
-                        }
-                    }
-                    if(props.username!=="")
-                        getItems();
-                },
-                []
-            );
+import './Presentation.css'
+function Presentation() {
 
     return(
-        // folosim un grid pentru a aseza sectiunile din continut
-        // o sectiune va fii dedicata vizualizarea chestionarelor create de utilizator
-        <div style={{
-            display:'flex',
-            justifyContent:'center'
-        }}>
-            <div id="display" style={{
-
-                flexGrow:'1',
-                maxWidth:'75rem',
-                display:'flex',
-                flexDirection:'column',
-                overflowX:'auto',
-                margin:'20px'
-            }}>
-
-                <h3 style={{
-                    padding:'5px', textAlign:'center'
-                }}>My Forms</h3>
-
-                <Table<MinimalFormInfo> columns={["Name", "Date created", "Date published", "Date closed" , "Submissions"]}
-                                 columnNames={['name',
-                                     makePair('dateCreated', (date:Date)=>date?date.toISOString().split('T')[0]:'-'),
-                                     makePair('datePublished', (date:Date|null)=>date?date.toISOString().split('T')[0]:'-'),
-                                     makePair('dateClosed', (date:Date|null)=>date?date.toISOString().split('T')[0]:'-'),
-                                     'submissionsCount']}
-                                 data={formList}
-                                 setData={setFormList}
-                                 rowOnClick=
-                                    {(form:MinimalFormInfo):void => {
-                                        navigate(`view-form/${form.id}`);
-                                    }}
-                                style={{overflowX:'auto'}}
-                />
-
-
-                <Link to={baseURL + '/create-new-form'}>
-                    <div style={{display:"flex", justifyContent:'center'}} className="table-button">
-                        <p style={{margin:'0'}}>
-                            New Form
-                        </p>
+        <div className={"presentation"}>
+            <div className={"card"}>
+                <h1>
+                    unSigned
+                </h1>
+                <label>
+                    Anonymous forms
+                </label>
+                <div>
+                    <div>
+                        <hr />
+                        Key based
+                        <hr />
                     </div>
-                </Link>
+                    <div>
+                        <hr />
+                        Stateless
+                        <hr />
+                    </div>
+                    <div>
+                        <hr />
+                        Performant
+                        <hr />
+                    </div>
+                </div>
+
             </div>
         </div>
-
-    );
-}
-
-function DefaultContent() {
-
-    const {username}:{username:any} = useOutletContext();
-
-    //  <SideBar isOpen={sidebarIsOpen} setIsOpen={setSidebarIsOpen} anchor={'right'} />
-    return(
-        <>
-        {
-            username !== ""?
-            <DataDisplay username={username}/>
-            :
-            <NotLoggedInPanel />
-        }
-        </>
-
-    );
+    )
 }
 
 function Index() {
@@ -156,15 +80,16 @@ function Index() {
     const nav = useNavigate();
 
     const queryClient = useQueryClient();
-    const {isSuccess, data, isLoading, isError, isStale} = useQuery({queryKey: ['username'], queryFn:auto_login, retry:0, refetchOnWindowFocus:true})
-    const username:string|null = useMemo(()=>data?data:null,[data]);
+    const {isSuccess, data, isLoading, isError, isStale} = useQuery({queryKey: ['username'], queryFn:auto_login, retry:0, refetchOnWindowFocus:true, staleTime:3600})
+    const username:string|null = useMemo(()=>data?data:null,[data, isSuccess, isStale, isError]);
 
     const [sidebarIsOpen, setSidebarIsOpen] = useState(false);
 
     React.useEffect(()=> {
+        console.log('SIA DAT QUERYYYYYYYYYYYYYYY');
             if(isError) {
-                if (!['/', '/login', '/register'].includes(loc.pathname))
-                    nav('/');
+                if (!['/me', '/login', '/register'].includes(loc.pathname))
+                    nav('/me');
             }
         },
         [isStale, isError, isLoading]
@@ -191,31 +116,32 @@ function Index() {
                 username={username}
                 queryClient={queryClient} />
 
-            <SideBar isOpen={sidebarIsOpen} setIsOpen={setSidebarIsOpen} anchor={'right'} />
-            {
-                isLoading?
-                <div style={{display:"grid", placeContent:"center"}}>
-                    <p>
-                        Loading . . .
-                    </p>
-                </div>:
-                    <Outlet  context={{username:isSuccess?username:""}}/>
-            }
+            <div style={{
+                display:"grid",
+                gridTemplateColumns:'1fr auto'
+            }}>
 
-
-
+                {
+                    isLoading?
+                    <div style={{display:"grid", placeContent:"center"}}>
+                        <p>
+                            Loading . . .
+                        </p>
+                    </div>:
+                        <Outlet  context={{username:isSuccess?username:""}}/>
+                }
+                <SideBar isOpen={sidebarIsOpen} setIsOpen={setSidebarIsOpen} anchor={'right'} />
+            </div>
 
         </div>
-
-
     );
 }
 
-
+const queryClient = new QueryClient();
 window.onload = ()=>{
     const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement
     const root = createRoot(rootDiv);
-    const queryClient = new QueryClient();
+
     root.render(
         <QueryClientProvider client={queryClient} >
             <AlertProvider>
@@ -223,9 +149,10 @@ window.onload = ()=>{
                     <BrowserRouter>
                         <Routes>
                             <Route path='/' element={<Index />}>
+                                <Route index element={<Presentation />} />
+                                <Route path='me' element={<Profile />} />
                                 <Route path='login' element={<LoginComponent />}/>
                                 <Route path='register' element={<RegisterComponent />}/>
-                                <Route index element={<DefaultContent />} />
                                 <Route path='create-new-form' element={<FormCreator />} />
                                 <Route path='view-form/:formId' element={<ViewForm />}>
                                     <Route index element={<DisplayFrom />} />

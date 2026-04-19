@@ -15,18 +15,14 @@ export default function CollapsingDiv({children, ...props}:CollapsingDivProps) {
 
             if(elementChildren.length === 0) return;
 
-            // elementChildren.forEach((element)=>{element.style.display = 'flex'});
-
             const firstElement:HTMLElement|undefined = elementChildren[0];
 
             if(firstElement) {
 
                 const firstElementMidPos = (firstElement.offsetTop + firstElement.offsetHeight)/2;
-                console.log(firstElementMidPos)
 
                 for(let child of elementChildren) {
                     const childMidPos = (child.offsetTop + child.offsetHeight)/2;
-                    console.log(childMidPos)
 
                     if (childMidPos > firstElementMidPos + firstElement.offsetHeight/2)
                         child.style.display = 'none';

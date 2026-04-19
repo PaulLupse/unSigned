@@ -107,7 +107,7 @@ async def get_token(credentials: Annotated[OAuth2PasswordRequestForm, Depends()]
     return response
 
 @router.post("/me", response_class=JSONResponse)
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def me(login_response:Annotated[str, Depends(authenticate)], request: Request):
 
     return JSONResponse(content={"username":login_response, "message":"Logged in succesfully."}, status_code=status.HTTP_200_OK)

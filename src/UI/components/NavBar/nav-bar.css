@@ -29,11 +29,10 @@
     display:flex;
     gap:5px;
     align-items: center;
-    border: 1px solid;
     padding:10px;
 }
 
-.nav-bar .left .userGroup button{
+.nav-bar .left .userGroup .profilePictureButton{
     border-radius: 2rem;
     border:none;
     height: 3rem;
@@ -48,6 +47,10 @@
 
 .nav-bar .left .userGroup button:active {
     background-color: var(--button-clicked);
+}
+
+.nav-bar .left .userGroup h3{
+    white-space: preserve nowrap;
 }
 
 .nav-bar .right {
