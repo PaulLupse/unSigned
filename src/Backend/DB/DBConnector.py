@@ -20,7 +20,11 @@ import dotenv, os
 
 dotenv.load_dotenv()
 
-mongo_client = MongoClient(os.getenv("DATABASE_URL"))
+db_url = os.getenv("DATABASE_URL")
+if not db_url:
+    raise ValueError("DATABASE_URL not set.")
+
+mongo_client = MongoClient(db_url)
 
 class DBConnector:
 
@@ -38,7 +42,9 @@ class DBConnector:
 
     def validate_credentials(self, username:str, password:str):
 
+
         user = self.users_table.find_one({"username": username})
+        print(user)
 
         if user:
 
@@ -52,7 +58,6 @@ class DBConnector:
         return 404
 
     def find_user(self, username:str):
-
 
         user = self.users_table.find_one({"username":username}, {"username":1})
 

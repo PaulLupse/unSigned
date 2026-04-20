@@ -3,6 +3,14 @@ from random import shuffle
 
 dotenv.load_dotenv()
 
+SENDER_EMAIL = os.getenv("SENDER_EMAIL")
+if not SENDER_EMAIL:
+    raise ValueError("SENDER_EMAIL .env variable not set")
+
+GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
+if not GMAIL_APP_PASSWORD:
+    raise ValueError("GMAIL_APP_PASSWORD .env variable not set")
+
 # functie pentru distribuirea cheilor catre utilizatorii avand emailurile listate
 async def distribute_keys(emails:list[str], keys:list[str], form_owner_username:str) -> None:
 

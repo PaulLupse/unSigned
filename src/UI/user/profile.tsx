@@ -72,7 +72,8 @@ function DataDisplay(props:DataProps) {
                                  setData={setFormList}
                                  rowOnClick=
                                     {(form:MinimalFormInfo):void => {
-                                        navigate(`view-form/${form.id}`);
+                                        console.log(form.id)
+                                        navigate(`/view-form/${form.id}`);
                                     }}
                                 style={{overflowX:'auto'}}
                 />

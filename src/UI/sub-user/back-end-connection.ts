@@ -14,7 +14,7 @@ type UseKeyResponseType = z.TypeOf<typeof UseKeyResponseSchema>;
 
 
 export async function check_form_id(formId:string):Promise<boolean|undefined> {
-    const checkFormIdRequest = new Request(baseURL + `/sub-users/check/${formId}`, {
+    const checkFormIdRequest = new Request(baseURL + `/api/sub-users/check/${formId}`, {
         method:'POST',
         body:JSON.stringify({formId:formId}),
         headers:{
@@ -30,7 +30,7 @@ export async function check_form_id(formId:string):Promise<boolean|undefined> {
 }
 
 export async function check_key({key, formId}: { key: string, formId: string }):Promise<void> {
-    const checkKeyRequest = new Request(baseURL + '/sub-users/check-key', {
+    const checkKeyRequest = new Request(baseURL + '/api/sub-users/check-key', {
         method:'POST',
         body:JSON.stringify({key:key, formId:formId}),
         headers:{
@@ -46,7 +46,7 @@ export async function check_key({key, formId}: { key: string, formId: string }):
 
 export async function use_key({k, formId}:{k: string, formId: string}):Promise<FormInfo|undefined> {
 
-    const useKeyRequest :Request = new Request(baseURL+'/sub-users/use-key',
+    const useKeyRequest :Request = new Request(baseURL+'/api/sub-users/use-key',
         {
             method:'post',
             headers:{
@@ -81,7 +81,7 @@ export async function submit_form({key, formId, submission}:{key: string, formId
         throw new Error("Invalid submission parameters.")
     }
 
-    const submitFormRequest = new Request(baseURL+'/sub-users/submit-form',
+    const submitFormRequest = new Request(baseURL+'/api/sub-users/submit-form',
         {
             method:'POST',
             headers:{
