@@ -1,0 +1,71 @@
+.sidebarBackdrop {
+  position: absolute !important;
+}
+
+.sidebar {
+    position:absolute !important;
+
+    display:flex;
+    flex-direction: column;
+    padding: 20px;
+    border-left: 2px solid;
+    border-top: 2px solid;
+    width:15rem;
+    top:100px;
+    right:0;
+    box-shadow: none !important;
+
+    gap:10px;
+    pointer-events: all;
+}
+
+.sidebar .collapse-button {
+    position: absolute;
+    top:0.5rem;
+    left:0.5rem;
+    aspect-ratio: 1/1;
+    height: 2rem;
+    background: url('/static/images/X.png') no-repeat center;
+    background-size: 60%;
+    border-radius: 3rem;
+}
+
+.sidebar .collapse-button:hover{
+    background-color: var(--button-hover);
+}
+
+.sidebar .collapse-button:active{
+    background-color: var(--button-clicked);
+}
+
+.sidebar .element {
+    margin:0;
+    padding:10px;
+}
+
+.sidebar hr {
+    border:1px solid black;
+    width:100%;
+    margin:0;
+}
+
+.sidebar h1, .sidebar h2, .sidebar h3, .sidebar h4, .sidebar h5 {
+    margin: 0;
+    text-align: center;
+}
+
+.sidebar h2 {
+    margin: 10px;
+}
+
+.sidebar p {
+    margin: 0;
+}
+
+.sidebar a:hover{
+    background-color: var(--button-hover);
+}
+
+.sidebar a:active{
+    background-color: var(--button-clicked);
+}

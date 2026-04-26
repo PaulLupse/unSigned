@@ -6,7 +6,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
     context: __dirname,
     entry: {
-        main:'./src/UI/index.tsx'
+        main:'./src/frontend/index.tsx'
     },
     output: {
         path: path.join(__dirname, "/dist"),
@@ -37,8 +37,20 @@ module.exports = {
             },
             {
                 test: /\.css$/i,
-                use: ["style-loader", "css-loader"],
-            },
+                use: [
+                  "style-loader", // Injects CSS into the DOM
+                  {
+                    loader: "css-loader",
+                    options: {
+                      // Enables CSS Modules for files ending in .module.css
+                      modules: {
+                        auto: true,
+                        localIdentName: "[name]__[local]--[hash:base64:5]",
+                      },
+                    },
+                  },
+                ],
+              },
             {
                 test: /\.(png|jpe?g|gif|svg)$/i,
                 type: "asset/resource",

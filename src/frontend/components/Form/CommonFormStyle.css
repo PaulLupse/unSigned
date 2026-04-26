@@ -1,0 +1,33 @@
+.form {
+    box-sizing: border-box;
+    width:100%;
+    max-width: 800px;
+    padding:30px;
+    border: 1px solid;
+    margin: 0;
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form .title-frame {
+    display:flex;
+    justify-content: center;
+}
+
+.form .title-frame .form-title {
+    text-align: center;
+    margin: 0 0 30px;
+    font-size: 32px;
+}
+
+.from .question-list {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr;
+}
+
+.form .question-list .question-group {
+    display:grid;
+    grid-template-columns: 1fr auto;
+}

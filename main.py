@@ -11,10 +11,11 @@ from slowapi import _rate_limit_exceeded_handler
 
 import logging
 
-from src.Backend.API.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
-from src.Backend.API.User import router as users_routes
-from src.Backend.API.SubUsers import router as sub_users_routes
-from src.Backend.API.Limiter import limiter
+from src.backend.api.auth.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
+from src.backend.api.endpoints.users import router as users_routes
+from src.backend.api.endpoints.sub_users import router as sub_users_routes
+from src.backend.api.endpoints.admin import router as admin_router
+from src.backend.api.Limiter import limiter
 
 
 logger = logging.getLogger('uvicorn.error')
@@ -25,6 +26,7 @@ oauth2_scheme = OAuth2PasswordBearerWithCookies(tokenUrl="token")
 app = FastAPI()
 app.include_router(users_routes, prefix="/api")
 app.include_router(sub_users_routes, prefix="/api")
+app.include_router(admin_router, prefix="/api")
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -38,12 +40,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from src.Backend.API.Handlers import validation_exception_handler as vse
+from src.backend.api.handlers import validation_exception_handler as vse
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request:Request, exception : RequestValidationError):
     return await vse(request, exception)
 
-from src.Backend.API.Handlers import http_exception_handler as heh
+from src.backend.api.handlers import http_exception_handler as heh
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request:Request, exception : HTTPException):
     return await heh(request, exception)

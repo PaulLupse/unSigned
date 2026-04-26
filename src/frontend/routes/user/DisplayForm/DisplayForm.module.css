@@ -1,0 +1,38 @@
+.formFrame {
+    box-sizing: border-box;
+
+    display: grid;
+    padding:30px;
+    margin:0 30px 100px 30px;
+    height:100%;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    align-items: start;
+
+    --children-max-width: 800px;
+    anchor-name: --form-frame;
+}
+
+.statusBar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+@media screen and (max-height: 500px) {
+    .form-frame {
+        grid-template-columns: 1fr auto;
+        gap:15px;
+    }
+    .fixed-element {
+        position: static;
+        align-self: start;
+        margin:0;
+    }
+    .fixed-element .button-bar {
+        grid-auto-flow: row;
+        width: unset;
+    }
+}

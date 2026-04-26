@@ -1,0 +1,21 @@
+.form .question-list .question {
+    margin: 5px;
+    border: 1px solid;
+    padding: 5px
+}
+
+.form .question-list .question div {
+    display:flex;
+    flex-direction: column;
+}
+
+.form .question-list .question .question-text {
+    margin:0;
+    padding-left: 5px;
+}
+
+.form .question-list .question .grid-choices {
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+}

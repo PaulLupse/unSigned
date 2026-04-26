@@ -1,0 +1,13 @@
+.fixed-element {
+
+    box-sizing: border-box;
+    position:fixed;
+    width:100%;
+    position-anchor: --form-frame;
+    max-width: var(--children-max-width, 100%);
+    background: var(--main-color);
+    padding:10px;
+    border: 1px solid;
+    margin:10px;
+    bottom:10px;
+}

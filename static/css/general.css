@@ -53,42 +53,6 @@ button:active {
     background: var(--button-clicked);
 }
 
-.form-frame {
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-    flex-direction: column;
-    padding: 30px;
-    flex-grow: 1;
-    max-width: 800px;
-
-    gap:10px;
-}
-
-.form-title {
-    text-align: center;
-    margin: 0 0 30px;
-    font-size: 32px;
-}
-
-.form-question-list {
-    border: 1px solid;
-    padding: 30px;
-    margin: 0;
-}
-
-.form-question {
-    margin: 5px;
-    border: 1px solid;
-    padding: 5px
-}
-
-.form-grid-question-choices-frame {
-    display: flex;
-    justify-content: space-evenly;
-    flex-wrap: wrap;
-}
-
 .error-popup {
     margin:0;
     color:red;

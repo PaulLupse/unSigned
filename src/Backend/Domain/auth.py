@@ -1,0 +1,19 @@
+from pydantic import BaseModel
+from typing import Optional
+
+
+class User(BaseModel):
+    id:str
+    username:str
+
+class KeyPayload(BaseModel):
+    formId: str
+
+class KeyFooter(BaseModel):
+    keyId: Optional[str] = None
+
+class Key(BaseModel):
+    payload: KeyPayload
+    footer: Optional[KeyFooter] = KeyFooter()
+
+
