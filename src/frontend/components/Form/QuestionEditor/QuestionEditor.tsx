@@ -2,7 +2,6 @@ import React, {type SetStateAction} from "react";
 import type {Dispatch} from "react";
 import {
     useForm,
-    type SubmitHandler,
     type UseFormRegister,
     type UseFormWatch,
     type FieldErrors,
@@ -31,8 +30,9 @@ interface QuestionOptionsComponentProps {
 }
 
 interface QuestionEditorProps {
-    setDisplayQuestionEditor:Dispatch<SetStateAction<boolean>>;
-    action:(question:GridQuestion|TextQuestion)=>void;
+    setQuestionToBeEdited:(questionIndex:number, set:boolean)=>void
+    action:(questionIndex:number, question:GridQuestion|TextQuestion)=>void;
+    questionIndex:number
     questionData?:TextQuestion|GridQuestion
 }
 
@@ -56,7 +56,7 @@ function TextQuestionOptions(props:QuestionOptionsComponentProps) {
 
             <div className={'max-chars'}>
                 <label>
-                    Maximum answer characters:
+                    Maximum characters:
                 </label>
                 <input data-tooltip-id={'maxChars'}
                        {...props.register("specificOptions.maxChars",
@@ -136,7 +136,7 @@ function GridQuestionOptions(props:QuestionOptionsComponentProps) {
             }
             <div className={'add-button-frame'}>
                 <button type="button" onClick={addChoice}>
-                    Add option +
+                    Add choice
                 </button>
             </div>
         </div>
@@ -177,14 +177,16 @@ export function QuestionEditor(props:QuestionEditorProps) {
     // aceasta componenta este si ea un formular a carui folosire creeaza o noua intrebare
     // de fapt, si editarea se realizeaza sub forma de creare a unei intrebari noi, prin inlocuirea optiunilor
     // optiunilor intrebarii cu noi opriuni
-    const {register, formState:{errors}, handleSubmit, control, watch} = useForm<QuestionOptions>(
-        { defaultValues:props.questionData?getDefaultQuestionOptions(props.questionData):{} }
+    const {register, formState:{errors}, control, watch, getValues, trigger} = useForm<QuestionOptions>(
+        { defaultValues:props.questionData?getDefaultQuestionOptions(props.questionData):{},
+            mode: "onChange"
+        }
     );
 
     const type = watch('specificOptions.type');
 
     // handler pentru adaugarea unei noi intrebari
-    const submit:SubmitHandler<QuestionOptions> = async (data:QuestionOptions)=>{
+    const submit = async (data:QuestionOptions)=>{
 
         let question;
         if(data.specificOptions.type==='grid') {
@@ -206,48 +208,58 @@ export function QuestionEditor(props:QuestionEditorProps) {
                     maxChars:data.specificOptions.maxChars
                 })
         }
-        props.action(question);
-
-        // panoul de creat intrebare noua dispare atunci cand este adaugata o noua intrebare
-        props.setDisplayQuestionEditor(false);
+        props.action(props.questionIndex, question);
     };
 
     return (
-        <div className={'question-editor'} style={{gridColumn:'2'}} id="QuestionEditor">
+        <div className={'question-editor'} id="QuestionEditor">
 
-            <form onSubmit={handleSubmit(submit)}>
+            <div className={'common-options-frame'}>
+                <textarea id="question"
+                          aria-setsize={0}
+                          data-tooltip-id={'text'}
+                          {...register("text",
+                              {required:"Question text cannot be null."})}
+                          placeholder="Question text"/>
 
-                <div className={'common-options-frame'}>
-                    <textarea id="question"
-                              data-tooltip-id={'text'}
-                              {...register("text",
-                                  {required:"Question text cannot be null."})}
-                              placeholder="Question text"/>
+                <FormInputErrorPopup name={'text'} errors={errors} place={"bottom"}/>
 
-                    <FormInputErrorPopup name={'text'} errors={errors} place={"bottom"}/>
+                {/* selector al tipului de intrebare */}
+                <select {...register("specificOptions.type")}>
+                    <option value='text'>Text Question</option>
+                    <option value='grid'>Grid Question</option>
+                </select>
+            </div>
 
-                    {/* selector al tipului de intrebare */}
-                    <select {...register("specificOptions.type")}>
-                        <option value='text'>Text Question</option>
-                        <option value='grid'>Grid Question</option>
-                    </select>
-                </div>
+            {
+                type==='grid' &&
+                <GridQuestionOptions register={register} watch={watch} errors={errors} control={control} />
+            }
+            {
+                type==='text' &&
+                <TextQuestionOptions register={register} watch={watch} errors={errors} control={control} />
+            }
 
-                {
-                    type==='grid' &&
-                    <GridQuestionOptions register={register} watch={watch} errors={errors} control={control} />
-                }
-                {
-                    type==='text' &&
-                    <TextQuestionOptions register={register} watch={watch} errors={errors} control={control} />
-                }
+            <div className={'button-bar'}>
 
-                <div className={'button-bar'}>
-                    <button type={"button"} onClick={()=>{props.setDisplayQuestionEditor(false);}} className="button" style={{width:'8rem'}}>Cancel</button>
-                    <input type="submit" value="Confirm" className="plain-button" style={{width:'8rem'}}/>
-                </div>
+                <button type={"button"}
+                        onClick={
+                            ()=>{
+                                props.setQuestionToBeEdited(props.questionIndex, false);
+                            }}
+                        style={{width:'8rem'}}>Cancel</button>
 
-            </form>
+                <button type={"button"}
+                        onClick=
+                            {async()=>{
+                                const isValid = await trigger();
+                                if (isValid) {
+                                    await submit(getValues());
+                                    props.setQuestionToBeEdited(props.questionIndex, false);
+                                }
+                            }}
+                        style={{width:'8rem'}}>Done</button>
+            </div>
         </div>
     )
 }

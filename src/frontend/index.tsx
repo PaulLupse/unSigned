@@ -106,7 +106,15 @@ function Index() {
                 minHeight: '100dvh',
                 minWidth:'320px'}}>
 
-            <Toaster position="top-center" />
+            <Toaster position="top-center"
+                toastOptions={{
+                        style:{
+                            borderRadius:'0',
+                            border:'1px solid'
+                        }
+                    }
+                }
+            />
 
             <NavBar
                 sidebarIsOpen={sidebarIsOpen}

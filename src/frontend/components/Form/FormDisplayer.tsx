@@ -1,8 +1,8 @@
 import React from "react";
-import type {GridQuestion,TextQuestion} from "../../../domain/types";
-import {QuestionDisplayer} from "../QuestionDisplayer/QuestionDisplayer";
+import type {GridQuestion,TextQuestion} from "../../domain/types";
+import {QuestionDisplayer} from "./QuestionDisplayer/QuestionDisplayer";
 
-import "../CommonFormStyle.css"
+import "./CommonFormStyle.css"
 
 
 interface QuestionListProps {
@@ -11,7 +11,7 @@ interface QuestionListProps {
 
 function QuestionList({questions}:QuestionListProps) {
     return (
-        <ol className={'form-question-list'}>
+        <ol className={'question-list'}>
             {
                 questions.length > 0 ?
                     questions.map(
@@ -32,20 +32,23 @@ function QuestionList({questions}:QuestionListProps) {
 }
 
 interface FormDisplayerProps {
-    formName:string
+    name:string
     questions:Array<GridQuestion|TextQuestion>
 }
 
-export function FormDisplayer({formName, questions}:FormDisplayerProps) {
+export function FormDisplayer({name, questions}:FormDisplayerProps) {
 
     return (
         <div className={'form'}>
+
             <div className={'title-frame'}>
                 <h2 className={'form-title'}>
-                    {formName}
+                    {name}
                 </h2>
             </div>
+
             <QuestionList questions={questions} />
+
         </div>
     )
 }

@@ -26,7 +26,6 @@ button {
     font-size: 16px;
     background: white;
     border: solid 1px;
-    padding:5px 10px 5px 10px
 }
 
 button:hover {
@@ -39,7 +38,7 @@ button:active {
 
 .plain-button {
     font-family: 'Poppins', sans-serif;
-    font-size: 16px;
+    font-size: 15px;
     background: white;
     border: solid 1px;
     padding:5px
@@ -73,11 +72,10 @@ button:active {
 }
 
 input {
-    padding: 5px 10px 5px 10px;
     border:1px solid;
 }
 
-p, h1, h2, h3, h4, h5 {
+p, h1, h2, h3, h4, h5, input, button {
     padding: 5px 10px 5px 10px;
     margin: 0;
 }

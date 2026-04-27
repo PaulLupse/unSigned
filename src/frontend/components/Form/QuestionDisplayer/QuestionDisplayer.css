@@ -1,21 +1,78 @@
-.form .question-list .question {
-    margin: 5px;
+
+.question-group {
+    display:grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+    "question delete"
+    "question edit";
+    gap:10px;
+    margin:10px;
+}
+
+.question-group :first-child {
+    margin:0;
+    grid-area: question;
+}
+
+.question-group button {
+    place-self: center;
+    width: 100%;
+    aspect-ratio: 1/1;
+}
+
+.edit-button {
+
+    height: 2rem;
+    align-self: end;
+    background: url("/static/images/edit.png") no-repeat center, white;
+    background-size: 75%;
+}
+
+.edit-button:hover {
+    background: url("/static/images/edit.png") no-repeat center, var(--button-hover);
+    background-size: 75%;
+}
+
+.edit-button:active {
+    background: url("/static/images/edit.png") no-repeat center, var(--button-clicked);
+    background-size: 75%;
+}
+
+.question {
+    margin: 10px;
     border: 1px solid;
     padding: 5px
 }
 
-.form .question-list .question div {
-    display:flex;
-    flex-direction: column;
+.question p {
+
+    overflow-wrap: break-word;
+    word-break: break-all;
 }
 
-.form .question-list .question .question-text {
-    margin:0;
-    padding-left: 5px;
-}
-
-.form .question-list .question .grid-choices {
+.grid-choice-frame {
     display: flex;
     justify-content: space-evenly;
     flex-wrap: wrap;
+}
+
+.grid-choice {
+    display:flex;
+}
+
+.grid-choice p {
+    max-width: 100%;
+  overflow-wrap: break-word;
+
+  word-break: break-all;
+}
+
+.grid-choice :first-child {
+    grid-column: 1;
+    grid-row:1;
+}
+
+.grid-choice :last-child {
+    grid-column: 2;
+    grid-row:1;
 }

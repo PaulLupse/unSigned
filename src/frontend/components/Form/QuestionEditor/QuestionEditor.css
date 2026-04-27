@@ -1,15 +1,18 @@
 .question-editor {
-    box-sizing: border-box;
-    flex-grow: 1;
-    width:100%;
-    max-width: 800px;
-    padding: 30px;
     border: 1px solid;
-    position: sticky;
-    top: 130px;
-    align-self: start;
+
+    padding:10px;
+    margin:10px;
 
     display:grid;
+}
+
+.question-editor input[type="checkbox"] {
+    height:1.5rem;
+    aspect-ratio: 1/1;
+    place-self: center;
+    accent-color: black;
+    border-radius: 0;
 }
 
 .question-editor form {
@@ -22,49 +25,54 @@
 .question-editor .common-options-frame {
     display:flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
     gap: 10px;
 }
 
 .question-editor .common-options-frame textarea {
     border: 1px solid;
-    max-width: 400px;
     height: 4rem;
-    align-self: stretch;
     padding: 5px;
     overflow: scroll;
-    resize: none;
+    resize: vertical;
+
+    overflow-wrap: break-word;
+    word-break: break-all;
 }
 
 .question-editor .button-bar {
     display:flex;
     justify-content: space-evenly;
+    flex-wrap: wrap;
+    gap:5px;
 }
 
 .question-editor .grid-question {
     display:flex;
     gap:10px;
     flex-direction: column;
+    padding: 10px 0 10px 0;
+    margin:10px 0 10px 0;
+    border: 1px solid;
 }
 
 .question-editor .grid-question .options-frame {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    justify-items: center;
-    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
 }
 
-.question-editor .grid-question .options .option {
+.question-editor .grid-question .options-frame .option {
     display:flex;
 }
 
-.question-editor .grid-question .options .option p {
+.question-editor .grid-question .options-frame .option p {
     margin: 0
 }
 
 .question-editor .grid-question ol {
     margin:0;
-    padding-right: 40px;
+    padding: 0 30px 0 30px;
 }
 
 .question-editor .grid-question ol li {
@@ -83,30 +91,39 @@
 }
 
 .question-editor .text-question {
-    display:grid;
-    grid-template-columns: 1fr;
-    justify-items: center;
+    display:flex;
+    gap:10px;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: space-evenly;
+    padding: 10px 0 10px 0;
+    margin:10px 0 10px 0;
+    border: 1px solid;
 }
 
 .question-editor .text-question .is-optional {
     display:flex;
     justify-content: center;
+    gap:10px;
 }
 
-.question-editor .text-question .max-chars {
+.max-chars {
     display:flex;
     gap:5px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
 }
 
-.question-editor .text-question .max-chars input{
+.max-chars input{
     width: 4rem
 }
 
 .question-editor .grid-question .add-button-frame {
-    display:grid;
-    align-items: center;
-    justify-items: center;
+    display:flex;
+    align-items: stretch;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
 }
 
 .question-editor .grid-question .add-button-frame button {

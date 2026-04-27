@@ -7,7 +7,7 @@ import {formInfoSchema} from "../../../domain/schemas";
 import {useMutation} from "@tanstack/react-query";
 import {BackButton, NavButton} from "../../../components/Buttons/Buttons";
 import toast from "react-hot-toast";
-import {FormDisplayer} from "../../../components/Form/FormDisplayer/FormDisplayer";
+import {FormDisplayer} from "../../../components/Form/FormDisplayer";
 import ButtonBar from "../../../components/Buttons/ButtonBar/ButtonBar";
 import {FixedElement} from "../../../components/FixedElement/FixedElement";
 
@@ -41,7 +41,7 @@ export function DisplayFrom() {
         form &&
         <div className={styles.formFrame}>
 
-            <FormDisplayer formName={form.name} questions={form.questions} />
+            <FormDisplayer name={form.name} questions={form.questions} />
 
             <FixedElement>
 

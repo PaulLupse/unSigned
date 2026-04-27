@@ -81,7 +81,7 @@ export interface Email {
 }
 
 export interface NewForm {
-    formName:string
+    name:string
     questions:Array<TextQuestion|GridQuestion>
 }
 

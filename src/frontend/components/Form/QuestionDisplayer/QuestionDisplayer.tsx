@@ -13,19 +13,13 @@ export function TextQuestionComponent({question, index}:{question:TextQuestion, 
 
 export function GridQuestionComponent({question, index}:{question:GridQuestion, index:number}) {
     return (
-        <div className={'grid-choices'} key={index}>
+        <div className={'grid-choice-frame'} key={index}>
         {
             question.choices.map((choice:string, choiceIndex:number)=>{
                 return (
-                    question.isMultipleChoice?
-                    <div key={choiceIndex}>
-                        <input type={'checkbox'} value={choiceIndex}/>
-                        {choice}
-                    </div>
-                    :
-                    <div key={choiceIndex}>
-                        <input type={'radio'} value={choiceIndex}/>
-                        {choice}
+                    <div className={'grid-choice'} key={choiceIndex}>
+                        <input type={question.isMultipleChoice?'checkbox':'radio'} value={choiceIndex}/>
+                        <p>{choice}</p>
                     </div>
                 )
             })
@@ -44,10 +38,10 @@ export function QuestionDisplayer(props:DisplayQuestionProps) {
     const index:number = props.questionIndex;
     const question = props.question;
     return(
-        <li key={props.questionIndex} className={'form-question'}>
-            <div id={"Intrebarea #" + index} key={index} style={{display:'flex', flexDirection:'column'}}>
+        <li key={props.questionIndex} className={'question'}>
+            <div id={"Intrebarea #" + index} key={index} >
 
-                <p style={{margin:'0', paddingLeft:'5px'}}>
+                <p className={'question-text'}>
                     {question.text}
                 </p>
 

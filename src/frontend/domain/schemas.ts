@@ -56,7 +56,7 @@ export const minimalFormInfoSchema = z.object({
 });
 
 export const newFormSchema = z.object({
-    formName: z.string(),
+    name: z.string(),
     questions: z.array(z.union([textQuestionSchema, gridQuestionSchema]))
 });
 

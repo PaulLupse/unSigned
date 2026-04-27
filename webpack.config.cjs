@@ -14,7 +14,10 @@ module.exports = {
         publicPath: '/'
     },
     resolve: {
-        extensions: [".tsx", ".ts", ".js"],
+        alias: {
+          src: path.resolve(__dirname, 'src/'),
+        },
+        extensions: ['.ts', '.tsx', '.js']
     },
     devtool:"source-map",
     module: {
@@ -55,7 +58,7 @@ module.exports = {
                 test: /\.(png|jpe?g|gif|svg)$/i,
                 type: "asset/resource",
             },
-        ]
+        ],
     },
     plugins: [
         new HtmlWebpackPlugin({

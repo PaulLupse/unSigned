@@ -1,33 +1,22 @@
 
 .main {
     box-sizing: border-box;
-    display: grid;
+    display:grid;
+    justify-items: center;
+    --children-max-width: 800px;
 }
 
-.formAndEditor {
-
+.formFrame {
     box-sizing: border-box;
-    display:grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 1fr;
 
-    align-items: start;
-    align-self: start;
-
-    width:100%;
-
+    display: grid;
     padding:30px;
-    margin-bottom: 100px;
+    margin:0 30px 100px 30px;
+    height:100%;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    align-items: start;
 
     --children-max-width: 800px;
-
-    gap:30px;
-}
-
-
-.formAndEditor :first-child {
-    justify-self: end;
-}
-.formAndEditor :only-child {
-    justify-self: center;
 }

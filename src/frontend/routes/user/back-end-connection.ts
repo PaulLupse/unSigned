@@ -2,8 +2,6 @@
 
 import {CredentialError, CustomError} from "../../Utilities";
 
-const url:string = '';
-
 import {LoginInfo, type FormInfo, type NewForm, type MinimalFormInfo, type Email} from "../../domain/types";
 import {formInfoSchema, minimalFormInfoSchema} from "../../domain/schemas";
 import {use} from "react";
@@ -14,7 +12,7 @@ async function getAccessToken(loginInfo:LoginInfo) {
     loginForm.append("username", loginInfo.username)
     loginForm.append("password", loginInfo.password)
 
-    return await fetch(url+"/api/users/token", {method:"POST", body:loginForm});
+    return await fetch("/api/users/token", {method:"POST", body:loginForm});
 }
 
 // functie pt login in urma introducerii credentialelor
@@ -41,7 +39,7 @@ export async function register({username, password}:{username: string, password:
         'Content-Type': "application/json"
     });
 
-    const request = new Request(url + "/api/users/register", {
+    const request = new Request("/api/users/register", {
         method: "PUT",
         headers: requestHeader,
         body: JSON.stringify({
@@ -64,7 +62,7 @@ export async function register({username, password}:{username: string, password:
 export async function auto_login():Promise<string>{
 
     const loginRequest = new Request(
-        url + "/api/users/me",
+        "/api/users/me",
         {
             method:"POST",
             credentials:'include'
@@ -91,7 +89,7 @@ export async function auto_login():Promise<string>{
 
 export async function logout():Promise<boolean> {
 
-    const logoutRequest = new Request(url+"/api/users/me/logout",
+    const logoutRequest = new Request("/api/users/me/logout",
         {
             method:"POST",
             credentials:"include"
@@ -107,7 +105,7 @@ export async function logout():Promise<boolean> {
 export async function get_form(formId:string):Promise<FormInfo|undefined> {
 
     const getItemsRequest = new Request(
-        url+`/api/users/me/form/${formId}`,
+        `/api/users/me/form/${formId}`,
         {
             method:'GET',
             credentials:'include'
@@ -135,7 +133,7 @@ export async function get_forms():Promise<Array<MinimalFormInfo>|undefined> {
     try {
 
         const getItemsRequest = new Request(
-            url+'/api/users/me/forms',
+            '/api/users/me/forms',
             {
                 method:'GET',
                 credentials:'include'
@@ -171,8 +169,9 @@ export async function add_form(form:NewForm):Promise<string|undefined> {
         'Content-Type': "application/json"
     });
 
+    console.log(form)
 
-    const createItemRequest = new Request(url+"/api/users/me/form/add",
+    const createItemRequest = new Request("/api/users/me/form/add",
         {
             method:"POST",
             headers:requestHeader,
@@ -193,7 +192,7 @@ export async function add_form(form:NewForm):Promise<string|undefined> {
 
 export async function delete_form(formId:string):Promise<boolean|undefined> {
 
-    const deleteRequest:Request = new Request(url+`/api/users/me/form/${formId}/delete`,
+    const deleteRequest:Request = new Request(`/api/users/me/form/${formId}/delete`,
         {
             method:'DELETE'
         }
@@ -219,7 +218,7 @@ export async function distribute_keys({emails, formId}:{emails: Email[], formId:
             'Content-Type': "application/json"
         });
 
-    const dist_keys_request = new Request(url+`/api/users/me/form/${formId}/distribute_keys`,
+    const dist_keys_request = new Request(`/api/users/me/form/${formId}/distribute_keys`,
         {
             method:'POST',
             headers: requestHeader,

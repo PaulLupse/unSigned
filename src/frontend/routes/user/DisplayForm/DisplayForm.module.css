@@ -11,7 +11,7 @@
     align-items: start;
 
     --children-max-width: 800px;
-    anchor-name: --form-frame;
+    anchor-name: --fixed-element-anchor;
 }
 
 .statusBar {

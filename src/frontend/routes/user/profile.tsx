@@ -12,7 +12,7 @@ interface DataProps {
 function NotLoggedInPanel() {
     return (
             <div
-                style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
+                style={{display:'flex', height:'100%', flexDirection:'column', justifyContent:'center', alignItems:'center'}}>
                 <h3>
                     You are not logged in.
                 </h3>
