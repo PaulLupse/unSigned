@@ -71,6 +71,20 @@ export interface MinimalFormInfo {
     submissionsCount:number
 }
 
+export interface Template {
+    id: string
+    name: string
+    questions:Array<TextQuestion|GridQuestion>
+    ownerId: string
+}
+
+export interface MinimalTemplate {
+    id:string
+    name:string
+    questionCount:number
+    ownerId:string
+}
+
 export interface Credentials {
     username:string
     password:string
@@ -104,4 +118,25 @@ export interface QuestionOptions {
     text:string
     isOptional:boolean
     specificOptions:GridOptions|TextOptions
+}
+
+interface AnswerStatistic {
+    type:'text'|'grid'
+    engagement:number
+}
+
+export interface TextQuestionAnswerStatistic extends AnswerStatistic {
+    type:'text'
+    avgWordCount:number
+    frequentWords:string[]
+}
+
+export interface GridQuestionAnswerStatistic extends AnswerStatistic {
+    type:'grid'
+    answerRate:number[]
+}
+
+export interface User {
+    username:string
+    id:string
 }

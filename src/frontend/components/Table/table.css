@@ -26,6 +26,8 @@ th {
   padding:8px;
   border: 2px solid;
   border-top:0;
+  width:100%;
+  box-sizing: border-box;
 }
 
 .table-button:hover {

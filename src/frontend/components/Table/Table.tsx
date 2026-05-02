@@ -92,8 +92,10 @@ function TableRow<lineInterface extends Object>({index, onClick, line, dataField
             {
                 dataFields.map(
                     (entry:string|pair<string, (arg:any)=>any>, index:number)=> {
+                        console.log(entry)
                         return (
-                            <td key={index}>
+                            <td key={index} style={{maxWidth:'200px'}}>
+                                <p>
                                 {
                                     // daca entry-ul e doar un stringm se verifica daca este valid
                                     typeof entry === 'string'?
@@ -104,7 +106,9 @@ function TableRow<lineInterface extends Object>({index, onClick, line, dataField
                                         validateKey(entry.obj1, line)?
                                             entry.obj2(line[entry.obj1 as keyof lineInterface])
                                             :''
+
                                 }
+                                </p>
                             </td>
                         )
                     }
@@ -121,7 +125,6 @@ function TableRow<lineInterface extends Object>({index, onClick, line, dataField
 interface TableProps<lineInterface extends Object> {
     columns: Array<string>
     data: Array<lineInterface>
-    setData: any
     columnNames: Array<string| pair<string, (arg:any)=>any>>
     rowOnClick: (arg1:lineInterface)=>void
     style?: any

@@ -69,6 +69,21 @@ export const emailSchema = z.object({
     email:z.string().min(1, "Field required!").regex(/\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/, "Invalid email!")
 })
 
-export const gridChoice = z.object({
-    
+export const templateSchema = z.object({
+    id:z.string(),
+    name:z.string(),
+    questions:z.array(z.union([textQuestionSchema, gridQuestionSchema])),
+    ownerId:z.string()
+})
+
+export const minimalTemplateSchema = z.object({
+    id:z.string(),
+    name:z.string(),
+    questionCount:z.number(),
+    ownerId:z.string()
+})
+
+export const userSchema = z.object({
+    username:z.string(),
+    id:z.string()
 })

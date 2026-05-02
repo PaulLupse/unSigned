@@ -75,6 +75,10 @@ module.exports = {
             target: process.env.FASTAPI_SERVER_ADDRESS,
             changeOrigin: true,
             secure: false
-        }]
+        }],
+        static: {
+            directory: path.join(__dirname, 'static'),
+        },
+        compress: true,
     }
 }

@@ -1,0 +1,45 @@
+.main {
+    min-height: 100dvh;
+    display:grid;
+    justify-content: center;
+    grid-template-columns: 1fr;
+    box-sizing: border-box;
+    grid-template-rows: 100px 1fr;
+
+}
+
+.formIdInput {
+    display:grid;
+    grid-template-columns: 1fr;
+    gap: 5px;
+    border: 1px solid;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 300px;
+}
+
+.keyInput {
+    display:grid;
+    justify-items: stretch;
+    gap:5px    ;
+
+    place-self: center;
+    width:100%;
+    max-width: 300px;
+}
+
+.formFrame {
+    box-sizing: border-box;
+
+    display: grid;
+    padding:30px;
+    margin:0 30px 100px 30px;
+    height:100%;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    align-items: start;
+
+    --children-max-width: 800px;
+    anchor-name: --fixed-element-anchor;
+}

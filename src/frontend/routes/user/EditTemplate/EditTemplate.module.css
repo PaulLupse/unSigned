@@ -1,0 +1,22 @@
+
+.main {
+    box-sizing: border-box;
+    display:grid;
+    justify-items: center;
+    --children-max-width: 800px;
+}
+
+.formFrame {
+    box-sizing: border-box;
+
+    display: grid;
+    padding:30px;
+    margin:0 30px 100px 30px;
+    height:100%;
+    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    align-items: start;
+
+    --children-max-width: 800px;
+}

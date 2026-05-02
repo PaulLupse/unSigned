@@ -1,0 +1,24 @@
+.floatingMenu {
+    box-sizing: border-box;
+    border-radius: 0;
+    border: 0;
+    box-shadow: none !important;
+}
+
+.floatingMenu .item {
+    box-sizing: border-box;
+    padding:5px 10px 5px 10px !important;
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 15px !important;
+    border:1px solid;
+    border-bottom: 0;
+    place-items: center;
+    justify-content: center;
+}
+
+.floatingMenuList {
+    box-sizing: border-box;
+    padding: 0;
+    gap:10px;
+    border-bottom: 1px solid;
+}

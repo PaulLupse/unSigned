@@ -1,0 +1,5 @@
+.errorPopup {
+    border-radius: 0;
+    color:black;
+    z-index: 20;
+}

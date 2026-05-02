@@ -1,0 +1,49 @@
+.notLoggedInPanel {
+    display:flex;
+    height:100%;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.main {
+    display:grid;
+    grid-template-columns: 1fr;
+    justify-items: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.profileCard {
+    display:flex;
+    flex-direction: column;
+    padding:20px;
+    border: 2px solid black;
+
+}
+
+.header {
+    display:grid;
+    grid-template-columns: auto 1fr auto;
+    justify-items: start;
+    align-items: center;
+    gap: 10px;
+}
+
+.content {
+    display:grid;
+    grid-template-columns: auto 1fr;
+}
+
+.footer {
+    display:flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.pfp {
+    width: 100px;
+    height: 100px;
+}

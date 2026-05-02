@@ -1,4 +1,7 @@
+import re
+from collections import Counter
 from dataclasses import dataclass
+from email import message
 
 import pymongo.errors
 from bson import ObjectId
@@ -9,6 +12,8 @@ from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 from pymongo.results import DeleteResult, InsertOneResult
 
+from src.backend.domain.models import AnswerStatistic, TextAnswer, TextQuestionAnswerStatistic, GridQuestionAnswerStatistic, \
+    GridAnswer
 from src.backend.domain.models import MinimalTemplateInfo, Template
 from src.backend.domain.models import TextQuestion, GridQuestion
 from src.backend.api.auth.auth import hash_password, verify_password
@@ -139,6 +144,8 @@ class DBConnector:
         form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id)})
         if not form_from_db: return DBResult(404, "Form not found.")
 
+
+        print(form_from_db)
         if "datePublished" in form_from_db.keys(): return DBResult(409, "Form closed.")
 
         self.forms_table.update_one({"_id":ObjectId(form_id)}, update={"$set":{"datePublished":datetime.now().isoformat()}})
@@ -153,6 +160,8 @@ class DBConnector:
 
         form_from_db['id'] = str(form_from_db.pop('_id'))
         form = Form.model_validate(form_from_db)
+
+        print(form)
 
         if form.datePublished is None: DBResult(409, "Form not published.")
 
@@ -172,9 +181,9 @@ class DBConnector:
         forms_from_db = TypeAdapter(list[Form]).validate_python(forms_from_db)
 
         minimal_forms:list[MinimalFormInfo] = TypeAdapter(list[MinimalFormInfo]).validate_python([MinimalFormInfo(name=form.name,
-                                                               dateClosed=None,
+                                                               dateClosed=form.dateClosed,
                                                                dateCreated=form.dateCreated,
-                                                               datePublished=None,
+                                                               datePublished=form.datePublished,
                                                                submissionsCount=len(form.submissions),
                                                                 id=form.id)
                                                                 for form in forms_from_db])
@@ -243,18 +252,28 @@ class DBConnector:
                   new_title:str|None = None,
                   new_questions:list[TextQuestion|GridQuestion]|None = None):
 
-        new_data = {}
-        if new_questions: new_data["questions"] = jsonable_encoder(new_questions)
-        if new_title: new_data["name"] = new_title
+        try:
 
-        self.forms_table.update_one(
-            {"_id":ObjectId(form_id)},
-            {
-                "$set": new_data
-            }
-        )
+            new_data = {}
+            new_data["questions"] = jsonable_encoder(new_questions)
+            if new_title: new_data["name"] = new_title
 
-        return DBResult(200, "Updated.")
+            print(new_data)
+
+            result = self.forms_table.update_one(
+                {"_id":ObjectId(form_id)},
+                {
+                    "$set": new_data
+                }
+            )
+
+            if result.modified_count == 0: return DBResult(404, "Form not found.")
+
+            return DBResult(200, "Updated.")
+
+        except Exception as e:
+
+            return DBResult(500, "Unexpected error: " + str(e))
 
     # returneaza detalii minime despre template-urile utilizatorului
     def get_templates(self, owner_id:str)->DBResult[list[MinimalTemplateInfo]]:
@@ -267,7 +286,9 @@ class DBConnector:
                 [ MinimalTemplateInfo(
                         id=str(template['_id']),
                         name=template['name'],
-                        questionCount=len(template['questions']) )
+                        questionCount=len(template['questions']),
+                        ownerId=template['ownerId'])
+
                 for template in templates_from_db]
 
             return DBResult[list[MinimalTemplateInfo]](status=200, message="Queried successfully.", data=template_list)
@@ -279,6 +300,8 @@ class DBConnector:
     def get_template(self, template_id:str)->DBResult[Template]:
 
         try:
+
+            if not ObjectId.is_valid(template_id): return DBResult(404, "Template not found.")
 
             template_from_db = self.templates_table.find_one({"_id":ObjectId(template_id)})
 
@@ -316,7 +339,7 @@ class DBConnector:
 
             result = self.templates_table.insert_one(template_in_db)
 
-            return DBResult(201, "Created.", result.inserted_id)
+            return DBResult(201, "Created.", str(result.inserted_id))
 
         except pymongo.errors.DuplicateKeyError:
             return DBResult(409, "Template with this name already exists.")
@@ -327,7 +350,7 @@ class DBConnector:
         new_template_in_db:dict = {}
 
         if new_name: new_template_in_db['name'] = new_name
-        if new_questions: new_template_in_db['questions'] = jsonable_encoder(new_questions)
+        new_template_in_db['questions'] = jsonable_encoder(new_questions)
 
         result = self.templates_table.update_one(
             {"_id":ObjectId(template_id)},
@@ -347,12 +370,101 @@ class DBConnector:
 
         return DBResult(200, "Deleted.")
 
+    @staticmethod
+    def calculate_text_submission_data(answers:list[TextAnswer], question:TextQuestion)->TextQuestionAnswerStatistic:
+
+        word_count:int = 0
+        words_counter:Counter = Counter()
+        nr_answered:int = 0
+
+        for answer in answers:
+            words = re.split(r'[.;,\s]+', answer.text)
+            word_count += len(words)
+            if word_count != 0: nr_answered += 1
+            words_counter.update(Counter(words))
+
+        top_5_words = [item[0] for item in words_counter.most_common(5)]
+
+        return TextQuestionAnswerStatistic(type='text',
+                                           engagement=nr_answered / len(answers) * 100,
+                                           avgWordCount= word_count / len(answers),
+                                           frequentWords=top_5_words)
+
+    @staticmethod
+    def calculate_grid_submission_data(answers:list[GridAnswer], question:GridQuestion)->GridQuestionAnswerStatistic:
+
+        choices_counter:list[int] = [0 for _ in question.choices]
+        nr_answered:int = 0
+
+        for answer in answers:
+            for choice in answer.choices:
+                choices_counter[choice] += 1
+            if answer.choices: nr_answered += 1
+
+        answers_len = len(answers)
+        return GridQuestionAnswerStatistic(type='grid',
+                                           engagement=nr_answered/answers_len*100,
+                                           answerRate=[cnt/answers_len*100 for cnt in choices_counter])
+
+    @staticmethod
+    def get_questions_answers(subs:list[Submission])->list[list[TextAnswer]|list[GridAnswer]]:
+
+        # initializam matricea de raspunsuri (ineficient dar pt moment merge)
+        questions_answers:list[list[TextAnswer]|list[GridAnswer]] = []
+        for i in range(0, len(subs[0].answers)):
+            answer_list = []
+            questions_answers.append(answer_list)
+
+        for sub in subs:
+            for answer_index, answer in enumerate(sub.answers):
+                questions_answers[answer_index].append(answer)
+
+        return questions_answers
+
+    def get_submission_data(self, form_id)->DBResult[list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic]]:
+
+        try:
+
+            form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id)})
+
+            if not form_from_db: return DBResult(404, "Form not found.")
+
+            form_from_db['id'] = str(form_from_db.pop('_id'))
+            form = Form.model_validate(form_from_db)
+
+            questions:list[TextQuestion|GridQuestion] = form.questions
+            submissions:list[Submission]|None = form.submissions
+
+            if not submissions: return DBResult(200, "No submissions found.", [])
+
+            questions_answers:list[list[TextAnswer]|list[GridAnswer]] = self.get_questions_answers(submissions)
+
+            statistics:list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic] = []
+
+            for question_index, question in enumerate(questions):
+
+                if type(question) == TextQuestion:
+                    statistics.append(self.calculate_text_submission_data(questions_answers[question_index], question))
+
+                elif type(question) == GridQuestion:
+                    statistics.append(self.calculate_grid_submission_data(questions_answers[question_index], question))
+
+            return DBResult[list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic]](status=200, data=statistics, message="Ok.")
+
+        except Exception as e:
+            return DBResult(500, "Unexpected error: " + str(e))
+
 
 def get_db()->DBConnector:
     try:
         return DBConnector()
     except Exception as e:
         raise Exception("Unexpected error: " + str(e))
+
+if __name__ == "__main__":
+
+    db = get_db()
+    print(db.get_submission_data('69f3f65a38b069bc7088df78'))
 
 
 

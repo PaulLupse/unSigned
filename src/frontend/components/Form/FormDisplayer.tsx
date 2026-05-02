@@ -3,13 +3,18 @@ import type {GridQuestion,TextQuestion} from "../../domain/types";
 import {QuestionDisplayer} from "./QuestionDisplayer/QuestionDisplayer";
 
 import "./CommonFormStyle.css"
+import type {Field, FieldErrors, UseFormRegister, UseFormReset, UseFormResetField} from "react-hook-form";
+import FormInputErrorPopup from "src/frontend/components/FormInputErrorPopup/FormInputErrorPopup";
 
 
 interface QuestionListProps {
     questions:Array<TextQuestion|GridQuestion>
+    register?:UseFormRegister<any>
+    errors?:FieldErrors<any>
+    resetField?:UseFormResetField<any>
 }
 
-function QuestionList({questions}:QuestionListProps) {
+function QuestionList({questions, register, errors, resetField}:QuestionListProps) {
     return (
         <ol className={'question-list'}>
             {
@@ -17,13 +22,15 @@ function QuestionList({questions}:QuestionListProps) {
                     questions.map(
                         (question: TextQuestion | GridQuestion, index: number) => {
                             return (
-                                <QuestionDisplayer key={index} questionIndex={index + 1} question={question}/>
+                                <>
+                                    <QuestionDisplayer key={index} question={question} index={index} register={register} errors={errors} resetField={resetField}/>
+                                </>
                             )
                         }
                     ) :
                     <div style={{display: 'flex', justifyContent: 'center'}}>
                         <h3>
-                            This form has no questions.
+                            No questions.
                         </h3>
                     </div>
             }
@@ -34,9 +41,12 @@ function QuestionList({questions}:QuestionListProps) {
 interface FormDisplayerProps {
     name:string
     questions:Array<GridQuestion|TextQuestion>
+    register?:UseFormRegister<any>
+    errors?:FieldErrors<any>
+    resetField?:UseFormResetField<any>
 }
 
-export function FormDisplayer({name, questions}:FormDisplayerProps) {
+export function FormDisplayer({name, questions, register, errors, resetField}:FormDisplayerProps) {
 
     return (
         <div className={'form'}>
@@ -47,7 +57,7 @@ export function FormDisplayer({name, questions}:FormDisplayerProps) {
                 </h2>
             </div>
 
-            <QuestionList questions={questions} />
+            <QuestionList questions={questions} register={register} errors={errors} resetField={resetField} />
 
         </div>
     )

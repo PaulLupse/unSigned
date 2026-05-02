@@ -60,10 +60,10 @@ def generate_key(data:Key)->str:
     return token
 
 # valideaza si decodeaza o cheie de access pentru un chestionar
-def decode_key(token)->Key|None:
+def decode_key(token:str)->Key|None:
 
     try:
-        decoded = pyseto.decode(keys=paseto_key, token=token)
+        decoded = pyseto.decode(keys=paseto_key, token=token.strip(' '))
         payload = json.loads(decoded.payload.decode("utf-8"))
         keyId = json.loads(decoded.footer.decode("utf-8"))['keyId']
 

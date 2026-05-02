@@ -1,0 +1,36 @@
+.question {
+    margin: 10px;
+    border: 1px solid;
+    padding: 5px
+}
+
+.question p {
+
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+.gridChoiceFrame {
+    display: flex;
+    justify-content: space-evenly;
+    flex-wrap: wrap;
+    gap:5px;
+}
+
+.gridChoice {
+    display:flex;
+    border: 1px solid gray;
+
+}
+
+.gridChoice p {
+    max-width: 100%;
+    overflow-wrap: break-word;
+
+    word-break: break-all;
+}
+
+.gridChoice input {
+    margin:10px;
+    align-self: start;
+}

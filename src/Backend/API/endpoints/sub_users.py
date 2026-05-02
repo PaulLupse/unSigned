@@ -20,16 +20,19 @@ def validate_key(key:str, form_id:str)->Key|None:
 
     key:Key|None = decode_key(key)
     if not key:
+        print("AICI 1")
         return None
     if key.payload.formId != form_id:
+        print("AICI 2")
         return None
     if db_connector.check_key_usage(key):
+        print("AICI 3")
         return None
     return key
 
 
 @router.post("/check/{form_id}", response_class=JSONResponse)
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def check_form_id(form_id:str, request: Request):
 
     exists:bool = db_connector.check_form_existence(form_id)
@@ -40,7 +43,7 @@ async def check_form_id(form_id:str, request: Request):
         return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Form found."})
 
 @router.post("/check-key", response_class=HTMLResponse)
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def check_key(chk_key_req: CheckKeyRequest, request: Request):
 
     if validate_key(chk_key_req.key, chk_key_req.formId):
@@ -64,7 +67,7 @@ async def check_key(chk_key_req: CheckKeyRequest, request: Request):
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Invalid Key."})
 
 @router.post("/use-key", response_class=JSONResponse)
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def use_key(chk_key_req: CheckKeyRequest, request: Request):
 
     key:Key|None = validate_key(chk_key_req.key, chk_key_req.formId)
@@ -94,15 +97,17 @@ class SubmitFormRequest(BaseModel):
     formId:str
 
 @router.post("/submit-form", response_class=JSONResponse)
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def submit_form(submit_form_request:SubmitFormRequest, request: Request):
 
     validation_response: Key | None = validate_key(submit_form_request.key, submit_form_request.formId)
+    print(validation_response)
     if validation_response:
 
         result:DBResult = db_connector.submit_form_answer(validation_response.payload.formId, submit_form_request.submission)
+        use_key_result:DBResult = db_connector.use_key(validation_response)
 
-        if result.status==200:
+        if result.status==use_key_result==200:
             return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Submitted successfully."})
 
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"detail":"Internal Server Error."})

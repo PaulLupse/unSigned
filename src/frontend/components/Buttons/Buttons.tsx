@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useRef} from "react";
 import {type To, useNavigate} from "react-router-dom";
 
 interface NavButtonProps extends React.ComponentPropsWithoutRef<'button'> {
@@ -8,8 +8,19 @@ interface NavButtonProps extends React.ComponentPropsWithoutRef<'button'> {
 
 export function NavButton({to, children, ...rest}:NavButtonProps) {
     const navigate = useNavigate()
+    const buttonRef = useRef<HTMLButtonElement>(null);
+
+    const navEvent = ()=>{navigate(to);}
+
+    useEffect(()=>{
+        buttonRef.current?.addEventListener("click", navEvent);
+        return ()=>{
+            buttonRef.current?.removeEventListener("click", navEvent);
+        }
+    }, [buttonRef])
+
     return(
-        <button onClick={() => { navigate(to) }} {...rest}>
+        <button ref={buttonRef} {...rest}>
             {children}
         </button>
     )

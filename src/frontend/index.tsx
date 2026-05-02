@@ -1,79 +1,45 @@
 import React, {useMemo, useState} from 'react'
 import {createRoot} from "react-dom/client";
-import {
-    BrowserRouter,
-    Link, Navigate,
-    Outlet,
-    Route,
-    Routes, useLocation, useNavigate,
-    useOutletContext
-} from "react-router-dom";
-import {
-    useQueryClient,
-    QueryClient,
-    QueryClientProvider, useQuery
-} from "@tanstack/react-query";
+import {BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate} from "react-router-dom";
+import {QueryCache, QueryClient, QueryClientProvider, useQuery, useQueryClient} from "@tanstack/react-query";
 import {AlertProvider} from "./components/AlertProvider";
 
 import '../../static/css/general.css'
 
-import {auto_login} from "./routes/user/back-end-connection";
+import {auto_login} from "./server/users-server";
 
 import FormCreator from "./routes/user/FormCreator/FormCreator";
-import {ViewForm} from "./routes/user/ViewForm";
+import {Form} from "./routes/user/Form";
 import {DisplayFrom} from "./routes/user/DisplayForm/DisplayForm";
-import {DisplaySubmissionData} from "./routes/user/view-submission-data";
-import {
+import {SubmissionData} from "./routes/user/SubmissionData/SubmissionData";
+import
+    SubUsersMain, {
     BaseComponent,
     FormIdInputComponent,
     KeyInputComponent,
     ShowFormComponent,
-    SubUsersMain
-} from "./routes/sub-user/complete-form";
-import { StyledEngineProvider } from '@mui/material/styles';
+} from "./routes/sub-user/SubUsersMain";
+import {StyledEngineProvider} from '@mui/material/styles';
 
-import {LoginComponent, RegisterComponent} from "./routes/user/login";
+import {LoginComponent, RegisterComponent} from "./routes/user/Auth";
 import NavBar from "./components/NavBar/NavBar";
-import {DistributeKeys} from "./routes/user/distribute-keys";
+import {DistributeKeys} from "./routes/user/DistributeKeys/DistributeKeys";
 import SideBar from "./components/SideBar/BetterSideBar";
-import {Toaster} from "react-hot-toast";
-import {Profile} from "./routes/user/profile";
+import toast, {Toaster} from "react-hot-toast";
+import {Profile} from "./routes/user/Profile/Profile";
 
 
-import './Presentation.css'
-function Presentation() {
-
-    return(
-        <div className={"presentation"}>
-            <div className={"card"}>
-                <h1>
-                    unSigned
-                </h1>
-                <label>
-                    Anonymous forms
-                </label>
-                <div>
-                    <div>
-                        <hr />
-                        Key based
-                        <hr />
-                    </div>
-                    <div>
-                        <hr />
-                        Stateless
-                        <hr />
-                    </div>
-                    <div>
-                        <hr />
-                        Performant
-                        <hr />
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    )
-}
+import './routes/user/Presentation/Presentation.module.css'
+import EditForm from "src/frontend/routes/user/EditForm/EditForm";
+import Template from "src/frontend/routes/user/Template";
+import DisplayTemplate from "src/frontend/routes/user/DisplayTemplate/DisplayTemplate";
+import EditTemplate from "src/frontend/routes/user/EditTemplate/EditTemplate";
+import {Presentation} from "src/frontend/routes/user/Presentation/Presentation";
+import TemplateCreator from "src/frontend/routes/user/TemplateCreator/TemplateCreator";
+import {DisplayTemplates, DisplayForms} from "src/frontend/routes/user/DisplayUserData";
+import ThankYou from "src/frontend/routes/sub-user/ThankYou";
+import type {User} from "src/frontend/domain/types";
+import AdminMain from "src/frontend/routes/admin/AdminMain/AdminMain";
 
 function Index() {
 
@@ -81,19 +47,16 @@ function Index() {
     const nav = useNavigate();
 
     const queryClient = useQueryClient();
-    const {isSuccess, data, isLoading, isError, isStale} = useQuery({queryKey: ['username'], queryFn:auto_login, retry:0, refetchOnWindowFocus:true, staleTime:3600})
-    const username:string|null = useMemo(()=>data?data:null,[data, isSuccess, isStale, isError]);
+    const {isSuccess, data, isLoading, isError, isStale} = useQuery({queryKey: ['user'], queryFn:auto_login, retry:0, refetchOnWindowFocus:false})
 
     const [sidebarIsOpen, setSidebarIsOpen] = useState(false);
 
     React.useEffect(()=> {
-        console.log('SIA DAT QUERYYYYYYYYYYYYYYY');
             if(isError) {
-                if (!['/me', '/login', '/register'].includes(loc.pathname))
-                    nav('/me');
+                if (!['/me', '/login', '/register', '/'].includes(loc.pathname))
+                    nav('/me', {replace:true});
             }
-        },
-        [isStale, isError, isLoading]
+        },[loc, isSuccess, isError, isStale, isLoading]
     );
 
     return (
@@ -121,27 +84,39 @@ function Index() {
                 setSidebarIsOpen={setSidebarIsOpen}
                 isLoading={isLoading}
                 isSuccess={isSuccess}
-                username={username}
                 queryClient={queryClient} />
-            <div style={{}}>
+            <main>
                 {
                     isLoading?
-                    <div style={{display:"grid", placeContent:"center"}}>
+                    <div className={'loading'}>
                         <p>
                             Loading . . .
                         </p>
                     </div>:
-                        <Outlet  context={{username:isSuccess?username:""}}/>
+                        <Outlet context={{user:data?data:undefined}}/>
                 }
                 <SideBar isOpen={sidebarIsOpen} setIsOpen={setSidebarIsOpen} anchor={'right'} />
-            </div>
+            </main>
 
 
         </div>
     );
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    queryCache: new QueryCache({
+        onError:(error)=>{
+            if('status' in error) // daca eroarea este de tip CustomError . . .
+                if(error.status == 401) {
+                    if (!['/me', '/login', '/register', '/'].includes(window.location.pathname)) 
+                        window.location.pathname='/login'
+                    return;
+                }
+            toast.error(error.message);
+        }
+    })
+});
+
 window.onload = ()=>{
     const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement
     const root = createRoot(rootDiv);
@@ -154,14 +129,27 @@ window.onload = ()=>{
                         <Routes>
                             <Route path='/' element={<Index />}>
                                 <Route index element={<Presentation />} />
-                                <Route path='me' element={<Profile />} />
+                                <Route path='me' >
+                                    <Route index element={<Profile />} />
+                                    <Route path='forms' element={<DisplayForms />} />
+                                    <Route path='templates' element={<DisplayTemplates />} />
+                                </Route>
                                 <Route path='login' element={<LoginComponent />}/>
                                 <Route path='register' element={<RegisterComponent />}/>
-                                <Route path='create-new-form' element={<FormCreator />} />
-                                <Route path='view-form/:formId' element={<ViewForm />}>
-                                    <Route index element={<DisplayFrom />} />
-                                    <Route path='submissions' element={<DisplaySubmissionData />} />
+                                <Route path='form/create' element={<FormCreator />} />
+                                <Route path='template/create' element={<TemplateCreator />} />
+                                <Route path={'form/:formId'} element={<Form />}>
+                                    <Route path="view" element={<DisplayFrom />} />
+                                    <Route path="edit" element={<EditForm />} />
+                                    <Route path='submissions' element={<SubmissionData />} />
                                     <Route path='keys' element={<DistributeKeys />}/>
+                                </Route>
+                                <Route path={'template/:templateId'} element={<Template />}>
+                                    <Route path="view" element={<DisplayTemplate />}/>
+                                    <Route path='edit' element={<EditTemplate />}/>
+                                </Route>
+                                <Route path={"admin"} element={<AdminMain />}>
+
                                 </Route>
                             </Route>
                             {/* ruta /complete-form este separata de ruta principala deoarece este menita sa fie accesata de sub-utilizatori */}
@@ -170,6 +158,7 @@ window.onload = ()=>{
                                 <Route path={":formId"} element={<BaseComponent />}>
                                     <Route index element={<KeyInputComponent />} ></Route>
                                     <Route path={"complete"} element={<ShowFormComponent />} ></Route>
+                                    <Route path={"done"} element={<ThankYou />}></Route>
                                 </Route>
                             </Route>
                             <Route path='/*' element={<Navigate to={'/'} replace={true} />} ></Route>

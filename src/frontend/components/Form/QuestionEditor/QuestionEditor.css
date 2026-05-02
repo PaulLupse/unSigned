@@ -1,8 +1,8 @@
 .question-editor {
-    border: 1px solid;
+    border: 3px solid;
 
-    padding:10px;
-    margin:10px;
+    padding:5px;
+    margin:10px 10px 20px 10px;
 
     display:grid;
 }
@@ -45,6 +45,10 @@
     justify-content: space-evenly;
     flex-wrap: wrap;
     gap:5px;
+}
+
+.question-editor .button-bar button {
+    border: 2px black solid
 }
 
 .question-editor .grid-question {
@@ -127,6 +131,5 @@
 }
 
 .question-editor .grid-question .add-button-frame button {
-    width: 8rem
+    width: 8rem;
 }
-

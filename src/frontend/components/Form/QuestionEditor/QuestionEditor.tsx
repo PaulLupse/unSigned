@@ -18,7 +18,7 @@ import type {
     GridChoice,
     GridOptions, TextOptions
 } from "../../../domain/types";
-import FormInputErrorPopup from "../../../common/error-popups";
+import FormInputErrorPopup from "src/frontend/components/FormInputErrorPopup/FormInputErrorPopup";
 
 import {gridQuestionSchema, textQuestionSchema} from "../../../domain/schemas";
 
@@ -31,6 +31,9 @@ interface QuestionOptionsComponentProps {
 
 interface QuestionEditorProps {
     setQuestionToBeEdited:(questionIndex:number, set:boolean)=>void
+    setQuestionNew:(questionIndex:number, set:boolean)=>void
+    questionIsNew:(questionIndex:number)=>boolean
+    deleteQuestion:(questionIndex:number)=>void
     action:(questionIndex:number, question:GridQuestion|TextQuestion)=>void;
     questionIndex:number
     questionData?:TextQuestion|GridQuestion
@@ -58,13 +61,12 @@ function TextQuestionOptions(props:QuestionOptionsComponentProps) {
                 <label>
                     Maximum characters:
                 </label>
-                <input data-tooltip-id={'maxChars'}
+                <input data-tooltip-id={'specificOptions.maxChars'}
                        {...props.register("specificOptions.maxChars",
-                           {max:
-                                   {value:10000,
+                           {max: {value:10000,
                                        message:"Answers should not have more than 10000 characters!"}
                            })} defaultValue={30}  type={'number'} />
-                <FormInputErrorPopup name={"maxChars"} errors={props.errors} place={'top'} />
+                <FormInputErrorPopup name={"specificOptions.maxChars"} errors={props.errors} place={'top'} />
             </div>
         </div>
     )
@@ -145,30 +147,37 @@ function GridQuestionOptions(props:QuestionOptionsComponentProps) {
 }
 
 
-function getDefaultQuestionOptions(questionData:TextQuestion|GridQuestion):QuestionOptions {
+function getDefaultQuestionOptions(questionData:TextQuestion|GridQuestion|undefined, questionIndex:number):QuestionOptions {
 
-    let specificOptions:GridOptions|TextOptions
-    if (questionData.type === 'grid') {
-         specificOptions = {
-             type:"grid",
-             choices:questionData.choices.map(
-                 (choice:string):GridChoice=> {
-                     return {text:choice}
-                 }),
-             isMultipleChoice: questionData.isMultipleChoice
-         }
-    } else {
-        specificOptions = {
-            type:"text",
-            maxChars:questionData.maxChars
+    if(questionData) {
+         let specificOptions:GridOptions|TextOptions
+        if (questionData.type === 'grid') {
+             specificOptions = {
+                 type:"grid",
+                 choices:questionData.choices.map(
+                     (choice:string):GridChoice=> {
+                         return {text:choice}
+                     }),
+                 isMultipleChoice: questionData.isMultipleChoice
+             }
+        } else {
+            specificOptions = {
+                type:"text",
+                maxChars:questionData.maxChars
+            }
         }
+
+        return {
+            text:questionData.text!==''?questionData.text:`Question #${questionIndex+1} text`,
+            isOptional:questionData.isOptional,
+            specificOptions:specificOptions
+        }
+    } return {
+        text:`Question #${questionIndex+1} text`,
+        isOptional:false,
+        specificOptions:{type:'text', maxChars:30}
     }
 
-    return {
-        text:questionData.text,
-        isOptional:questionData.isOptional,
-        specificOptions:specificOptions
-    }
 }
 
 // Componenta ce ofera posibilitatea de a creea o noua intrebare sau de a edita o intrebare existenta
@@ -178,7 +187,7 @@ export function QuestionEditor(props:QuestionEditorProps) {
     // de fapt, si editarea se realizeaza sub forma de creare a unei intrebari noi, prin inlocuirea optiunilor
     // optiunilor intrebarii cu noi opriuni
     const {register, formState:{errors}, control, watch, getValues, trigger} = useForm<QuestionOptions>(
-        { defaultValues:props.questionData?getDefaultQuestionOptions(props.questionData):{},
+        { values:getDefaultQuestionOptions(props.questionData, props.questionIndex),
             mode: "onChange"
         }
     );
@@ -188,26 +197,18 @@ export function QuestionEditor(props:QuestionEditorProps) {
     // handler pentru adaugarea unei noi intrebari
     const submit = async (data:QuestionOptions)=>{
 
-        let question;
+        let constructedQuestion:any = {text:data.text, isOptional:data.isOptional, type:data.specificOptions.type}, question;
         if(data.specificOptions.type==='grid') {
-            question =
-                gridQuestionSchema.parse({
-                    text:data.text,
-                    type:'grid',
-                    choices:data.specificOptions.choices.map((choice:GridChoice) => choice.text),
-                    isOptional:data.isOptional,
-                    isMultipleChoice:data.specificOptions.isMultipleChoice
-                })
-        }
-        else {
 
-            question = textQuestionSchema.parse({
-                    text:data.text,
-                    type:'text',
-                    isOptional:data.isOptional,
-                    maxChars:data.specificOptions.maxChars
-                })
+            constructedQuestion.choices=data.specificOptions.choices.map((choice:GridChoice) => choice.text);
+            constructedQuestion.isMultipleChoice=data.specificOptions.isMultipleChoice;
+            question = gridQuestionSchema.parse(constructedQuestion)
+
+        } else {
+            constructedQuestion.maxChars=data.specificOptions.maxChars;
+            question = textQuestionSchema.parse(constructedQuestion)
         }
+
         props.action(props.questionIndex, question);
     };
 
@@ -216,13 +217,14 @@ export function QuestionEditor(props:QuestionEditorProps) {
 
             <div className={'common-options-frame'}>
                 <textarea id="question"
+                          defaultValue={`Question #${props.questionIndex} text . . .`}
                           aria-setsize={0}
-                          data-tooltip-id={'text'}
+                          data-tooltip-id={`text${props.questionIndex}`}
                           {...register("text",
                               {required:"Question text cannot be null."})}
                           placeholder="Question text"/>
 
-                <FormInputErrorPopup name={'text'} errors={errors} place={"bottom"}/>
+                <FormInputErrorPopup id={`text${props.questionIndex}`} name={`text`} errors={errors} place={"bottom"}/>
 
                 {/* selector al tipului de intrebare */}
                 <select {...register("specificOptions.type")}>
@@ -246,6 +248,11 @@ export function QuestionEditor(props:QuestionEditorProps) {
                         onClick={
                             ()=>{
                                 props.setQuestionToBeEdited(props.questionIndex, false);
+                                if(props.questionIsNew(props.questionIndex)) {
+                                    props.deleteQuestion(props.questionIndex);
+                                    props.setQuestionNew(props.questionIndex, false)
+                                }
+
                             }}
                         style={{width:'8rem'}}>Cancel</button>
 
@@ -255,6 +262,8 @@ export function QuestionEditor(props:QuestionEditorProps) {
                                 const isValid = await trigger();
                                 if (isValid) {
                                     await submit(getValues());
+                                    if (props.questionIsNew(props.questionIndex))
+                                        props.setQuestionNew(props.questionIndex, false)
                                     props.setQuestionToBeEdited(props.questionIndex, false);
                                 }
                             }}

@@ -10,12 +10,13 @@ from typing import Annotated
 import logging, jwt, os
 from datetime import timedelta
 
+from src.backend.domain.models import AnswerStatistic, TextQuestionAnswerStatistic, GridQuestionAnswerStatistic
 from src.backend.db.DBConnector import DBResult
 from src.backend.domain.requests import RegisterRequest, EditFormRequest
 from src.backend.api.Limiter import limiter
 from src.backend.api.auth.KeyDistributor import distribute_keys
 from src.backend.domain.auth import Key, KeyPayload, User
-from src.backend.domain.models import MinimalFormInfo, NewForm, Form
+from src.backend.domain.models import MinimalFormInfo, NewForm, Form, MinimalTemplateInfo, Template
 from src.backend.db.DBConnector import DBConnector, get_db
 from src.backend.api.auth.auth import generate_access_token, generate_key
 from src.backend.api.auth.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
@@ -56,6 +57,7 @@ async def authenticate(token : Annotated[str, Depends(oauth2_scheme)])->User:
         return User(id=user_id, username=payload.get("username"))
 
     except ExpiredSignatureError:
+
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail="Acces token expired. Please log in again.",
                             headers={"WWW-Authenticate": "Bearer"})
@@ -71,6 +73,14 @@ EXP = 60
 async def get_token(credentials: Annotated[OAuth2PasswordRequestForm, Depends()], request: Request):
 
     logger.debug("Token called.")
+
+    tk = request.cookies.get("access_token")
+    if tk:
+        try:
+            jwt.decode(tk.split(' ')[1], key=os.getenv("SECURE_KEY"), algorithms=[os.getenv("JWT_ALG")])
+            raise HTTPException(status_code=409, detail="Already logged in.", headers={"WWW-Authenticate":"Bearer"})
+        except ExpiredSignatureError:
+            ...
 
     # accesam baza de date pentru a verifica validitatea credentialelor
     db_response:DBResult[str] = db_connector.validate_credentials(credentials.username, credentials.password)
@@ -94,15 +104,15 @@ async def get_token(credentials: Annotated[OAuth2PasswordRequestForm, Depends()]
     return response
 
 
-@router.post("/me", response_class=JSONResponse)
+@router.post("/me", response_model=User, status_code=200)
 @limiter.limit("60/minute")
 async def me(user:Annotated[User, Depends(authenticate)], request: Request):
 
-    return JSONResponse(content={"username":user.username, "message":"Logged in succesfully."}, status_code=status.HTTP_200_OK)
+    return user
 
 
 @router.put("/register", response_class=JSONResponse)
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def register_user(register_request:RegisterRequest, request: Request):
 
     register_response:DBResult[str] = db_connector.register_user(username=register_request.username,
@@ -115,7 +125,7 @@ async def register_user(register_request:RegisterRequest, request: Request):
 
 
 @router.post("/me/logout", response_class=JSONResponse, dependencies=[Depends(authenticate)])
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def logout_user(request: Request):
 
     response:JSONResponse = JSONResponse(content={"message":f"Logged out succesfully."}, status_code=status.HTTP_200_OK)
@@ -125,7 +135,7 @@ async def logout_user(request: Request):
 
 
 @router.post("/me/delete", response_class=JSONResponse)
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def delete_user(user:Annotated[User, Depends(authenticate)], request: Request):
 
     result:DBResult = db_connector.delete_user(user.id)
@@ -136,7 +146,7 @@ async def delete_user(user:Annotated[User, Depends(authenticate)], request: Requ
 
 
 @router.get("/me/forms")
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def get_forms(user:Annotated[User, Depends(authenticate)], request: Request):
 
     result:DBResult[list[MinimalFormInfo]] = db_connector.get_forms(user.id)
@@ -144,7 +154,7 @@ async def get_forms(user:Annotated[User, Depends(authenticate)], request: Reques
 
 
 @router.post("/me/form/add", response_class=JSONResponse)
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def create_form(user:Annotated[User, Depends(authenticate)], new_form:NewForm, request: Request):
 
     result:DBResult[str] = db_connector.add_form(new_form, user.id)
@@ -154,7 +164,7 @@ async def create_form(user:Annotated[User, Depends(authenticate)], new_form:NewF
 
 
 @router.post("/me/form/{form_id}/publish", response_class=JSONResponse, dependencies=[Depends(authenticate)])
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def publish_form(form_id: str, request: Request):
 
     result:DBResult = db_connector.publish_form(form_id)
@@ -165,7 +175,7 @@ async def publish_form(form_id: str, request: Request):
 
 
 @router.post("/me/form/{form_id}/close", response_class=JSONResponse, dependencies=[Depends(authenticate)])
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def close_form(form_id: str, request: Request):
 
     result:DBResult = db_connector.close_form(form_id)
@@ -177,7 +187,7 @@ async def close_form(form_id: str, request: Request):
 
 
 @router.get("/me/form/{form_id}", response_class=JSONResponse, dependencies=[Depends(authenticate)])
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def get_form_by_id(form_id:str, request: Request):
 
     if len(form_id)!=24:
@@ -192,8 +202,10 @@ async def get_form_by_id(form_id:str, request: Request):
 
 
 @router.put("/me/form/{form_id}/edit", dependencies=[Depends(authenticate)], status_code=200)
-@limiter.limit("20/minute")
+@limiter.limit("60/minute")
 async def edit_form(form_id: str, edit_form_request:EditFormRequest, request:Request):
+
+    print(edit_form_request)
 
     get_form_result = db_connector.get_form(form_id)
     if get_form_result.data and get_form_result.data.datePublished is not None:
@@ -205,7 +217,7 @@ async def edit_form(form_id: str, edit_form_request:EditFormRequest, request:Req
 
 
 @router.delete("/me/form/{form_id}/delete", response_class=JSONResponse, dependencies=[Depends(authenticate)])
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def delete_form(form_id:str, request: Request):
 
     result: DBResult = db_connector.delete_form(form_id)
@@ -213,6 +225,16 @@ async def delete_form(form_id:str, request: Request):
         return JSONResponse(content={"message": "Deleted form succesfully."}, status_code=200)
     else:
         return JSONResponse(content={"message": result.message}, status_code=result.status)
+
+
+@router.get("/me/form/{form_id}/submission-data", response_model=list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic], dependencies=[Depends(authenticate)])
+async def submission_data(form_id:str, request: Request):
+
+    sub_data_res:DBResult[list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic]] = db_connector.get_submission_data(form_id=form_id)
+
+    if sub_data_res.status != 200: raise HTTPException(status_code=sub_data_res.status, detail=sub_data_res.message)
+
+    return sub_data_res.data
 
 
 class Email(BaseModel):
@@ -223,15 +245,96 @@ class DistributeKeysRequest(BaseModel):
 
 
 @router.post("/me/form/{form_id}/distribute_keys", response_class=JSONResponse)
-@limiter.limit("5/minute")
+@limiter.limit("60/minute")
 async def dist_keys(dist_key_req:DistributeKeysRequest, user : Annotated[User, Depends(authenticate)], form_id:str, request: Request):
 
     if db_connector.check_form_existence(form_id):
 
         keys = [generate_key(data=Key(payload=KeyPayload(formId=form_id))) for _ in range(len(dist_key_req.emails))]
-        await distribute_keys(keys=keys, emails=[email.email for email in dist_key_req.emails], form_owner_username=user.username)
+        await distribute_keys(keys=keys, emails=[email.email for email in dist_key_req.emails], form_owner_username=user.username, form_id = form_id)
 
         return JSONResponse(content={"message":"Successfully distributed keys."}, status_code=200)
 
     else: raise HTTPException(status_code=404, detail="Form not found.")
 
+
+@router.post("/me/template/create", status_code=201, response_class=JSONResponse)
+@limiter.limit("60/minute")
+async def create_template(create_template_request:NewForm, user: Annotated[User, Depends(authenticate)], request: Request):
+
+    create_template_response:DBResult[str] = db_connector.create_template(
+        name=create_template_request.name,
+        questions=create_template_request.questions,
+        owner_id=user.id
+    )
+
+    if create_template_response.status != 201:
+        raise HTTPException(status_code= create_template_response.status, detail = create_template_response.message)
+
+
+    return JSONResponse(status_code=201, content={"formId":create_template_response.data})
+
+@router.get("/me/templates", status_code=200, response_model=list[MinimalTemplateInfo])
+@limiter.limit("60/minute")
+async def get_templates(user:Annotated[User, Depends(authenticate)], request: Request):
+
+    get_templates_response:DBResult[list[MinimalTemplateInfo]] = db_connector.get_templates(user.id)
+
+    if get_templates_response.status != 200:
+        raise HTTPException(status_code= get_templates_response.status, detail = get_templates_response.message)
+
+    return get_templates_response.data
+
+@router.get("/me/template/{template_id}", dependencies=[Depends(authenticate)], response_model=Template)
+async def get_template(template_id:str):
+
+    get_template_response:DBResult[Template] = db_connector.get_template(template_id)
+
+    if get_template_response.status != 200:
+        raise HTTPException(status_code=get_template_response.status, detail=get_template_response.message)
+
+    return get_template_response.data
+
+@router.put("/me/template/{template_id}/edit", dependencies=[Depends(authenticate)], status_code=200)
+@limiter.limit("60/minute")
+async def edit_template(template_id: str, edit_temp_req: EditFormRequest, request: Request):
+
+    edit_template_response = db_connector.edit_template(
+        template_id=template_id,
+        new_name = edit_temp_req.name,
+        new_questions = edit_temp_req.questions
+    )
+
+    if edit_template_response.status != 200:
+        raise HTTPException(status_code=edit_template_response.status, detail=edit_template_response.message)
+
+
+@router.delete("/me/template/{template_id}/delete", dependencies=[Depends(authenticate)], status_code=200)
+async def delete_template(template_id:str, request: Request):
+
+    delete_template_response = db_connector.delete_template(template_id)
+
+    if delete_template_response.status != 200:
+        raise HTTPException(status_code=delete_template_response.status, detail=delete_template_response.message)
+
+
+@router.get("/templates", response_model=list[MinimalTemplateInfo], status_code=200)
+async def get_official_templates():
+
+    result:DBResult[list[MinimalTemplateInfo]] = db_connector.get_templates(owner_id="admin")
+
+    if result.status != 200:
+        raise HTTPException(status_code=result.status, detail=result.message)
+
+    return result.data
+
+
+@router.get("/templates/{template_id}", response_model=Template)
+async def get_official_template(template_id:str):
+
+    result:DBResult[Template] = db_connector.get_template(template_id)
+
+    if result.status != 200:
+        raise HTTPException(status_code=result.status, detail=result.message)
+
+    return result.data

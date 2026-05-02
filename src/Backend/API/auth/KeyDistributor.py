@@ -13,7 +13,7 @@ if not GMAIL_APP_PASSWORD:
 
 
 # functie pentru distribuirea cheilor catre utilizatorii avand emailurile listate
-async def distribute_keys(emails:list[str], keys:list[str], form_owner_username:str) -> None:
+async def distribute_keys(emails:list[str], keys:list[str], form_owner_username:str, form_id:str) -> None:
 
     if len(emails)!=len(keys): raise ValueError('Emails and Keys must have the same length')
 
@@ -25,8 +25,8 @@ async def distribute_keys(emails:list[str], keys:list[str], form_owner_username:
 
         for i in range(0, len(emails)):
             yag.send(to=emails[i],
-                     subject=f"Key to access a form created by {form_owner_username}.",
-                     contents=f"Key: {keys[i]} \n Do not loose the key! Once you use it, you cannot do it again, so use it wisely!")
+                     subject=f"Key to access a form created by user {form_owner_username} on unSigned.",
+                     contents=f"Key: {keys[i]} \nComplete the form here: http://localhost:3000/complete-form/{form_id}")
 
 if __name__ == "__main__":
 

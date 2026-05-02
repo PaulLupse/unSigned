@@ -12,33 +12,25 @@ body {
     font-family: 'Poppins', sans-serif;
 }
 
-a {
-    text-decoration: none;
-    color:black;
-}
-
-input, select, textarea, a {
+html, body, button, input, select, textarea {
     font-family: 'Poppins', sans-serif;
+    font-size: 15px;
 }
 
 button {
-    font-family: 'Poppins', sans-serif;
-    font-size: 16px;
     background: white;
     border: solid 1px;
 }
 
 button:hover {
-    background: #cfcfcf;
+    background: var(--button-hover);
 }
 
 button:active {
-    background: #ababab;
+    background: var(--button-clicked);
 }
 
 .plain-button {
-    font-family: 'Poppins', sans-serif;
-    font-size: 15px;
     background: white;
     border: solid 1px;
     padding:5px
@@ -52,14 +44,6 @@ button:active {
     background: var(--button-clicked);
 }
 
-.error-popup {
-    margin:0;
-    color:red;
-    border:1px solid;
-    top:100%;
-    position:absolute;
-}
-
 .loading {
     display:flex;
     justify-content: center;
@@ -71,11 +55,35 @@ button:active {
     text-align: center;
 }
 
-input {
+input, select, option {
     border:1px solid;
 }
 
-p, h1, h2, h3, h4, h5, input, button {
+option:hover {
+    background-color: var(--button-hover);
+}
+
+option:active {
+    background-color: var(--button-clicked);
+}
+
+p, h1, h2, h3, h4, a, h5, td, th, input, button, label, select, option {
+
+
+    overflow-wrap: break-word;
+    word-break: break-all;
     padding: 5px 10px 5px 10px;
     margin: 0;
+}
+
+h1, h2, h3, h4, h5, button, label {
+
+    text-align: center;
+}
+
+h1 {
+    text-align: center;
+    color: white;
+    -webkit-text-stroke: 0.20px black;
+    font-weight: bolder;
 }

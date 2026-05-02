@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useCallback, useRef, useState} from 'react';
 import './credential-form.css'
 import {type SubmitHandler, useForm} from "react-hook-form";
 import {useNavigate} from "react-router-dom";
@@ -6,7 +6,7 @@ import {QueryClient, useMutation, useQueryClient} from "@tanstack/react-query";
 import {zodResolver} from "@hookform/resolvers/zod";
 import type {Credentials} from "../../domain/types";
 import {credentialsSchema} from "../../domain/schemas";
-import FormInputErrorPopup from "../../common/error-popups";
+import FormInputErrorPopup from "src/frontend/components/FormInputErrorPopup/FormInputErrorPopup";
 import toast from "react-hot-toast";
 import {CredentialError} from "../../Utilities";
 
@@ -22,22 +22,29 @@ export function CredentialForm(props: CredentialFormProps) {
     const qC = useQueryClient();
     const [passwordInputType, setPasswordInputType] = React.useState('password');
 
+    const submitButton = useRef<HTMLButtonElement>(null);
+
+    const toggleSubmitButton = useCallback(()=>
+    {
+        if (submitButton.current)
+            submitButton.current.disabled = !submitButton?.current.disabled}, [submitButton]
+    )
+
     const {mutate} = useMutation({
         mutationFn:props.callback,
         onSuccess: async ()=>{
             if(props.type === "Login") {
 
                 await qC.invalidateQueries({queryKey:['username'], refetchType:'all'})
-                await qC.refetchQueries({queryKey:['username']})
-                toast.success("Logged in succesfully.")
+                await qC.refetchQueries({queryKey:['user']})
                 navigate('/me', {replace:true})
 
             } else {
-                toast.success("Registered succesfully. Redirecting to login page . . .")
                 navigate('/login', {replace:true})
             }
         },
         onError: (error)=>{
+            toggleSubmitButton()
             if(error instanceof CredentialError) {
                 if(error.detail.username !== '')
                     setError("username", {
@@ -49,8 +56,7 @@ export function CredentialForm(props: CredentialFormProps) {
                         type:"manual",
                         message:error.detail.password
                     })
-            } else if(error)
-                toast.error(`Could not ${props.type=="Login"?"login":"register"}: ` + error.message);
+            }
         }
     })
 
@@ -63,7 +69,7 @@ export function CredentialForm(props: CredentialFormProps) {
     }
 
     const onSubmit:SubmitHandler<Credentials> = async (data:Credentials) => {
-        console.log('a');
+        toggleSubmitButton();
         mutate({username:data.username, password:data.password})
     }
 
@@ -72,7 +78,7 @@ export function CredentialForm(props: CredentialFormProps) {
         <div data-tooltip-id={"root"} className={"frame"}>
             <form onSubmit={handleSubmit(onSubmit)}>
 
-                <h2 style={{textAlign:'center'}}>
+                <h2 style={{textAlign:'center', marginBottom:'25px'}}>
                     {props.type}
                 </h2>
 
@@ -93,7 +99,7 @@ export function CredentialForm(props: CredentialFormProps) {
                 </div>
 
                 <div style={{display:'grid', alignItems:'center', justifyItems:'center'}}>
-                    <button type={'submit'}>
+                    <button ref={submitButton} type={'submit'}>
                         Submit
                     </button>
                 </div>

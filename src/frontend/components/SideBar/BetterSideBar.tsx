@@ -29,34 +29,31 @@ export default function SideBar(props:SideBarProps) {
             <h2>
                 Quick access
             </h2>
-            <Link to={'/me'}>
+            <Link to={'/'} onClick={()=>props.setIsOpen(false)}>
                 <p>
-                    My accout
+                    Main page
                 </p>
             </Link>
             <hr />
-            <Link to={'/me'}>
+            <Link to={'/me'}  onClick={()=>props.setIsOpen(false)}>
+                <p>
+                    My account
+                </p>
+            </Link>
+            <hr />
+            <Link to={'/me/forms'} onClick={()=>props.setIsOpen(false)}>
                 <p>
                     Forms
                 </p>
             </Link>
 
             <hr />
-            <Link to={'/me'}>
-                <p>
-                    Submission data
+            <Link to={'/me/templates'} onClick={()=>props.setIsOpen(false)}>
+                <p >
+                    Templates
                 </p>
             </Link>
-            <hr />
-            <p>
-                Templates
-            </p>
-            <hr />
-            <Link to={'/'}>
-                <p>
-                    Main page
-                </p>
-            </Link>
+
         </Drawer>
     )
 }
