@@ -1,3 +1,4 @@
+from bson import ObjectId
 from fastapi import APIRouter, status, HTTPException, Request
 from fastapi.params import Depends
 from fastapi.responses import JSONResponse
@@ -158,7 +159,7 @@ async def close_form(form_id: str, request: Request, user:Annotated[User, Depend
 @limiter.limit("60/minute")
 async def get_form_by_id(form_id:str, request: Request, user:Annotated[User, Depends(authenticate)]):
 
-    if len(form_id)!=24:
+    if not ObjectId.is_valid(form_id):
         return JSONResponse(content={"message":"Invalid form id."},status_code=status.HTTP_404_NOT_FOUND)
 
     result:DBResult[Form] = db_connector.get_form(form_id, user.id)

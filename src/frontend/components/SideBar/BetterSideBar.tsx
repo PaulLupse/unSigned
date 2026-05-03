@@ -43,12 +43,12 @@ export default function SideBar(props:SideBarProps) {
             <hr />
             <Link to={'/me/forms'} onClick={()=>props.setIsOpen(false)}>
                 <p>
-                    Forms
+                    My Forms
                 </p>
             </Link>
 
             <hr />
-            <Link to={'/templates/mine'} onClick={()=>props.setIsOpen(false)}>
+            <Link to={'/templates'} onClick={()=>props.setIsOpen(false)}>
                 <p >
                     Templates
                 </p>

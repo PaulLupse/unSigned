@@ -150,6 +150,9 @@ export async function get_form(formId:string):Promise<FormInfo|undefined> {
     if (requestResponse.status == 404)
         throw new CustomError("Form not found.", 404)
 
+    if(requestResponse.status == 400)
+            throw new CustomError("Invalid form id.", 401)
+
     if (requestResponse.status == 429)
         throw new CustomError("Slow down! (you are being rate limited)", 429)
 
@@ -413,6 +416,8 @@ export async function get_template({templateId}:{templateId:string}):Promise<Tem
             throw new CustomError("Template not found", 404)
         if(getTemplateResponse.status == 401)
             throw new CustomError("Please log in first.", 401)
+        if(getTemplateResponse.status == 400)
+            throw new CustomError("Invalid template id.", 401)
         if(getTemplateResponse.status == 403)
             throw new CustomError("Unauthorized to view template", 403)
         if (getTemplateResponse.status == 429)

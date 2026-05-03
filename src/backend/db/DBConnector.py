@@ -198,9 +198,13 @@ class DBConnector:
         return DBResult(404, "Form not found.")
 
     # returneaza un singur formular
-    def get_form(self, form_id:str, owner_id:str)->DBResult[Form]:
+    def get_form(self, form_id:str, owner_id:str|None = None)->DBResult[Form]:
 
-        form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id})
+        filter_params = {"_id":ObjectId(form_id)}
+        if owner_id:
+            filter_params['ownerId'] = owner_id
+
+        form_from_db = self.forms_table.find_one(filter_params)
 
         if form_from_db:
             form_from_db['id'] = str(form_from_db.pop('_id'))
@@ -237,9 +241,13 @@ class DBConnector:
         return DBResult(200, "Submitted.")
 
     # verifica daca formularul exista
-    def check_form_existence(self, form_id:str, owner_id:str)->bool:
+    def check_form_existence(self, form_id:str, owner_id:str|None = None)->bool:
 
-        if self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id}):
+        filter_params = {"_id": ObjectId(form_id)}
+        if owner_id:
+            filter_params['ownerId'] = owner_id
+
+        if self.forms_table.find_one(filter_params):
             return True
         return False
 
@@ -302,7 +310,7 @@ class DBConnector:
 
         try:
 
-            if not ObjectId.is_valid(template_id): return DBResult(400, "Bad template id.")
+            if not ObjectId.is_valid(template_id): return DBResult(400, "Invalid template id.")
 
             template_from_db = self.templates_table.find_one({"_id": ObjectId(template_id)})
 
