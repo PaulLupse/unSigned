@@ -39,6 +39,7 @@ export const textQuestionSchema = formQuestionSchema.extend({
 export const formInfoSchema = z.object({
     name: z.string(),
     id: z.string(),
+    ownerId: z.string(),
     questions: z.array(z.union([textQuestionSchema, gridQuestionSchema])),
     dateCreated: z.coerce.date().nullable(),
     datePublished: z.coerce.date().nullable(),
@@ -49,6 +50,7 @@ export const formInfoSchema = z.object({
 export const minimalFormInfoSchema = z.object({
     name: z.string(),
     id: z.string(),
+    ownerId: z.string(),
     dateCreated: z.coerce.date().nullable(),
     datePublished: z.coerce.date().nullable(),
     dateClosed: z.coerce.date().nullable(),
@@ -73,7 +75,8 @@ export const templateSchema = z.object({
     id:z.string(),
     name:z.string(),
     questions:z.array(z.union([textQuestionSchema, gridQuestionSchema])),
-    ownerId:z.string()
+    ownerId:z.string(),
+    status:z.union([z.literal('official'), z.literal('public'), z.literal('private')])
 })
 
 export const minimalTemplateSchema = z.object({
@@ -85,5 +88,6 @@ export const minimalTemplateSchema = z.object({
 
 export const userSchema = z.object({
     username:z.string(),
-    id:z.string()
+    id:z.string(),
+    isAdmin:z.boolean()
 })

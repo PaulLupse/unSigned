@@ -5,6 +5,7 @@ from typing import Optional
 class User(BaseModel):
     id:str
     username:str
+    isAdmin:bool
 
 class KeyPayload(BaseModel):
     formId: str

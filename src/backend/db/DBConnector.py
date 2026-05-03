@@ -1,7 +1,7 @@
 import re
 from collections import Counter
 from dataclasses import dataclass
-from email import message
+from typing import Literal
 
 import pymongo.errors
 from bson import ObjectId
@@ -12,13 +12,13 @@ from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 from pymongo.results import DeleteResult, InsertOneResult
 
-from src.backend.domain.models import AnswerStatistic, TextAnswer, TextQuestionAnswerStatistic, GridQuestionAnswerStatistic, \
+from src.backend.domain.models import TextAnswer, TextQuestionAnswerStatistic, GridQuestionAnswerStatistic, \
     GridAnswer
 from src.backend.domain.models import MinimalTemplateInfo, Template
 from src.backend.domain.models import TextQuestion, GridQuestion
 from src.backend.api.auth.auth import hash_password, verify_password
 from src.backend.domain.models import Form, Submission, MinimalFormInfo, NewForm
-from src.backend.domain.auth import Key
+from src.backend.domain.auth import Key, User
 
 from datetime import date, datetime
 
@@ -57,7 +57,7 @@ class DBConnector:
 
     # valideaza detaliile de logare
     # in caz de validitate, returneaza id-ul utilizatorului
-    def validate_credentials(self, username:str, password:str)->DBResult[str]:
+    def validate_credentials(self, username:str, password:str)->DBResult[User]:
 
         user = self.users_table.find_one({"username": username})
 
@@ -65,9 +65,10 @@ class DBConnector:
 
             password_in_db:str = user["password"]
             user_id:str = str(user['_id'])
+            is_admin:bool = user['isAdmin']
 
             if verify_password(plain_password=password, hashed_password=password_in_db):
-                return DBResult(200, "Valid credentials.", user_id)
+                return DBResult[User](200, "Valid credentials.", User(id=user_id, username=username, isAdmin=is_admin))
             return DBResult(400, "Invalid credentials.")
 
         return DBResult(404, "User not found.")
@@ -99,7 +100,7 @@ class DBConnector:
             if validate_password.status != 200: return validate_password
 
             hashed_password = hash_password(password)
-            result:InsertOneResult = self.users_table.insert_one({"username":username,"password":hashed_password})
+            result:InsertOneResult = self.users_table.insert_one({"username":username,"password":hashed_password,"isAdmin":False})
 
             return DBResult(201, "Created.", str(result.inserted_id))
 
@@ -121,15 +122,12 @@ class DBConnector:
 
         try:
 
-            if self.forms_table.find_one({"name":new_form.name, "owner_id":owner_id}):
-                return DBResult(409, "Form with this name already exists.")
-
             current_date:date = datetime.now().date()
 
             new_form_dict = new_form.model_dump(mode="json")
             new_form_dict['dateCreated'] = current_date.isoformat()
             new_form_dict['submissions'] = []
-            new_form_dict['owner_id'] = owner_id
+            new_form_dict['ownerId'] = owner_id
 
             result:InsertOneResult = self.forms_table.insert_one(new_form_dict)
 
@@ -139,9 +137,9 @@ class DBConnector:
             return DBResult(409, "Form with this name already exists.")
 
     # seteaza proprietatea de publicare a unui formular la 'true'
-    def publish_form(self, form_id:str)->DBResult:
+    def publish_form(self, form_id:str, owner_id:str)->DBResult:
 
-        form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id)})
+        form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id})
         if not form_from_db: return DBResult(404, "Form not found.")
 
 
@@ -153,9 +151,9 @@ class DBConnector:
 
     # 'inchide' un chestionar
     # un chestionar inchis nu mai accepta raspunsuri
-    def close_form(self, form_id:str)->DBResult:
+    def close_form(self, form_id:str, owner_id:str)->DBResult:
 
-        form_from_db = self.forms_table.find_one({"_id": ObjectId(form_id)})
+        form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id})
         if not form_from_db: return DBResult(404, "Form not found.")
 
         form_from_db['id'] = str(form_from_db.pop('_id'))
@@ -172,7 +170,7 @@ class DBConnector:
     def get_forms(self, owner_id:str)->DBResult[list[MinimalFormInfo]]:
 
         # validam lista de formulare returnata de baza de date
-        forms_from_db = list(self.forms_table.find({"owner_id":owner_id}))
+        forms_from_db = list(self.forms_table.find({"ownerId":owner_id}))
 
         # necesar sa schimbam numele campului id
         for form in forms_from_db:
@@ -185,24 +183,24 @@ class DBConnector:
                                                                dateCreated=form.dateCreated,
                                                                datePublished=form.datePublished,
                                                                submissionsCount=len(form.submissions),
-                                                                id=form.id)
+                                                                id=form.id, ownerId=owner_id)
                                                                 for form in forms_from_db])
 
         return DBResult(200, "Queried successfully.", minimal_forms)
 
     # sterge un chestionar pe baza id-ului
-    def delete_form(self, form_id:str)->DBResult:
+    def delete_form(self, form_id:str, owner_id:str)->DBResult:
 
-        delete_result:DeleteResult = self.forms_table.delete_one({'_id': ObjectId(form_id)})
+        delete_result:DeleteResult = self.forms_table.delete_one({"_id":ObjectId(form_id), "ownerId":owner_id})
         if delete_result.deleted_count:
             return DBResult(200, "Deleted.")
 
         return DBResult(404, "Form not found.")
 
     # returneaza un singur formular
-    def get_form(self, form_id:str)->DBResult[Form]:
+    def get_form(self, form_id:str, owner_id:str)->DBResult[Form]:
 
-        form_from_db = self.forms_table.find_one(ObjectId(form_id))
+        form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id})
 
         if form_from_db:
             form_from_db['id'] = str(form_from_db.pop('_id'))
@@ -239,9 +237,9 @@ class DBConnector:
         return DBResult(200, "Submitted.")
 
     # verifica daca formularul exista
-    def check_form_existence(self, form_id:str)->bool:
+    def check_form_existence(self, form_id:str, owner_id:str)->bool:
 
-        if self.forms_table.find_one({"_id":ObjectId(form_id)}):
+        if self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id}):
             return True
         return False
 
@@ -249,19 +247,19 @@ class DBConnector:
     # un formular nu poate fii modificat daca este deja publicat
     def edit_form(self,
                   form_id:str,
+                  owner_id:str,
                   new_title:str|None = None,
                   new_questions:list[TextQuestion|GridQuestion]|None = None):
 
         try:
 
-            new_data = {}
-            new_data["questions"] = jsonable_encoder(new_questions)
+            new_data = {"questions": jsonable_encoder(new_questions)}
             if new_title: new_data["name"] = new_title
 
             print(new_data)
 
             result = self.forms_table.update_one(
-                {"_id":ObjectId(form_id)},
+                {"_id":ObjectId(form_id), "ownerId":owner_id},
                 {
                     "$set": new_data
                 }
@@ -276,11 +274,15 @@ class DBConnector:
             return DBResult(500, "Unexpected error: " + str(e))
 
     # returneaza detalii minime despre template-urile utilizatorului
-    def get_templates(self, owner_id:str)->DBResult[list[MinimalTemplateInfo]]:
+    def get_templates(self, owner_id:str, status:Literal['public','private','official'])->DBResult[list[MinimalTemplateInfo]]:
 
         try:
 
-            templates_from_db = self.templates_table.find({"ownerId":owner_id})
+            if status == 'private':
+                templates_from_db = self.templates_table.find({"ownerId":owner_id, 'status':'private'})
+            elif status == 'official':
+                templates_from_db = self.templates_table.find({"status":'official'})
+            else: templates_from_db = self.templates_table.find({'status':'public'})
 
             template_list:list[MinimalTemplateInfo] = \
                 [ MinimalTemplateInfo(
@@ -296,22 +298,40 @@ class DBConnector:
         except Exception as e:
             return DBResult(500, "Unexpected error: " + str(e))
 
-    # returneaza un template dupa id
-    def get_template(self, template_id:str)->DBResult[Template]:
+    def check_authorization(self, template_id:str, owner_id:str, is_admin:bool, req:Literal['read','write'])->DBResult[Template]:
 
         try:
 
-            if not ObjectId.is_valid(template_id): return DBResult(404, "Template not found.")
+            if not ObjectId.is_valid(template_id): return DBResult(400, "Bad template id.")
 
-            template_from_db = self.templates_table.find_one({"_id":ObjectId(template_id)})
+            template_from_db = self.templates_table.find_one({"_id": ObjectId(template_id)})
 
             if template_from_db is None: return DBResult(404, "Template not found.")
 
-            template_from_db["id"] = str(template_from_db.pop("_id"))
+            if template_from_db['ownerId'] != owner_id:
+                if template_from_db['status'] == 'private':
+                    return DBResult(403, "Unauthorized.")
+                if template_from_db['status'] == 'official' and req == 'write' and not is_admin:
+                    return DBResult(403, "Unauthorized.")
 
+            template_from_db['id'] = str(template_from_db.pop('_id'))
             template:Template = Template.model_validate(template_from_db)
 
-            return DBResult(200, "Queried.", template)
+            return DBResult(200, "Ok.", template)
+
+        except Exception as e:
+            return DBResult(500, "Unexpected error: " + str(e))
+
+    # returneaza un template dupa id
+    def get_template(self, template_id:str, user:User)->DBResult[Template]:
+
+        try:
+
+            chk_auth:DBResult[Template] = self.check_authorization(template_id, user.id, user.isAdmin, "read")
+            if chk_auth.status != 200:
+                return DBResult(chk_auth.status, chk_auth.message)
+
+            return DBResult(200, "Queried.", chk_auth.data)
 
         except ValidationError as e:
             return DBResult(500, "Database error: " + str(e))
@@ -327,14 +347,15 @@ class DBConnector:
         return False
 
     # memoreaza template-ul in baza de date
-    def create_template(self, name:str, questions:list[TextQuestion|GridQuestion], owner_id:str)->DBResult[str]:
+    def create_template(self, name:str, questions:list[TextQuestion|GridQuestion], owner_id:str, status:Literal['public', 'private', 'official'])->DBResult[str]:
 
         try:
 
             template_in_db = {
                 "name":name,
                 "questions":jsonable_encoder(questions),
-                "ownerId":owner_id
+                "ownerId":owner_id,
+                "status":status
             }
 
             result = self.templates_table.insert_one(template_in_db)
@@ -345,7 +366,12 @@ class DBConnector:
             return DBResult(409, "Template with this name already exists.")
 
     # modifica template-ul, inlocuind numele si intrebarile cu cele pasate
-    def edit_template(self, template_id:str|None, new_name:str|None, new_questions:list[TextQuestion|GridQuestion]|None)->DBResult:
+    def edit_template(self, template_id:str, user:User, new_name:str|None, new_questions:list[TextQuestion|GridQuestion]|None)->DBResult:
+
+        chk_auth:DBResult[Template] = self.check_authorization(template_id, user.id, user.isAdmin, req='write')
+
+        if chk_auth.status != 200:
+            return DBResult(chk_auth.status, chk_auth.message)
 
         new_template_in_db:dict = {}
 
@@ -362,16 +388,21 @@ class DBConnector:
         return DBResult(200, "Updated.")
 
     # sterge template-ul
-    def delete_template(self, template_id)->DBResult:
+    def delete_template(self, template_id, user:User)->DBResult:
 
-        result = self.templates_table.delete_one({'_id':ObjectId(template_id)})
+
+        chk_auth:DBResult[Template] = self.check_authorization(template_id, user.id, user.isAdmin, req='write')
+        if chk_auth.status != 200:
+            return DBResult(chk_auth.status, chk_auth.message)
+
+        result = self.templates_table.delete_one({"_id":ObjectId(template_id)})
 
         if result.deleted_count == 0: return DBResult(404, "Template not found.")
 
         return DBResult(200, "Deleted.")
 
     @staticmethod
-    def calculate_text_submission_data(answers:list[TextAnswer], question:TextQuestion)->TextQuestionAnswerStatistic:
+    def calculate_text_submission_data(answers:list[TextAnswer])->TextQuestionAnswerStatistic:
 
         word_count:int = 0
         words_counter:Counter = Counter()
@@ -421,11 +452,11 @@ class DBConnector:
 
         return questions_answers
 
-    def get_submission_data(self, form_id)->DBResult[list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic]]:
+    def get_submission_data(self, form_id, owner_id:str)->DBResult[list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic]]:
 
         try:
 
-            form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id)})
+            form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id})
 
             if not form_from_db: return DBResult(404, "Form not found.")
 
@@ -444,7 +475,7 @@ class DBConnector:
             for question_index, question in enumerate(questions):
 
                 if type(question) == TextQuestion:
-                    statistics.append(self.calculate_text_submission_data(questions_answers[question_index], question))
+                    statistics.append(self.calculate_text_submission_data(questions_answers[question_index]))
 
                 elif type(question) == GridQuestion:
                     statistics.append(self.calculate_grid_submission_data(questions_answers[question_index], question))
@@ -461,10 +492,6 @@ def get_db()->DBConnector:
     except Exception as e:
         raise Exception("Unexpected error: " + str(e))
 
-if __name__ == "__main__":
-
-    db = get_db()
-    print(db.get_submission_data('69f3f65a38b069bc7088df78'))
 
 
 

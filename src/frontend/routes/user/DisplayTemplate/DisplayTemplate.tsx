@@ -1,7 +1,7 @@
 import React, {useCallback} from "react";
-import {templateSchema} from "src/frontend/domain/schemas";
+import {templateSchema, userSchema} from "src/frontend/domain/schemas";
 import {useNavigate, useOutletContext} from "react-router-dom";
-import type {Template} from "src/frontend/domain/types";
+import type {Template, User} from "src/frontend/domain/types";
 import * as style from "./DisplayTemplate.module.css"
 import {FormDisplayer} from "src/frontend/components/Form/FormDisplayer";
 import {FixedElement} from "src/frontend/components/FixedElement/FixedElement";
@@ -14,7 +14,11 @@ import toast from "react-hot-toast";
 export default function DisplayTemplate() {
 
     const queryClient = useQueryClient()
-    const template:Template = templateSchema.parse(useOutletContext())
+    const context = useOutletContext<{template:Template, user:User}>()
+
+    const template:Template = templateSchema.parse(context.template)
+    const user:User = userSchema.parse(context.user)
+
     const navigate = useNavigate()
 
     const deleteMutation = useMutation(
@@ -44,15 +48,21 @@ export default function DisplayTemplate() {
             <FixedElement>
                 <ButtonBar>
 
-                    <NavButton to={"/me/templates"} onClick={async ()=>{queryClient.removeQueries({queryKey:['template']})}}>
+                    <NavButton to={`/templates/${template.status=='private'?'mine':template.status}`} onClick={async ()=>{queryClient.removeQueries({queryKey:['template']})}}>
                         Back
                     </NavButton>
-                    <NavButton to={`/template/${template.id}/edit`}>
-                        Edit
-                    </NavButton>
-                    <button onClick={deleteTemplate}>
-                        Delete
-                    </button>
+                    {
+                        ((template.status=='private' && user.id === template.ownerId) || (template.status=='official' && user?.isAdmin)) &&
+                        <>
+                            <NavButton to={`/templates/${template.id}/edit`}>
+                                Edit
+                            </NavButton>
+                            <button onClick={deleteTemplate}>
+                                Delete
+                            </button>
+                        </>
+                    }
+
                     <NavButton to={`/form/create?templateId=${template.id}`}>
                         Use template
                     </NavButton>

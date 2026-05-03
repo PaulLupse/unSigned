@@ -117,18 +117,18 @@ export function DisplayFrom() {
 
                     {
                         formStatus=="Not published"&&
-                        <NavButton to={`/form/${form.id}/edit`}>
+                        <NavButton to={`/me/forms/${form.id}/edit`}>
                             Edit form
                         </NavButton>
                     }
                     {
                         formStatus!="Closed"&&
-                        <NavButton to={`/form/${form.id}/keys`}>
+                        <NavButton to={`/me/forms/${form.id}/keys`}>
                             Distribute keys
                         </NavButton>
                     }
 
-                    <NavButton to={`/form/${form.id}/submissions`}>
+                    <NavButton to={`/me/forms/${form.id}/submissions`}>
                         See results
                     </NavButton>
 

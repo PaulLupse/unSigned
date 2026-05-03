@@ -7,7 +7,7 @@ import {
 import {add_form, create_template} from "../../../server/users-server";
 import type {NewForm} from "../../../domain/types";
 import type {TextQuestion, GridQuestion} from "../../../domain/types";
-import {useNavigate} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 
 import {newFormSchema} from "../../../domain/schemas";
 import {useMutation} from "@tanstack/react-query";
@@ -27,6 +27,11 @@ import Loading from "src/frontend/components/Loading";
 export default function TemplateCreator() {
 
     const navigate = useNavigate();
+    const loc = useLocation();
+
+    const pathSegments = loc.pathname.split('/')
+    const type:string|undefined = pathSegments[pathSegments.length - 1]
+
     const [loadingProgress, setLoadingProgress] = React.useState(false)
 
     const {register, formState:{errors}, handleSubmit, control, watch, getValues, setValue} = useForm<NewForm>({defaultValues:{questions:[], name:'New template'}});
@@ -37,7 +42,7 @@ export default function TemplateCreator() {
         mutationFn:create_template,
         onSuccess:(formId:string|undefined)=>{
             toast.success("Template created successfully!");
-            navigate(`/template/${formId}/view`)
+            navigate(`/templates/${formId}/view`)
         },
         onError:(error)=>{
             toast.error("Could not create form. " + error?.message);
@@ -56,6 +61,7 @@ export default function TemplateCreator() {
 
         return ()=>{
             window.removeEventListener("beforeunload", saveProgress);
+            sessionStorage.clear()
         };
 
     }, []);
@@ -101,7 +107,7 @@ export default function TemplateCreator() {
                                 name:data.name,
                                 questions:data.questions,
                             })
-        mutate({templateData:newForm});
+        mutate({templateData:newForm, type:type==='official'?'official':undefined});
     }
 
     return (

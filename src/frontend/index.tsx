@@ -36,10 +36,10 @@ import DisplayTemplate from "src/frontend/routes/user/DisplayTemplate/DisplayTem
 import EditTemplate from "src/frontend/routes/user/EditTemplate/EditTemplate";
 import {Presentation} from "src/frontend/routes/user/Presentation/Presentation";
 import TemplateCreator from "src/frontend/routes/user/TemplateCreator/TemplateCreator";
-import {DisplayTemplates, DisplayForms} from "src/frontend/routes/user/DisplayUserData";
+import {DisplayForms} from "src/frontend/routes/user/DisplayForms";
 import ThankYou from "src/frontend/routes/sub-user/ThankYou";
-import type {User} from "src/frontend/domain/types";
-import AdminMain from "src/frontend/routes/admin/AdminMain/AdminMain";
+import TemplatesMenu from "src/frontend/routes/user/TemplatesMenu";
+import {ListTemplates} from "src/frontend/routes/user/ListTemplates";
 
 function Index() {
 
@@ -132,25 +132,30 @@ window.onload = ()=>{
                                 <Route path='me' >
                                     <Route index element={<Profile />} />
                                     <Route path='forms' element={<DisplayForms />} />
-                                    <Route path='templates' element={<DisplayTemplates />} />
+                                    <Route path={'forms/:formId'} element={<Form />}>
+                                        <Route path="view" element={<DisplayFrom />} />
+                                        <Route path="edit" element={<EditForm />} />
+                                        <Route path='submissions' element={<SubmissionData />} />
+                                        <Route path='keys' element={<DistributeKeys />}/>
+                                    </Route>
                                 </Route>
                                 <Route path='login' element={<LoginComponent />}/>
                                 <Route path='register' element={<RegisterComponent />}/>
                                 <Route path='form/create' element={<FormCreator />} />
-                                <Route path='template/create' element={<TemplateCreator />} />
-                                <Route path={'form/:formId'} element={<Form />}>
-                                    <Route path="view" element={<DisplayFrom />} />
-                                    <Route path="edit" element={<EditForm />} />
-                                    <Route path='submissions' element={<SubmissionData />} />
-                                    <Route path='keys' element={<DistributeKeys />}/>
-                                </Route>
-                                <Route path={'template/:templateId'} element={<Template />}>
-                                    <Route path="view" element={<DisplayTemplate />}/>
-                                    <Route path='edit' element={<EditTemplate />}/>
-                                </Route>
-                                <Route path={"admin"} element={<AdminMain />}>
 
+                                <Route path='templates' >
+                                    <Route index element={<TemplatesMenu />} />
+                                    <Route path={"official"} element={<ListTemplates/>} />
+                                    <Route path={"mine"} element={<ListTemplates/>}  />
+                                    <Route path={"public"} element={<ListTemplates/>}  />
+                                    <Route path={'create'} element={<TemplateCreator />}/>
+                                    <Route path={'create/official'} element={<TemplateCreator />}/>
+                                    <Route path={':templateId'} element={<Template />}>
+                                        <Route path="view" element={<DisplayTemplate />}/>
+                                        <Route path='edit' element={<EditTemplate />}/>
+                                    </Route>
                                 </Route>
+
                             </Route>
                             {/* ruta /complete-form este separata de ruta principala deoarece este menita sa fie accesata de sub-utilizatori */}
                             <Route path='complete-form' element={<SubUsersMain />}>

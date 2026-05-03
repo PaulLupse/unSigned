@@ -15,6 +15,7 @@ from src.backend.api.auth.OAuth2PasswordBearerWithCookie import OAuth2PasswordBe
 from src.backend.api.endpoints.users import router as users_routes
 from src.backend.api.endpoints.sub_users import router as sub_users_routes
 from src.backend.api.endpoints.admin import router as admin_router
+from src.backend.api.endpoints.templates import router as templates_router
 from src.backend.api.Limiter import limiter
 
 
@@ -27,6 +28,7 @@ app = FastAPI()
 app.include_router(users_routes, prefix="/api")
 app.include_router(sub_users_routes, prefix="/api")
 app.include_router(admin_router, prefix="/api")
+app.include_router(templates_router, prefix="/api")
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)

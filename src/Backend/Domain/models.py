@@ -33,6 +33,7 @@ class Form(BaseModel):
     id:str
     name:str
     questions:list[TextQuestion|GridQuestion]
+    ownerId:str
 
     dateCreated:Optional[datetime] = None
     datePublished:Optional[datetime] = None
@@ -64,6 +65,7 @@ class GridQuestionAnswerStatistic(AnswerStatistic):
 class MinimalFormInfo(BaseModel):
     id:str
     name:str
+    ownerId:str
     dateCreated:Optional[datetime]
     datePublished:Optional[datetime]
     dateClosed:Optional[datetime]
@@ -75,6 +77,7 @@ class Template(BaseModel):
     name:str
     questions:list[GridQuestion|TextQuestion]
     ownerId:str
+    status:Literal['private', 'public', 'official']
 
 class MinimalTemplateInfo(BaseModel):
 

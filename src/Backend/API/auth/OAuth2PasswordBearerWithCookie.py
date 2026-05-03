@@ -25,5 +25,3 @@ class OAuth2PasswordBearerWithCookies(OAuth2PasswordBearer):
             )
 
         return access_token
-
-

@@ -4,28 +4,26 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.encoders import jsonable_encoder
 
-from jwt import InvalidTokenError, ExpiredSignatureError
+from jwt import ExpiredSignatureError
 from pydantic import BaseModel
 from typing import Annotated
 import logging, jwt, os
 from datetime import timedelta
 
-from src.backend.domain.models import AnswerStatistic, TextQuestionAnswerStatistic, GridQuestionAnswerStatistic
+from src.backend.api.auth.Authenticator import authenticate
+from src.backend.domain.models import TextQuestionAnswerStatistic, GridQuestionAnswerStatistic
 from src.backend.db.DBConnector import DBResult
 from src.backend.domain.requests import RegisterRequest, EditFormRequest
 from src.backend.api.Limiter import limiter
 from src.backend.api.auth.KeyDistributor import distribute_keys
 from src.backend.domain.auth import Key, KeyPayload, User
-from src.backend.domain.models import MinimalFormInfo, NewForm, Form, MinimalTemplateInfo, Template
+from src.backend.domain.models import MinimalFormInfo, NewForm, Form
 from src.backend.db.DBConnector import DBConnector, get_db
 from src.backend.api.auth.auth import generate_access_token, generate_key
-from src.backend.api.auth.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
-
 
 logger = logging.getLogger('uvicorn.error')
 logger.setLevel(logging.DEBUG)
 
-oauth2_scheme = OAuth2PasswordBearerWithCookies(tokenUrl="api/users/token")
 
 db_connector:DBConnector = get_db()
 
@@ -33,38 +31,6 @@ router:APIRouter = APIRouter(prefix="/users", tags=["users"])
 
 class TokenData(BaseModel):
     username:str
-
-
-async def authenticate(token : Annotated[str, Depends(oauth2_scheme)])->User:
-
-    # eroare daca validarea da rateuri
-    validation_error = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        payload = jwt.decode(token, key=os.getenv("SECURE_KEY"), algorithms=[os.getenv("JWT_ALG")])
-        user_id = payload.get("sub")
-
-        if user_id is None:
-            raise validation_error
-
-        db_response = db_connector.find_user(user_id = user_id)
-        if db_response.status != 200: raise validation_error
-
-        return User(id=user_id, username=payload.get("username"))
-
-    except ExpiredSignatureError:
-
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail="Acces token expired. Please log in again.",
-                            headers={"WWW-Authenticate": "Bearer"})
-
-    except InvalidTokenError as error:
-        logger.debug(error)
-        raise validation_error
 
 
 EXP = 60
@@ -83,13 +49,15 @@ async def get_token(credentials: Annotated[OAuth2PasswordRequestForm, Depends()]
             ...
 
     # accesam baza de date pentru a verifica validitatea credentialelor
-    db_response:DBResult[str] = db_connector.validate_credentials(credentials.username, credentials.password)
+    db_response:DBResult[User] = db_connector.validate_credentials(credentials.username, credentials.password)
 
     # daca credentialele nu sunt valide
     if db_response.status != 200: raise HTTPException(status_code=db_response.status, detail=db_response.message, headers={"WWW-Authenticate":"Bearer"})
 
+
+    if db_response.data is None: raise ValueError("No user data returned!")
     # generam un jeton de acces
-    access_token:str=generate_access_token({"sub": db_response.data, "username": credentials.username}, expiration_time=timedelta(minutes=EXP))
+    access_token:str=generate_access_token({"sub": db_response.data.id, "username": db_response.data.username, "isAdmin":db_response.data.isAdmin}, expiration_time=timedelta(minutes=EXP))
 
     response : JSONResponse = JSONResponse(content={"status": "success", "loggedIn": True})
 
@@ -163,22 +131,22 @@ async def create_form(user:Annotated[User, Depends(authenticate)], new_form:NewF
     return JSONResponse(status_code=201, content={"message":"Created successfully.", "formId":result.data})
 
 
-@router.post("/me/form/{form_id}/publish", response_class=JSONResponse, dependencies=[Depends(authenticate)])
+@router.post("/me/form/{form_id}/publish", response_class=JSONResponse)
 @limiter.limit("60/minute")
-async def publish_form(form_id: str, request: Request):
+async def publish_form(form_id: str, user:Annotated[User, Depends(authenticate)], request: Request):
 
-    result:DBResult = db_connector.publish_form(form_id)
+    result:DBResult = db_connector.publish_form(form_id, owner_id=user.id)
     if result.status != 200:
         return JSONResponse(content={"message": result.message}, status_code=result.status)
 
     return JSONResponse(content={"message":"Form published successfully."}, status_code=200)
 
 
-@router.post("/me/form/{form_id}/close", response_class=JSONResponse, dependencies=[Depends(authenticate)])
+@router.post("/me/form/{form_id}/close", response_class=JSONResponse)
 @limiter.limit("60/minute")
-async def close_form(form_id: str, request: Request):
+async def close_form(form_id: str, request: Request, user:Annotated[User, Depends(authenticate)]):
 
-    result:DBResult = db_connector.close_form(form_id)
+    result:DBResult = db_connector.close_form(form_id, user.id)
 
     if result.status != 200:
         return JSONResponse(content={"message": result.message}, status_code=result.status)
@@ -186,14 +154,14 @@ async def close_form(form_id: str, request: Request):
     return JSONResponse(content={"message": "Form closed successfully."}, status_code=200)
 
 
-@router.get("/me/form/{form_id}", response_class=JSONResponse, dependencies=[Depends(authenticate)])
+@router.get("/me/form/{form_id}", response_class=JSONResponse)
 @limiter.limit("60/minute")
-async def get_form_by_id(form_id:str, request: Request):
+async def get_form_by_id(form_id:str, request: Request, user:Annotated[User, Depends(authenticate)]):
 
     if len(form_id)!=24:
         return JSONResponse(content={"message":"Invalid form id."},status_code=status.HTTP_404_NOT_FOUND)
 
-    result:DBResult[Form] = db_connector.get_form(form_id)
+    result:DBResult[Form] = db_connector.get_form(form_id, user.id)
 
     if result.status == 200:
         return JSONResponse(content={"message":"Queried successfully.", 'form':jsonable_encoder(result.data)}, status_code=status.HTTP_200_OK)
@@ -203,34 +171,34 @@ async def get_form_by_id(form_id:str, request: Request):
 
 @router.put("/me/form/{form_id}/edit", dependencies=[Depends(authenticate)], status_code=200)
 @limiter.limit("60/minute")
-async def edit_form(form_id: str, edit_form_request:EditFormRequest, request:Request):
+async def edit_form(form_id: str, edit_form_request:EditFormRequest, request:Request, user:Annotated[User, Depends(authenticate)]):
 
     print(edit_form_request)
 
-    get_form_result = db_connector.get_form(form_id)
+    get_form_result = db_connector.get_form(form_id, user.id)
     if get_form_result.data and get_form_result.data.datePublished is not None:
         raise HTTPException(status_code=409, detail="Published forms cannot be edited.")
 
-    edit_form_result:DBResult = db_connector.edit_form(form_id, new_title=edit_form_request.name, new_questions=edit_form_request.questions)
+    edit_form_result:DBResult = db_connector.edit_form(form_id, new_title=edit_form_request.name, new_questions=edit_form_request.questions, owner_id=user.id)
     if edit_form_result.status != 200:
         raise HTTPException(status_code=edit_form_result.status, detail=edit_form_result.message)
 
 
-@router.delete("/me/form/{form_id}/delete", response_class=JSONResponse, dependencies=[Depends(authenticate)])
+@router.delete("/me/form/{form_id}/delete", response_class=JSONResponse)
 @limiter.limit("60/minute")
-async def delete_form(form_id:str, request: Request):
+async def delete_form(form_id:str, request: Request, user:Annotated[User, Depends(authenticate)]):
 
-    result: DBResult = db_connector.delete_form(form_id)
+    result: DBResult = db_connector.delete_form(form_id, user.id)
     if result.status == 200:
         return JSONResponse(content={"message": "Deleted form succesfully."}, status_code=200)
     else:
         return JSONResponse(content={"message": result.message}, status_code=result.status)
 
 
-@router.get("/me/form/{form_id}/submission-data", response_model=list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic], dependencies=[Depends(authenticate)])
-async def submission_data(form_id:str, request: Request):
+@router.get("/me/form/{form_id}/submission-data", response_model=list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic])
+async def submission_data(form_id:str, request: Request, user:Annotated[User, Depends(authenticate)]):
 
-    sub_data_res:DBResult[list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic]] = db_connector.get_submission_data(form_id=form_id)
+    sub_data_res:DBResult[list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic]] = db_connector.get_submission_data(form_id=form_id, owner_id=user.id)
 
     if sub_data_res.status != 200: raise HTTPException(status_code=sub_data_res.status, detail=sub_data_res.message)
 
@@ -248,7 +216,7 @@ class DistributeKeysRequest(BaseModel):
 @limiter.limit("60/minute")
 async def dist_keys(dist_key_req:DistributeKeysRequest, user : Annotated[User, Depends(authenticate)], form_id:str, request: Request):
 
-    if db_connector.check_form_existence(form_id):
+    if db_connector.check_form_existence(form_id, user.id):
 
         keys = [generate_key(data=Key(payload=KeyPayload(formId=form_id))) for _ in range(len(dist_key_req.emails))]
         await distribute_keys(keys=keys, emails=[email.email for email in dist_key_req.emails], form_owner_username=user.username, form_id = form_id)
@@ -258,83 +226,3 @@ async def dist_keys(dist_key_req:DistributeKeysRequest, user : Annotated[User, D
     else: raise HTTPException(status_code=404, detail="Form not found.")
 
 
-@router.post("/me/template/create", status_code=201, response_class=JSONResponse)
-@limiter.limit("60/minute")
-async def create_template(create_template_request:NewForm, user: Annotated[User, Depends(authenticate)], request: Request):
-
-    create_template_response:DBResult[str] = db_connector.create_template(
-        name=create_template_request.name,
-        questions=create_template_request.questions,
-        owner_id=user.id
-    )
-
-    if create_template_response.status != 201:
-        raise HTTPException(status_code= create_template_response.status, detail = create_template_response.message)
-
-
-    return JSONResponse(status_code=201, content={"formId":create_template_response.data})
-
-@router.get("/me/templates", status_code=200, response_model=list[MinimalTemplateInfo])
-@limiter.limit("60/minute")
-async def get_templates(user:Annotated[User, Depends(authenticate)], request: Request):
-
-    get_templates_response:DBResult[list[MinimalTemplateInfo]] = db_connector.get_templates(user.id)
-
-    if get_templates_response.status != 200:
-        raise HTTPException(status_code= get_templates_response.status, detail = get_templates_response.message)
-
-    return get_templates_response.data
-
-@router.get("/me/template/{template_id}", dependencies=[Depends(authenticate)], response_model=Template)
-async def get_template(template_id:str):
-
-    get_template_response:DBResult[Template] = db_connector.get_template(template_id)
-
-    if get_template_response.status != 200:
-        raise HTTPException(status_code=get_template_response.status, detail=get_template_response.message)
-
-    return get_template_response.data
-
-@router.put("/me/template/{template_id}/edit", dependencies=[Depends(authenticate)], status_code=200)
-@limiter.limit("60/minute")
-async def edit_template(template_id: str, edit_temp_req: EditFormRequest, request: Request):
-
-    edit_template_response = db_connector.edit_template(
-        template_id=template_id,
-        new_name = edit_temp_req.name,
-        new_questions = edit_temp_req.questions
-    )
-
-    if edit_template_response.status != 200:
-        raise HTTPException(status_code=edit_template_response.status, detail=edit_template_response.message)
-
-
-@router.delete("/me/template/{template_id}/delete", dependencies=[Depends(authenticate)], status_code=200)
-async def delete_template(template_id:str, request: Request):
-
-    delete_template_response = db_connector.delete_template(template_id)
-
-    if delete_template_response.status != 200:
-        raise HTTPException(status_code=delete_template_response.status, detail=delete_template_response.message)
-
-
-@router.get("/templates", response_model=list[MinimalTemplateInfo], status_code=200)
-async def get_official_templates():
-
-    result:DBResult[list[MinimalTemplateInfo]] = db_connector.get_templates(owner_id="admin")
-
-    if result.status != 200:
-        raise HTTPException(status_code=result.status, detail=result.message)
-
-    return result.data
-
-
-@router.get("/templates/{template_id}", response_model=Template)
-async def get_official_template(template_id:str):
-
-    result:DBResult[Template] = db_connector.get_template(template_id)
-
-    if result.status != 200:
-        raise HTTPException(status_code=result.status, detail=result.message)
-
-    return result.data

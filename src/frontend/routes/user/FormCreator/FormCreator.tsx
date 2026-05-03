@@ -72,6 +72,7 @@ export default function FormCreator() {
 
         return ()=>{
             window.removeEventListener("beforeunload", saveProgress);
+            sessionStorage.clear()
         };
 
     }, []);
@@ -142,8 +143,9 @@ export default function FormCreator() {
 
                         <ButtonWithMenu location={'top'} buttonText={'Load template'}
                                       options={[
-                                          {text:'From my templates', action:()=>{navigate('/me/templates')}},
-                                          {text:'From generic templates'}
+                                          {text:'From public templates', action:()=>{navigate('/templates/public')}},
+                                          {text:'From official templates', action:()=>{navigate('/templates/official')}},
+                                          {text:'From my templates', action:()=>{navigate('/templates/mine')}}
                                       ]} />
 
                         {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}

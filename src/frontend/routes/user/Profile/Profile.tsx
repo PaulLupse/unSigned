@@ -32,7 +32,7 @@ function DataDisplay({user}:{user:User}) {
     })
 
     const getTemplates = useQuery({
-        queryFn:get_templates,
+        queryFn:async()=>get_templates({type:'mine'}),
         queryKey:['templates'],
         retry:0
     })
@@ -68,7 +68,7 @@ function DataDisplay({user}:{user:User}) {
                 <hr style={{border:'1px solid gray', width:'100%', boxSizing:'border-box'}}/>
                 <div className={style.footer}>
                     <NavButton to={'/me/forms'}>My forms</NavButton>
-                    <NavButton to={'/me/templates'}>My templates</NavButton>
+                    <NavButton to={'/templates/mine'}>My templates</NavButton>
                 </div>
             </div>
         </div>

@@ -3,9 +3,8 @@ import json
 from pwdlib import PasswordHash
 from datetime import datetime, timedelta, timezone
 import jwt, bcrypt, dotenv, os, pyseto, uuid
-from pyseto.exceptions import DecryptError
 
-from src.backend.domain.auth import Key, KeyFooter, KeyPayload
+from src.backend.domain.auth import Key, KeyFooter, KeyPayload, User
 
 dotenv.load_dotenv()
 
@@ -73,3 +72,4 @@ def decode_key(token:str)->Key|None:
         print(token)
         # print("Could not decode paseto token: " + str(e))
         return None
+0

@@ -4,12 +4,12 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {update_form, update_template} from "../../../server/users-server";
-import type {FormInfo, NewForm} from "../../../domain/types";
+import {update_template} from "../../../server/users-server";
+import type {NewForm, Template, User} from "../../../domain/types";
 import type {TextQuestion, GridQuestion} from "../../../domain/types";
 import {useNavigate, useOutletContext} from "react-router-dom";
 
-import {formInfoSchema, newFormSchema, templateSchema} from "../../../domain/schemas";
+import {newFormSchema, templateSchema} from "../../../domain/schemas";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ButtonBar from "../../../components/Buttons/ButtonBar/ButtonBar";
@@ -28,9 +28,10 @@ export default function EditForm() {
 
     const navigate = useNavigate();
     const queryClient = useQueryClient();
+    const context = useOutletContext<{template:Template, user:User}>()
 
     // luam datele despre chestionar de la componenta parent UpdateForm, care da fetch la chestionar
-    const parseResult = templateSchema.safeParse(useOutletContext());
+    const parseResult = templateSchema.safeParse(context.template);
     if(!parseResult.success) {
         toast.error("Error when parsing form . . .");
         navigate('/me');
@@ -47,7 +48,7 @@ export default function EditForm() {
         onSuccess:async ()=>{
             toast.success("Template updated successfully!");
             await queryClient.invalidateQueries({queryKey:['template']})
-            navigate(`/template/${parseResult.data?.id}/view`)
+            navigate(`/templates/${parseResult.data?.id}/view`)
         },
         onError:(error)=>{
             toast.error("Could not update template. " + error?.message);
@@ -81,7 +82,7 @@ export default function EditForm() {
                                 name:data.name,
                                 questions:data.questions,
                             })
-        mutate({newTemplateData:newForm, templateId:parseResult.data?parseResult.data.id:'' });
+        mutate({newTemplateData:newForm, templateId:parseResult.data?parseResult.data.id:'', type:parseResult.data?.status as 'official'|'mine'});
     }
 
     return (
@@ -99,7 +100,7 @@ export default function EditForm() {
             <FixedElement>
                   <ButtonBar>
                         {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}
-                      <NavButton to={`/template/${parseResult.data?.id}/view`} >Cancel</NavButton>
+                      <NavButton to={`/templates/${parseResult.data?.id}/view`} >Cancel</NavButton>
                         {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}
                       <button form={"barosan"} type='submit' className='plain-button'>Done</button>
                   </ButtonBar>

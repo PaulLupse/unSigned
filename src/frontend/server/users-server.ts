@@ -17,7 +17,6 @@ import {
     templateSchema,
     userSchema
 } from "../domain/schemas";
-
 const requestWithPayloadHeaders = new Headers({
         'Accept': "application/json",
         'Content-Type': "application/json"
@@ -69,6 +68,9 @@ export async function register({username, password}:{username: string, password:
 
     const response = await fetch(request);
     if (!response.ok)  {
+        if(response.status == 400) {
+            throw new CredentialError("Password too short", {username:'', password:'Password too short'}, 400)
+        }
         if(response.status == 409) {
             throw new CredentialError("User already exists", {username:'User already exists', password:''}, 409)
         }
@@ -340,9 +342,11 @@ export async function close_form(formId:string):Promise<boolean|undefined> {
     }
 }
 
-export async function create_template({templateData}:{templateData:NewForm}):Promise<string|undefined> {
+export async function create_template({templateData, type}:{templateData:NewForm, type:'official'|undefined}):Promise<string|undefined> {
 
-    const createItemRequest = new Request("/api/users/me/template/create",
+    const route:string = type==undefined?"/api/templates/create":"/api/admin/official-templates/create"
+
+    const createItemRequest = new Request(route,
         {
             method:"POST",
             headers:requestWithPayloadHeaders,
@@ -364,9 +368,9 @@ export async function create_template({templateData}:{templateData:NewForm}):Pro
         throw new CustomError("Slow down! (you are being rate limited)", 429)
 }
 
-export async function get_templates():Promise<Array<MinimalTemplate>|undefined> {
+export async function get_templates({type}:{type:'public'|'mine'|'official'}):Promise<Array<MinimalTemplate>|undefined> {
 
-    const getTemplatesRequest = new Request("/api/users/me/templates", {
+    const getTemplatesRequest = new Request(`/api/templates/${type}`, {
         method:"GET"
     })
 
@@ -389,7 +393,7 @@ export async function get_templates():Promise<Array<MinimalTemplate>|undefined> 
 
 export async function get_template({templateId}:{templateId:string}):Promise<Template|undefined> {
 
-    const getTemplateRequest = new Request(`/api/users/me/template/${templateId}`, {
+    const getTemplateRequest = new Request(`/api/templates/${templateId}`, {
         method:"GET"
     })
 
@@ -409,6 +413,8 @@ export async function get_template({templateId}:{templateId:string}):Promise<Tem
             throw new CustomError("Template not found", 404)
         if(getTemplateResponse.status == 401)
             throw new CustomError("Please log in first.", 401)
+        if(getTemplateResponse.status == 403)
+            throw new CustomError("Unauthorized to view template", 403)
         if (getTemplateResponse.status == 429)
             throw new CustomError("Slow down! (you are being rate limited)", 429)
     }
@@ -416,7 +422,10 @@ export async function get_template({templateId}:{templateId:string}):Promise<Tem
 
 export async function update_template({templateId, newTemplateData}:{templateId:string, newTemplateData:NewForm}):Promise<boolean|undefined> {
 
-    const editTemplateRequest = new Request(`/api/users/me/template/${templateId}/edit`, {
+
+    const route:string = `/api/admin/official-templates/${templateId}/edit`
+
+    const editTemplateRequest = new Request(route, {
         method:"PUT",
         body:JSON.stringify(newTemplateData),
         headers:requestWithPayloadHeaders
@@ -429,12 +438,16 @@ export async function update_template({templateId, newTemplateData}:{templateId:
     if (editTemplateResponse.status==404) throw new Error("Form not found")
     if (editTemplateResponse.status==400) throw new Error("Bad template data.")
     if(editTemplateResponse.status == 401) throw new CustomError("Please log in first.", 401)
+    if(editTemplateResponse.status == 403) throw new CustomError("Unauthorized to edit template", 403)
     if (editTemplateResponse.status==429) throw new CustomError("Slow down! (you are being rate limited)", 429)
 }
 
 export async function delete_template({templateId}:{templateId:string}):Promise<boolean|undefined> {
 
-    const deleteTemplateRequest = new Request(`/api/users/me/template/${templateId}/delete`, {
+
+    const route:string = `/api/templates/${templateId}/delete`
+
+    const deleteTemplateRequest = new Request(route, {
         method:'DELETE'
     })
 
@@ -444,6 +457,7 @@ export async function delete_template({templateId}:{templateId:string}):Promise<
 
     if (deleteTemplateResponse.status == 404) throw new CustomError("Form does not exist.", 404)
     if (deleteTemplateResponse.status == 401) throw new CustomError("Please log in first.", 401)
+    if (deleteTemplateResponse.status == 403) throw new CustomError("Unauthorized to delete template", 403)
     if (deleteTemplateResponse.status == 429) throw new CustomError("Slow down! (you are being rate limited)", 429)
 
 }
