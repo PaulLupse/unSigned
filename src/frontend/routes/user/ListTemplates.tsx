@@ -83,9 +83,9 @@ export function ListTemplates() {
                 </div>
 
                 <FixedElement style={{maxWidth:'200px'}}>
-                    <BackButton>
+                    <NavButton to={-1} onClick={async ()=>{qC.removeQueries({queryKey:['templates']})}}>
                         Back
-                    </BackButton>
+                    </NavButton>
                 </FixedElement>
             </div>
         </div>

@@ -12,7 +12,7 @@ import React, {useEffect, useState} from "react";
 import {useQuery} from "@tanstack/react-query";
 import {get_form_submission_data} from "src/frontend/server/users-server";
 import {FixedElement} from "src/frontend/components/FixedElement/FixedElement";
-import {BackButton} from "src/frontend/components/Buttons/Buttons";
+import {BackButton, NavButton} from "src/frontend/components/Buttons/Buttons";
 import * as style from './SubmissionData.module.css'
 import * as questionDisplayerStyle from 'src/frontend/components/Form/QuestionDisplayer/QuestionDisplayer.module.css'
 
@@ -228,7 +228,7 @@ export function SubmissionData() {
         retry:0
     })
 
-    useEffect(()=>{if(statisticData.isError)navigate(`/form/${form.id}/view`)})
+    useEffect(()=>{if(statisticData.isError)navigate(`/me/forms/${form.id}/view`)})
 
     const [displayMode, setDisplayMode] = React.useState('individual');
 
@@ -263,7 +263,7 @@ export function SubmissionData() {
 
                 <FixedElement>
                     <ButtonBar>
-                        <BackButton>Back</BackButton>
+                        <NavButton to={`/me/forms/${form.id}/view`}>Back</NavButton>
                         <div style={{display:'grid', gridTemplateColumns:'auto 1fr'}}>
                             <label>Display:</label>
                             <select onChange={(evt)=>setDisplayMode(evt.target.value)}>

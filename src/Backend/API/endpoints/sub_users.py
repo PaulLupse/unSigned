@@ -107,8 +107,11 @@ async def submit_form(submit_form_request:SubmitFormRequest, request: Request):
         result:DBResult = db_connector.submit_form_answer(validation_response.payload.formId, submit_form_request.submission)
         use_key_result:DBResult = db_connector.use_key(validation_response)
 
-        if result.status==use_key_result==200:
+        if result.status==use_key_result.status==200:
             return JSONResponse(status_code=status.HTTP_201_CREATED, content={"message": "Submitted successfully."})
+
+        print(result.message)
+        print(use_key_result.message)
 
         return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"detail":"Internal Server Error."})
 

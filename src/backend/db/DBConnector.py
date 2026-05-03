@@ -426,7 +426,7 @@ class DBConnector:
 
         return TextQuestionAnswerStatistic(type='text',
                                            engagement=nr_answered / len(answers) * 100,
-                                           avgWordCount= word_count / len(answers),
+                                           avgWordCount= word_count / nr_answered,
                                            frequentWords=top_5_words)
 
     @staticmethod
@@ -443,7 +443,7 @@ class DBConnector:
         answers_len = len(answers)
         return GridQuestionAnswerStatistic(type='grid',
                                            engagement=nr_answered/answers_len*100,
-                                           answerRate=[cnt/answers_len*100 for cnt in choices_counter])
+                                           answerRate=[cnt/nr_answered*100 for cnt in choices_counter])
 
     @staticmethod
     def get_questions_answers(subs:list[Submission])->list[list[TextAnswer]|list[GridAnswer]]:

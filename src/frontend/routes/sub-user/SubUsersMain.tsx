@@ -20,6 +20,7 @@ import {FixedElement} from "src/frontend/components/FixedElement/FixedElement";
 import {BackButton, NavButton} from "src/frontend/components/Buttons/Buttons";
 import {FormDisplayer} from "src/frontend/components/Form/FormDisplayer";
 import ButtonBar from "src/frontend/components/Buttons/ButtonBar/ButtonBar";
+import {useAlert} from "src/frontend/components/AlertProvider";
 
 interface KeyFormInput {
     key:string
@@ -51,6 +52,8 @@ export function ShowFormComponent() {
     const key:string = context.key;
     const formId = context.formId;
 
+    const {showAlert} = useAlert()
+
     const nav = useNavigate()
     if (key==='') nav(`/complete-form/${formId}`)
 
@@ -79,10 +82,9 @@ export function ShowFormComponent() {
         if(!data)
             return;
 
-        console.log(data)
-
         const submission = parseData(inputData, data)
-        submit.mutate({key:key, formId:formId, submission:submission})
+        showAlert("Are you sure?", [{text:'No'},{text:'Yes', action:()=>
+        submit.mutate({key:key, formId:formId, submission:submission})}])
     }
 
     return (
@@ -107,7 +109,7 @@ export function ShowFormComponent() {
                 <button type={'button'} className={'plain-button'} onClick={()=>{reset()}}>
                     Clear choices
                 </button>
-                <button form={"barosan"} className={'plain-button'} type={"submit"} onClick={()=>{console.log(errors); console.log(getValues())}}>Submit</button>
+                <button form={"barosan"} className={'plain-button'} type={"submit"}>Submit</button>
             </ButtonBar>
         </FixedElement>
 

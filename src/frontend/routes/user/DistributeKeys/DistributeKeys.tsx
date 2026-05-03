@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import * as style from './DistributeKeys.module.css'
 import {FixedElement} from "src/frontend/components/FixedElement/FixedElement";
 import ButtonBar from "src/frontend/components/Buttons/ButtonBar/ButtonBar";
-import {BackButton} from "src/frontend/components/Buttons/Buttons";
+import {BackButton, NavButton} from "src/frontend/components/Buttons/Buttons";
 
 
 interface EmailsList {
@@ -118,7 +118,7 @@ export function DistributeKeys() {
 
             <FixedElement>
                 <ButtonBar>
-                    <BackButton>Back</BackButton>
+                    <NavButton to={`/me/forms/${form.id}/view`}>Back</NavButton>
                     <button ref={distKeyButton} type={'submit'} form={'distKeyForm'}>
                         Distribute
                     </button>

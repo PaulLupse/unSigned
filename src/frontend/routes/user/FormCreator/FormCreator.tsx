@@ -81,7 +81,7 @@ export default function FormCreator() {
         mutationFn:add_form,
         onSuccess:(formId:string|undefined)=>{
             toast.success("Form added successfully!");
-            navigate(`/form/${formId}/view`)
+            navigate(`/me/forms/${formId}/view`)
         },
         onError:(error)=>{
             toast.error("Could not create form. " + error?.message);

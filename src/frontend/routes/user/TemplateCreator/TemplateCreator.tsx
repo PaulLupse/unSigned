@@ -128,12 +128,9 @@ export default function TemplateCreator() {
 
             <FixedElement>
                   <ButtonBar>
-                        {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}
                         <button type='button' onClick={()=>{navigate(-1);}}>
                             Back
                         </button>
-
-                        {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}
                       <button form={"barosan"} type='submit' className='plain-button'>Done</button>
                   </ButtonBar>
             </FixedElement>

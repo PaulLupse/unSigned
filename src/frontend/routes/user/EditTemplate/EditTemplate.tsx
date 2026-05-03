@@ -82,7 +82,7 @@ export default function EditForm() {
                                 name:data.name,
                                 questions:data.questions,
                             })
-        mutate({newTemplateData:newForm, templateId:parseResult.data?parseResult.data.id:'', type:parseResult.data?.status as 'official'|'mine'});
+        mutate({newTemplateData:newForm, templateId:parseResult.data?parseResult.data.id:''});
     }
 
     return (

@@ -26,7 +26,7 @@ export default function DisplayTemplate() {
             mutationFn:delete_template,
             onSuccess:()=>{
                 toast.success("Template deleted successfully!")
-                navigate('/me')
+                navigate('/templates/mine')
             },
             onError:(error)=>{
                 toast.error("Could not delete template: " + error.message)
