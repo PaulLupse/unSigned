@@ -2,11 +2,67 @@
 
 ## Descriere
 
-Acest proiect este menit pentru a dezvolta un serviciu de generare a unor chestionare complet anonime.
+Acest proiect este menit pentru a dezvolta un serviciu de creare și completare a unor formulare complet anonime, oferind 
+o interfață utilizarilor prin intermediul unui site web. 
 
-## Roadmap
-- Saptamana 1-2: Terminare interfata minima pentru generare si gestionare de chestionare
-- Saptamana 3-4: Aplicarea anonimitatii propriu-zise in cadrul chestionarelor, dezvoltarea backend-ului
-- Saptamana 5-6: Continuarea dezvoltarii frontend-ului
-- Saptamana 7: Code cleaning, testing si bug-solving
-- Saptamana 8: Creare prezentare, documentatie etc.
+## Rulare proiect
+
+Rularea proiectului necesită rularea a două servere: cel de backend (FastAPI & Uvicorn) și cel web (Node.js &
+Webpack dev server).
+
+Întrucât aplicația se folosește de variabile de mediu (environment variables), care nu sunt distribuite alături de codul
+sursă și fișierele de configurație.
+
+Astfel, este necesară setarea următoarelor variabile de mediu:
+
+    SECURE_KEY
+    SECURE_PYSETO_KEY
+    FASTAPI_SERVER_ADDRESS
+    FRONTEND_PORT
+    JWT_ALG
+    DATABASE_URL
+    SENDER_EMAIL
+    GMAIL_APP_PASSWORD
+
+1) SECURE_KEY: o cheie de 256 de biți, sub format hexazecimal
+2) SECURE_PYSETO_KEY: o cheie de 256 de biți, sub format hexazecimal
+3) FASTAPI_SERVER_ADDRESS: adresa server-ului FastAPI (de regulă http://127.0.0.1:8000)
+4) FRONTEND_PORT: port-ul serverului FastAPI (de regulă 8000)
+5) JWT_ALG: algoritmul pt semnarea JWT-ului
+6) DATABASE_URL: adresa bazei de date, în acest caz MongoDB (de regulă mongodb://localhost:27017/)
+7) SENDER_EMAIL: adresa care trimite email-urile având cheile de acces. Email-ul trebuie să fie gmail și contul gmail trebuie să aibă pornită autentificarea în doi pași
+8) GMAIL_APP_PASSWORD: parola de aplicație, configurată în contul google
+
+### Rularea serverului de backend
+
+Pentru a putea rula serverul de backend este necesară instalarea modulelor python, listate în fișierul requirements.txt,
+din directorul de bază. 
+
+Instalarea se realizează prin intermediul unui terminal deschis în directorul principal, folosind următoarea comandă
+
+    pip install -r requirements.txt
+
+În urma instalării modulelor, este necesară, de asemenea, activarea mediului virtual python, folosind următoarea comandă:
+
+    ./.venv/Scripts/activate    
+
+În final, rularea server-ului de backend se realizează folosind următoarea comandă:
+
+    uvicorn main:app
+
+
+### Rularea serverului web
+
+Pentru a putea rula serverul de backend este necesară instalarea modulelor node, a căror nume se regăsesc în fișierul de
+configurare package.json din directorul de bază. Instalarea modulelor se realizează folosind următoarea linie de comandă:
+
+    npm install
+
+Rularea serverului web se efectuează prin următoarea linie de comandă:
+
+    npm start
+
+
+## Licență
+
+MIT Liscense

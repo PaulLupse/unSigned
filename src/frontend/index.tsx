@@ -142,7 +142,6 @@ window.onload = ()=>{
                                 <Route path='login' element={<LoginComponent />}/>
                                 <Route path='register' element={<RegisterComponent />}/>
                                 <Route path='form/create' element={<FormCreator />} />
-
                                 <Route path='templates' >
                                     <Route index element={<TemplatesMenu />} />
                                     <Route path={"official"} element={<ListTemplates/>} />
@@ -155,7 +154,6 @@ window.onload = ()=>{
                                         <Route path='edit' element={<EditTemplate />}/>
                                     </Route>
                                 </Route>
-
                             </Route>
                             {/* ruta /complete-form este separata de ruta principala deoarece este menita sa fie accesata de sub-utilizatori */}
                             <Route path='complete-form' element={<SubUsersMain />}>
