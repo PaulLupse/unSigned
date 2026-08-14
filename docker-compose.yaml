@@ -1,0 +1,50 @@
+
+version: "0.1"
+
+services:
+  db:
+    image: mongo:latest
+    container_name: db
+    ports:
+      - "27018:27017"
+    volumes:
+      - proiect-chestionare-db:/data/db
+
+    networks:
+      - chestionare
+
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "8000:8000"
+
+    environment:
+      - DB_ADDRESS=mongodb://db:27017
+
+    depends_on:
+      - db
+
+    networks:
+      - chestionare
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports: ["3000:3000"]
+
+    environment:
+      - BACKEND_ADDRESS=http://backend:8000
+
+    depends_on:
+      - backend
+
+    networks:
+      - chestionare
+
+networks:
+  chestionare:
+    driver: bridge
+
+volumes:
+  proiect-chestionare-db:

@@ -15,21 +15,21 @@ sursă și fișierele de configurație.
 
 Astfel, este necesară setarea următoarelor variabile de mediu:
 
-    SECURE_KEY
+    SECURE_JWT_KEY
     SECURE_PYSETO_KEY
-    FASTAPI_SERVER_ADDRESS
+    BACKEND_ADDRESS
     FRONTEND_PORT
     JWT_ALG
-    DATABASE_URL
+    DB_ADDRESS
     SENDER_EMAIL
     GMAIL_APP_PASSWORD
 
-1) SECURE_KEY: o cheie de 256 de biți, sub format hexazecimal
+1) SECURE_JWT_KEY: o cheie de 256 de biți, sub format hexazecimal
 2) SECURE_PYSETO_KEY: o cheie de 256 de biți, sub format hexazecimal
-3) FASTAPI_SERVER_ADDRESS: adresa server-ului FastAPI (de regulă http://127.0.0.1:8000)
+3) BACKEND_ADDRESS: adresa server-ului FastAPI (de regulă http://127.0.0.1:8000)
 4) FRONTEND_PORT: port-ul serverului FastAPI (de regulă 8000)
 5) JWT_ALG: algoritmul pt semnarea JWT-ului
-6) DATABASE_URL: adresa bazei de date, în acest caz MongoDB (de regulă mongodb://localhost:27017/)
+6) DB_ADDRESS: adresa bazei de date, în acest caz MongoDB (de regulă mongodb://localhost:27017/)
 7) SENDER_EMAIL: adresa care trimite email-urile având cheile de acces. Email-ul trebuie să fie gmail și contul gmail trebuie să aibă pornită autentificarea în doi pași
 8) GMAIL_APP_PASSWORD: parola de aplicație, configurată în contul google
 
@@ -61,6 +61,10 @@ configurare package.json din directorul de bază. Instalarea modulelor se realiz
 Rularea serverului web se efectuează prin următoarea linie de comandă:
 
     npm start
+
+### Note
+
+Se poate rula aplicatia prin intermediul containerelor docker, voi detalia acest proces in push-uri ulterioare.
 
 
 ## Licență
