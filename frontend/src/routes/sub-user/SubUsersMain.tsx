@@ -9,7 +9,7 @@ import type {SubmitHandler} from "react-hook-form";
 import React, {use, useEffect} from "react";
 import {gridAnswerSchema, textAnswerSchema} from '../../domain/schemas'
 
-import {use_key, submit_form, check_form_id, check_key} from "../../server/sub-users-server";
+import {useKey, submitForm, checkFormId, checkKey} from "../../server/sub-users-server";
 import type {FormInfo, GridQuestion, Submission, TextQuestion} from "../../domain/types";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
@@ -59,14 +59,14 @@ export function ShowFormComponent() {
 
     // query folosit pentru a accesa formularul
     const {data, error} = useQuery({
-        queryFn:()=>use_key({k:key, formId:formId}),
+        queryFn:()=>useKey({k:key, formId:formId}),
         queryKey:['form'],
         retry:0,
         refetchOnWindowFocus:false
     })
 
     const submit = useMutation({
-        mutationFn:submit_form,
+        mutationFn:submitForm,
         onSuccess:()=>{
             toast.success("Form submitted successfully!");
             nav(`/complete-form/${formId}/done`, {replace:true});
@@ -129,7 +129,7 @@ export function KeyInputComponent() {
     const formId = context.formId;
 
     const {mutate} = useMutation({
-        mutationFn:check_key,
+        mutationFn:checkKey,
         onSuccess:()=>{
             setKey(inputtedKey);
             navigate('complete')
@@ -189,7 +189,7 @@ export function FormIdInputComponent () {
 
                 if(value.length != 24 || (! /^[0-9a-fA-F]+$/.test(value)))
                     return "Invalid form id"
-                const foundForm = await check_form_id(value);
+                const foundForm = await checkFormId(value);
                 if(foundForm)
                     return true;
                 return "Could not find form."

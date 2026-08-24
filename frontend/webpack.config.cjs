@@ -2,6 +2,7 @@ var path = require('path');
 const reactMatch = /\.(ts|js)x?$/
 require('dotenv').config();
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { watch } = require('fs');
 
 module.exports = {
     context: __dirname,
@@ -69,7 +70,7 @@ module.exports = {
         })
     ],
     devServer: {
-        port: 3000,
+        port: process.env.FRONTEND_PORT,
         hot: true,
         historyApiFallback: true,
         proxy: [{
@@ -80,6 +81,10 @@ module.exports = {
         }],
         static: {
             directory: path.join(__dirname, 'static'),
+            watch: {
+                poll: 1000, // Check for changes every second
+                ignored: /node_modules/, // Omit node_modules to save CPU
+            }
         },
         compress: true,
     }

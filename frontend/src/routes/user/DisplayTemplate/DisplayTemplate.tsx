@@ -7,7 +7,7 @@ import {FormDisplayer} from "src/components/Form/FormDisplayer";
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {NavButton} from "src/components/Buttons/Buttons";
-import {delete_template} from "src/server/users-server";
+import {deleteTemplate} from "src/server/users-server";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -23,7 +23,7 @@ export default function DisplayTemplate() {
 
     const deleteMutation = useMutation(
         {
-            mutationFn:delete_template,
+            mutationFn:deleteTemplate,
             onSuccess:()=>{
                 toast.success("Template deleted successfully!")
                 navigate('/templates/mine')

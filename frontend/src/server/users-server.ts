@@ -1,6 +1,6 @@
 // acest script contine parte din logica de comunicare cu serverul web, precum logare, inregistrare si operati CRUD
 
-import {CredentialError, CustomError} from "../utilities/Utilities";
+import {CredentialError, CustomError} from "src/utilities/Utilities";
 
 import {
     LoginInfo,
@@ -9,37 +9,37 @@ import {
     type MinimalFormInfo,
     type Email,
     type MinimalTemplate, type Template, type TextQuestionAnswerStatistic, type GridQuestionAnswerStatistic, type User
-} from "../domain/types";
+} from "src/domain/types";
 import {
     formInfoSchema,
     minimalFormInfoSchema,
     minimalTemplateSchema,
     templateSchema,
     userSchema
-} from "../domain/schemas";
+} from "src/domain/schemas";
+import {fetch} from "src/utilities/Utilities";
 const requestWithPayloadHeaders = new Headers({
         'Accept': "application/json",
         'Content-Type': "application/json"
     });
 
+// Cere un jeton de access (jwt).
+// Returneaza un obiect response cu detaliile de autorizare.
 async function getAccessToken(loginInfo:LoginInfo) {
 
     const loginForm = new FormData();
     loginForm.append("username", loginInfo.username)
     loginForm.append("password", loginInfo.password)
 
-    return await fetch("/api/users/token", {method:"POST", body:loginForm});
+    return await fetch("/api/auth/token", {method:"POST", body:loginForm});
 }
 
-// functie pt login in urma introducerii credentialelor
+// Incearca autorizarea utilizatorului folosind nume si parola.
+// Arunca erori daca autorizarea a esuat, cu motivele esuarii.
 export async function login({username, password}:{username:string, password:string}):Promise<void>{
 
-    // initial citim datele introduse in formular
-    const loginInfo:LoginInfo = new LoginInfo(username, password);
 
-    const tokenResponse: Response = await getAccessToken(new LoginInfo(loginInfo.username, loginInfo.password));
-
-
+    const tokenResponse: Response = await getAccessToken(new LoginInfo(username, password));
 
     if (!tokenResponse.ok) {
         if (tokenResponse.status == 404) {
@@ -54,23 +54,22 @@ export async function login({username, password}:{username:string, password:stri
     }
 }
 
-export async function register({username, password}:{username: string, password: string}):Promise<void> {
+// Inregistreaza utilizatorul.
+// Arunca erori daca inregistrarea a esuat, cu motivele esuarii.
+export async function register({username, password, email}:{username: string, password: string, email:string}):Promise<void> {
 
-    const request = new Request("/api/users/register", {
+    const request = new Request("/api/auth/register", {
         method: "PUT",
         headers: requestWithPayloadHeaders,
         body: JSON.stringify({
             username: username,
             password: password,
-            email: (username != undefined) ? password : undefined
+            email: email
         })
     });
 
     const response = await fetch(request);
     if (!response.ok)  {
-        if(response.status == 400) {
-            throw new CredentialError("Password too short", {username:'', password:'Password too short'}, 400)
-        }
         if(response.status == 409) {
             throw new CredentialError("User already exists", {username:'User already exists', password:''}, 409)
         }
@@ -81,18 +80,19 @@ export async function register({username, password}:{username: string, password:
 
 }
 
-// functie pt login automat, daca utilizatorul s-a logat anterior
-export async function auto_login():Promise<User|undefined>{
+// Verifica daca utilizatorul este logat.
+// Returneaza detaliile utilizatorului, in caz afirmativ.
+export async function getUserData():Promise<User|undefined>{
 
     const loginRequest = new Request(
-        "/api/users/me",
+        "/api/auth/me",
         {
             method:"POST",
             credentials:'include'
         });
 
-
     const loginResponse = await fetch(loginRequest);
+
 
     if(loginResponse.ok)
     {
@@ -112,9 +112,11 @@ export async function auto_login():Promise<User|undefined>{
 
 }
 
+
+// Deautorizeaza utilizatorul.
 export async function logout():Promise<boolean> {
 
-    const logoutRequest = new Request("/api/users/me/logout",
+    const logoutRequest = new Request("/api/auth/me/logout",
         {
             method:"POST",
             credentials:"include"
@@ -127,7 +129,8 @@ export async function logout():Promise<boolean> {
 
 }
 
-export async function get_form(formId:string):Promise<FormInfo|undefined> {
+// Cauta un formular dupa id si il returneaza (daca il gaseste).
+export async function getForm(formId:string):Promise<FormInfo|undefined> {
 
     const getItemsRequest = new Request(
         `/api/users/me/form/${formId}`,
@@ -160,7 +163,8 @@ export async function get_form(formId:string):Promise<FormInfo|undefined> {
         throw new CustomError("Please log in first.", 401)
 }
 
-export async function get_forms():Promise<Array<MinimalFormInfo>|undefined> {
+// Returneaza toate formularele utilizatorului, sub forma minimala.
+export async function getForms():Promise<Array<MinimalFormInfo>|undefined> {
 
     const getItemsRequest = new Request(
         '/api/users/me/forms',
@@ -197,7 +201,8 @@ export async function get_forms():Promise<Array<MinimalFormInfo>|undefined> {
 
 }
 
-export async function add_form(form:NewForm):Promise<string|undefined> {
+// Adauga un nou formular.
+export async function addForm(form:NewForm):Promise<string|undefined> {
 
     console.log(form)
 
@@ -224,7 +229,8 @@ export async function add_form(form:NewForm):Promise<string|undefined> {
 
 }
 
-export async function update_form({newFormData, formId}:{newFormData: NewForm, formId: string}) {
+// Actualizeaza un formular cu datele noi (in stil overwrite).
+export async function updateForm({newFormData, formId}:{newFormData: NewForm, formId: string}) {
 
     console.log(newFormData)
 
@@ -254,7 +260,8 @@ export async function update_form({newFormData, formId}:{newFormData: NewForm, f
     }
 }
 
-export async function delete_form(formId:string):Promise<boolean|undefined> {
+// Sterge un formular.
+export async function deleteForm(formId:string):Promise<boolean|undefined> {
 
     const deleteRequest:Request = new Request(`/api/users/me/form/${formId}/delete`,
         {
@@ -278,7 +285,8 @@ export async function delete_form(formId:string):Promise<boolean|undefined> {
 
 }
 
-export async function get_form_submission_data(formId:string):
+// Returneaza datele despre raspunsurile la un formular (cautat dupa id).
+export async function getFormSubmissionData(formId:string):
     Promise<Array<TextQuestionAnswerStatistic|GridQuestionAnswerStatistic>|undefined> {
 
     const getDataRequest = new Request(`/api/users/me/form/${formId}/submission-data`,
@@ -301,7 +309,8 @@ export async function get_form_submission_data(formId:string):
     }
 }
 
-export async function publish_form(formId:string):Promise<boolean|undefined> {
+// Publica un formular.
+export async function publishForm(formId:string):Promise<boolean|undefined> {
 
     const publishRequest = new Request(`/api/users/me/form/${formId}/publish`, {
             method:"POST"
@@ -323,7 +332,8 @@ export async function publish_form(formId:string):Promise<boolean|undefined> {
     }
 }
 
-export async function close_form(formId:string):Promise<boolean|undefined> {
+// Inchide un formular.
+export async function closeForm(formId:string):Promise<boolean|undefined> {
 
     const closeRequest = new Request(`/api/users/me/form/${formId}/close`, {
             method:"POST"
@@ -345,7 +355,8 @@ export async function close_form(formId:string):Promise<boolean|undefined> {
     }
 }
 
-export async function create_template({templateData, type}:{templateData:NewForm, type:'official'|undefined}):Promise<string|undefined> {
+// Adauga un nou template.
+export async function createTemplate({templateData, type}:{templateData:NewForm, type:'official'|undefined}):Promise<string|undefined> {
 
     const route:string = type==undefined?"/api/templates/create":"/api/admin/official-templates/create"
 
@@ -371,7 +382,8 @@ export async function create_template({templateData, type}:{templateData:NewForm
         throw new CustomError("Slow down! (you are being rate limited)", 429)
 }
 
-export async function get_templates({type}:{type:'public'|'mine'|'official'}):Promise<Array<MinimalTemplate>|undefined> {
+// Returneaza toate template-urile utilizatorului, sub format minimal.
+export async function getTemplates({type}:{type:'public'|'mine'|'official'}):Promise<Array<MinimalTemplate>|undefined> {
 
     const getTemplatesRequest = new Request(`/api/templates/${type}`, {
         method:"GET"
@@ -394,7 +406,8 @@ export async function get_templates({type}:{type:'public'|'mine'|'official'}):Pr
         throw new CustomError("Slow down! (you are being rate limited)", 429)
 }
 
-export async function get_template({templateId}:{templateId:string}):Promise<Template|undefined> {
+// Returneaza un singur template, dupa id.
+export async function getTemplate({templateId}:{templateId:string}):Promise<Template|undefined> {
 
     const getTemplateRequest = new Request(`/api/templates/${templateId}`, {
         method:"GET"
@@ -425,7 +438,8 @@ export async function get_template({templateId}:{templateId:string}):Promise<Tem
     }
 }
 
-export async function update_template({templateId, newTemplateData}:{templateId:string, newTemplateData:NewForm}):Promise<boolean|undefined> {
+// Actualizeaza un template cu datele noi (in stil overwrite).
+export async function updateTemplate({templateId, newTemplateData}:{templateId:string, newTemplateData:NewForm}):Promise<boolean|undefined> {
 
 
     const route:string = `/api/admin/official-templates/${templateId}/edit`
@@ -447,7 +461,8 @@ export async function update_template({templateId, newTemplateData}:{templateId:
     if (editTemplateResponse.status==429) throw new CustomError("Slow down! (you are being rate limited)", 429)
 }
 
-export async function delete_template({templateId}:{templateId:string}):Promise<boolean|undefined> {
+// Sterge template-ul cu id-ul specificat.
+export async function deleteTemplate({templateId}:{templateId:string}):Promise<boolean|undefined> {
 
 
     const route:string = `/api/templates/${templateId}/delete`
@@ -467,7 +482,8 @@ export async function delete_template({templateId}:{templateId:string}):Promise<
 
 }
 
-export async function distribute_keys({emails, formId}:{emails: Email[], formId: string}):Promise<boolean|undefined> {
+// Trimite cerere de distribuire de chei de acces la formularul cu id-ul specificat, la email-urile specificate.
+export async function distributeKeys({emails, formId}:{emails: Email[], formId: string}):Promise<boolean|undefined> {
 
     const distKeysRequest = new Request(`/api/users/me/form/${formId}/distribute_keys`,
         {

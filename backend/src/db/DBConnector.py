@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from typing import Literal
 
 import pymongo.errors
-from bson import ObjectId
+from bson import ObjectId, CodecOptions
 from fastapi.encoders import jsonable_encoder
-from pydantic import TypeAdapter, ValidationError
+from pydantic import TypeAdapter, ValidationError, BaseModel
 
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
@@ -16,11 +16,11 @@ from src.domain.models import TextAnswer, TextQuestionAnswerStatistic, GridQuest
     GridAnswer
 from src.domain.models import MinimalTemplateInfo, Template
 from src.domain.models import TextQuestion, GridQuestion
-from src.api.auth.auth import hash_password, verify_password
+from src.api.auth.utils import hash_password, verify_password
 from src.domain.models import Form, Submission, MinimalFormInfo, NewForm
 from src.domain.auth import Key, User
 
-from datetime import date, datetime
+from datetime import date, datetime, timezone, timedelta
 
 import dotenv, os
 
@@ -32,12 +32,27 @@ if not DB_URL:
 
 mongo_client = MongoClient(DB_URL)
 
+
+class RefreshToken(BaseModel):
+
+    userId:str
+    hash:str
+    isUsed:bool
+    expiresAt:datetime # numarul de zile pt care va fii valabil
+
+    def isExpired(self)->bool:
+
+        return datetime.now(timezone.utc) > self.expiresAt
+
 @dataclass
 class DBResult[Type]:
 
     status:int
     message:str
     data:Type|None = None
+
+    def ok(self):
+        return 200 <= self.status <= 299
 
 
 class DBConnector:
@@ -46,61 +61,139 @@ class DBConnector:
         try:
             database = mongo_client.get_database("db-chestionare")
 
+            opt = CodecOptions(tz_aware=True)
+
             self.users_table = database["users"]
             self.forms_table = database["forms"]
             self.keys_table = database["keys"]
             self.templates_table = database["templates"]
+            self.sessions_table = database.get_collection("sessions", codec_options=opt)
 
         except ServerSelectionTimeoutError as e:
             print("ERROR: Server Selection Timeout. Check server connection.")
             raise e
 
-    # valideaza detaliile de logare
-    # in caz de validitate, returneaza id-ul utilizatorului
-    def validate_credentials(self, username:str, password:str)->DBResult[User]:
+    # Valideaza detaliile de logare si returneaza detaliile despre utilizator
+    # Identificatorul poate fii un email sau un username
+    def validate_credentials(self, password:str, identifier:str)->DBResult[User]:
 
-        user = self.users_table.find_one({"username": username})
+        # Cautam utilizatorul atat dupa email cat si dupa parola
+        user = self.users_table.find_one(
+            {
+                "$or":
+                 [
+                     {"username": identifier},
+                     {"email": identifier}
+                 ]
+            })
 
         if user:
 
-            password_in_db:str = user["password"]
+            password_in_db:str = user["password"] # Parola din db este stocata sub forma de hash
             user_id:str = str(user['_id'])
             is_admin:bool = user['isAdmin']
+            username:str = user['username']
+            email:str = user['email']
 
             if verify_password(plain_password=password, hashed_password=password_in_db):
-                return DBResult[User](200, "Valid credentials.", User(id=user_id, username=username, isAdmin=is_admin))
+                return DBResult[User](200,
+                                      "Valid credentials.",
+                                      User(id=user_id,
+                                           username=username,
+                                           isAdmin=is_admin,
+                                           email=email))
+
             return DBResult(400, "Invalid credentials.")
 
         return DBResult(404, "User not found.")
 
-    @staticmethod
-    def validate_password(password:str)->DBResult:
 
-        if len(password) > 30:
-            return DBResult(400, "Password is too long.")
-        elif len(password) < 8:
-            return DBResult(400, "Password is too short.")
-        return DBResult(200, "Password is valid.")
+    def store_refresh_token(self, user_id:str, hashed_refresh_token:str)->DBResult[str]:
 
-    def find_user(self, user_id:str)->DBResult:
+        expiration_date = datetime.now(timezone.utc) + timedelta(days=7)
+
+        res:InsertOneResult = self.sessions_table.insert_one(
+            {"user_id":user_id,
+             "hashed_ref_token":hashed_refresh_token,
+             "is_used":False,
+             "expires_at":expiration_date},)
+
+        if not res.inserted_id:
+            return DBResult(500, "Cannot store refresh token.")
+
+        return DBResult(200, "Stored refresh token.")
+
+    # Sterge toate refresh token-urile apartinand utilizatorului
+    def end_user_session(self, user_id:str,)->DBResult[str]:
+
+        self.sessions_table.delete_many({"user_id":user_id})
+
+        return DBResult(200, "Done.")
+
+
+    def invalidate_refresh_token(self, hashed_ref_token:str)->DBResult[str]:
+
+        result = self.sessions_table.update_one(filter={"hashed_ref_token":hashed_ref_token}, update={"$set":{"is_used":True}}, upsert=False)
+
+        if result.modified_count == 0: return DBResult(404, "Token not found.")
+        return DBResult(200, "Invalidated token.")
+
+    # Verifica refresh token-ul
+    def check_refresh_token(self, hashed_ref_token:str)->DBResult[User|None]:
+
+        result_from_db = self.sessions_table.find_one({"hashed_ref_token":hashed_ref_token})
+        result = RefreshToken(
+            userId=result_from_db["user_id"],
+            hash=result_from_db["hashed_ref_token"],
+            isUsed=result_from_db["is_used"],
+            expiresAt=result_from_db["expires_at"]
+        )
+
+        try:
+
+            if result.isUsed:
+                return DBResult(401, "Token used.")
+
+            if result.isExpired():
+                return DBResult(401, "Token expired.")
+
+            find_res = self.find_user(user_id=result.userId)
+
+            return find_res
+
+
+        except ValidationError as e:
+
+            return DBResult(401, "Token is invalid.")
+
+
+    def find_user(self, user_id:str)->DBResult[User|None]:
 
         user = self.users_table.find_one({"_id":ObjectId(user_id)})
 
-        if user: return DBResult(200, "User exists.")
-        else: return DBResult(404, "User not found.")
+        if user:
+
+            user = User(id=str(user["_id"]),
+                        username=user["username"],
+                        isAdmin=user["isAdmin"],
+                        email=user["email"])
+
+            return DBResult(200, "User exists.", data=user)
+        else: return DBResult(404, "User not found.", data=None)
 
     # metoda ce inregistreaza un utilizator
     # inregistreaza parola in baza de date sub forma 'hash'-uita, folosind un string generat aleator
     # returneaza id-ul utilizatorului
-    def register_user(self, username:str, password:str)->DBResult[str]:
+    def register_user(self, username:str, password:str, email:str)->DBResult[str]:
 
         try:
 
-            validate_password = self.validate_password(password)
-            if validate_password.status != 200: return validate_password
-
             hashed_password = hash_password(password)
-            result:InsertOneResult = self.users_table.insert_one({"username":username,"password":hashed_password,"isAdmin":False})
+            result:InsertOneResult = self.users_table.insert_one(
+                {"username":username,
+                 "password":hashed_password,
+                 "email":email,
+                 "isAdmin":False})
 
             return DBResult(201, "Created.", str(result.inserted_id))
 

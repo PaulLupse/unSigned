@@ -10,7 +10,7 @@ import type {
 import {useNavigate, useOutletContext} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import {useQuery} from "@tanstack/react-query";
-import {get_form_submission_data} from "src/server/users-server";
+import {getFormSubmissionData} from "src/server/users-server";
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import {BackButton, NavButton} from "src/components/Buttons/Buttons";
 import * as style from './SubmissionData.module.css'
@@ -223,7 +223,7 @@ export function SubmissionData() {
     questions = form.questions;
 
     const statisticData = useQuery({
-        queryFn:async()=>get_form_submission_data(form.id),
+        queryFn:async()=>getFormSubmissionData(form.id),
         queryKey:['submissionData'],
         retry:0
     })

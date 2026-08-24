@@ -1,6 +1,6 @@
 import {useNavigate} from "react-router-dom";
 import {useQuery} from "@tanstack/react-query";
-import {get_forms, get_templates} from "src/server/users-server";
+import {getForms, getTemplates} from "src/server/users-server";
 import {Table} from "src/components/Table/Table";
 import type {MinimalFormInfo, MinimalTemplate} from "src/domain/types";
 import {makePair} from "src/utilities/Utilities";
@@ -13,7 +13,7 @@ export function DisplayForms() {
     const navigate = useNavigate();
 
     const getForms = useQuery({
-        queryFn:get_forms,
+        queryFn:getForms,
         queryKey:['forms'],
         retry:0,
         refetchOnWindowFocus:false

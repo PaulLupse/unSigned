@@ -1,6 +1,6 @@
 import {Link, useNavigate, useOutletContext} from "react-router-dom";
 import React from "react";
-import {get_forms, get_templates, logout} from "src/server/users-server";
+import {getForms, getTemplates, logout} from "src/server/users-server";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import * as style from './Profile.module.css'
 import type {User} from "src/domain/types";
@@ -25,14 +25,14 @@ function DataDisplay({user}:{user:User}) {
     const queryClient = useQueryClient();
     const navigate = useNavigate();
 
-    const getForms = useQuery({
-        queryFn:get_forms,
+    const getUserForms = useQuery({
+        queryFn:getForms,
         queryKey:['forms'],
         retry:0
     })
 
-    const getTemplates = useQuery({
-        queryFn:async()=>get_templates({type:'mine'}),
+    const getUserTemplates = useQuery({
+        queryFn:async()=>getTemplates({type:'mine'}),
         queryKey:['templates'],
         retry:0
     })
@@ -62,8 +62,8 @@ function DataDisplay({user}:{user:User}) {
                 <hr style={{border:'1px solid gray', width:'100%', boxSizing:'border-box'}}/>
                 <div className={style.content}>
                     <p>User id:</p> <p>{user.id}</p>
-                    <p>Forms:</p> <p>{getForms.data?.length}</p>
-                    <p>Templates:</p> <p>{getTemplates.data?.length}</p>
+                    <p>Forms:</p> <p>{getUserForms.data?.length}</p>
+                    <p>Templates:</p> <p>{getUserTemplates.data?.length}</p>
                 </div>
                 <hr style={{border:'1px solid gray', width:'100%', boxSizing:'border-box'}}/>
                 <div className={style.footer}>

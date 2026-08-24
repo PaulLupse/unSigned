@@ -4,7 +4,7 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {add_form, create_template} from "../../../server/users-server";
+import {addForm, createTemplate} from "../../../server/users-server";
 import type {NewForm} from "../../../domain/types";
 import type {TextQuestion, GridQuestion} from "../../../domain/types";
 import {useLocation, useNavigate} from "react-router-dom";
@@ -39,7 +39,7 @@ export default function TemplateCreator() {
     const formQuestions = watch("questions");
 
     const {mutate, isPending} = useMutation({
-        mutationFn:create_template,
+        mutationFn:createTemplate,
         onSuccess:(formId:string|undefined)=>{
             toast.success("Template created successfully!");
             navigate(`/templates/${formId}/view`)

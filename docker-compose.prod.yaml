@@ -1,0 +1,56 @@
+services:
+
+  backend:
+    # difera de serviciul localizat in .dev prin lipsa bind mount-ului
+    build: 
+      context: ./backend
+      target: production
+
+    container_name: backend-prod
+    ports:
+      - "8000:8000"
+
+    environment:
+      - DB_ADDRESS=mongodb://db:27017
+
+    depends_on:
+      - db
+
+    networks:
+      - proiect-chestionare
+
+  nginx-proxy-manager:
+    container_name: NPM
+    image: 'jc21/nginx-proxy-manager:2.15.1'
+
+    ports:
+      - '80:80' # Public HTTP Port
+      - '443:443' # Public HTTPS Port
+      - '81:81' # Admin Web Port
+
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+
+    networks:
+      - proiect-chestionare
+
+  nginx:
+    build:
+      context: ./frontend
+      target: production
+
+    container_name:
+      frontend-prod
+      
+    ports: ["3000:3000"]
+
+    environment:
+      - BACKEND_ADDRESS=http://backend:8000
+      - FRONTEND_PORT=3000
+
+    networks:
+      - proiect-chestionare
+
+    depends_on:
+      - backend

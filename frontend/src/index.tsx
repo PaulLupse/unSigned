@@ -4,9 +4,7 @@ import {BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate
 import {QueryCache, QueryClient, QueryClientProvider, useQuery, useQueryClient} from "@tanstack/react-query";
 import {AlertProvider} from "./components/AlertProvider";
 
-import '../static/css/general.css'
-
-import {auto_login} from "./server/users-server";
+import {getUserData} from "./server/users-server";
 
 import FormCreator from "./routes/user/FormCreator/FormCreator";
 import {Form} from "./routes/user/Form";
@@ -41,13 +39,19 @@ import ThankYou from "./routes/sub-user/ThankYou";
 import TemplatesMenu from "./routes/user/TemplatesMenu";
 import {ListTemplates} from "./routes/user/ListTemplates";
 
+import "./general.css"
+
 function Index() {
 
     const loc = useLocation();
     const nav = useNavigate();
 
     const queryClient = useQueryClient();
-    const {isSuccess, data, isLoading, isError, isStale} = useQuery({queryKey: ['user'], queryFn:auto_login, retry:0, refetchOnWindowFocus:false})
+    const {isSuccess, data, isLoading, isError, isStale} = useQuery(
+        {queryKey: ['user'], 
+        queryFn:getUserData,
+        retry:0,
+        refetchOnWindowFocus:false})
 
     const [sidebarIsOpen, setSidebarIsOpen] = useState(false);
 

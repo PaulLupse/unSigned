@@ -6,6 +6,7 @@ class User(BaseModel):
     id:str
     username:str
     isAdmin:bool
+    email:str
 
 class KeyPayload(BaseModel):
     formId: str

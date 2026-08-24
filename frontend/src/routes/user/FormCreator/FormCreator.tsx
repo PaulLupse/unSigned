@@ -4,7 +4,7 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {add_form, get_template} from "../../../server/users-server";
+import {addForm, getTemplate} from "../../../server/users-server";
 import type {FormInfo, NewForm} from "../../../domain/types";
 import type {TextQuestion, GridQuestion} from "../../../domain/types";
 import {useNavigate, useParams, useSearchParams} from "react-router-dom";
@@ -36,7 +36,7 @@ export default function FormCreator() {
     // daca este folosit parametrul de query 'useTemplateId', atunci se incearca preluarea template-ului cu acel id
     // si folosirea intrebarilor acestuia ca si valori default pentru formular
     const usedTemplate = useQuery({
-        queryFn:async()=>get_template({templateId:usedTemplateId?usedTemplateId:''}),
+        queryFn:async()=>getTemplate({templateId:usedTemplateId?usedTemplateId:''}),
         queryKey:['usedTemplate', usedTemplateId],
         enabled: !!usedTemplateId,
         retry:0
@@ -78,7 +78,7 @@ export default function FormCreator() {
     }, []);
 
     const {mutate} = useMutation({
-        mutationFn:add_form,
+        mutationFn:addForm,
         onSuccess:(formId:string|undefined)=>{
             toast.success("Form added successfully!");
             navigate(`/me/forms/${formId}/view`)

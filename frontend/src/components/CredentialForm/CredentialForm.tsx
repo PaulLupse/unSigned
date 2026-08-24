@@ -1,14 +1,13 @@
-import React, {useCallback, useRef, useState} from 'react';
+import React, {useCallback, useRef} from 'react';
 import './credential-form.css'
 import {type SubmitHandler, useForm} from "react-hook-form";
 import {useNavigate} from "react-router-dom";
-import {QueryClient, useMutation, useQueryClient} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {zodResolver} from "@hookform/resolvers/zod";
-import type {Credentials} from "../../domain/types";
-import {credentialsSchema} from "../../domain/schemas";
+import type {Credentials} from "src/domain/types";
+import {credentialsSchema} from "src/domain/schemas";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
-import toast from "react-hot-toast";
-import {CredentialError} from "../../utilities/Utilities";
+import {CredentialError} from "src/utilities/Utilities";
 
 interface CredentialFormProps {
     type:string

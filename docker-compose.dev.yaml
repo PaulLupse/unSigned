@@ -1,0 +1,44 @@
+services:
+
+  backend:
+    build: 
+      context: ./backend
+      target: developement
+
+    container_name: backend-dev
+    ports:
+      - "8000:8000"
+
+    environment:
+      - DB_ADDRESS=mongodb://db:27017
+
+    volumes: # folosite pt hot reloading
+      - ./backend:/app
+      - /app/venv
+
+    depends_on:
+      - db
+
+    networks:
+      - proiect-chestionare
+
+  frontend:
+    build:
+      context: ./frontend
+      target: developement
+
+    container_name: frontend-dev
+    ports: ["3000:3000"]
+
+    environment:
+      - BACKEND_ADDRESS=http://backend:8000
+      - WATCHPACK_POLLING=true 
+    volumes: # folosite pt hot reloading
+      - ./frontend:/app
+      - /app/node_modules
+
+    depends_on:
+      - backend
+
+    networks:
+      - proiect-chestionare

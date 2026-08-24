@@ -1,6 +1,6 @@
-import {type FormInfo, type Submission} from "../domain/types";
+import {type FormInfo, type Submission} from "src/domain/types";
 import {z} from 'zod'
-import {formInfoSchema, submissionSchema} from "../domain/schemas";
+import {formInfoSchema, submissionSchema} from "src/domain/schemas";
 
 const baseURL:string = ''
 
@@ -13,7 +13,7 @@ const UseKeyResponseSchema = z.object(
 type UseKeyResponseType = z.TypeOf<typeof UseKeyResponseSchema>;
 
 
-export async function check_form_id(formId:string):Promise<boolean|undefined> {
+export async function checkFormId(formId:string):Promise<boolean|undefined> {
     const checkFormIdRequest = new Request(baseURL + `/api/sub-users/check/${formId}`, {
         method:'POST',
         body:JSON.stringify({formId:formId}),
@@ -29,7 +29,7 @@ export async function check_form_id(formId:string):Promise<boolean|undefined> {
         throw new Error("Form not found.")
 }
 
-export async function check_key({key, formId}: { key: string, formId: string }):Promise<void> {
+export async function checkKey({key, formId}: { key: string, formId: string }):Promise<void> {
     const checkKeyRequest = new Request(baseURL + '/api/sub-users/check-key', {
         method:'POST',
         body:JSON.stringify({key:key, formId:formId}),
@@ -44,7 +44,7 @@ export async function check_key({key, formId}: { key: string, formId: string }):
     else if(checkKeyResponse.status == 423) throw new Error("Form unavailable.")
 }
 
-export async function use_key({k, formId}:{k: string, formId: string}):Promise<FormInfo|undefined> {
+export async function useKey({k, formId}:{k: string, formId: string}):Promise<FormInfo|undefined> {
 
     if (k === '') throw new Error("Please input key again.")
 
@@ -75,7 +75,7 @@ export async function use_key({k, formId}:{k: string, formId: string}):Promise<F
     }
 }
 
-export async function submit_form({key, formId, submission}:{key: string, formId: string, submission: Submission}):Promise<void> {
+export async function submitForm({key, formId, submission}:{key: string, formId: string, submission: Submission}):Promise<void> {
 
     // verificam daca submission-ul este de forma schemei de submission-uri
     const parseResult = submissionSchema.safeParse(submission);

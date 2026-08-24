@@ -1,6 +1,6 @@
 import React from "react";
 import {useQuery} from "@tanstack/react-query";
-import {get_form, get_template} from "src/server/users-server";
+import {getForm, getTemplate} from "src/server/users-server";
 import {Outlet, useOutletContext, useParams} from "react-router-dom";
 import type {FormInfo, User} from "src/domain/types";
 import type {Template} from "src/domain/types";
@@ -13,7 +13,7 @@ export default function Template() {
     const context = useOutletContext<{user:User}>()
 
     const {isLoading, isError, data, error} = useQuery({
-        queryFn:async():Promise<Template|undefined>=>get_template({templateId}),
+        queryFn:async():Promise<Template|undefined>=>getTemplate({templateId}),
         queryKey:['template'],
         retry:0,
         refetchOnWindowFocus:false

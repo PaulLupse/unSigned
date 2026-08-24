@@ -6,7 +6,7 @@ import {emailSchema, formInfoSchema} from "../../../domain/schemas";
 import {zodResolver} from "@hookform/resolvers/zod";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {useNavigate, useOutletContext} from "react-router-dom";
-import {distribute_keys} from "../../../server/users-server";
+import {distributeKeys} from "../../../server/users-server";
 import {useAlert} from "../../../components/AlertProvider";
 import {useMutation} from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -46,7 +46,7 @@ export function DistributeKeys() {
     }, [distKeyButton.current])
 
     const wrappedDistKeysFn = async(data: any) => {
-        await toast.promise(distribute_keys(data),
+        await toast.promise(distributeKeys(data),
             {
                 loading:'Distributing . . .',
                 success:'The keys were distributed successfully!',

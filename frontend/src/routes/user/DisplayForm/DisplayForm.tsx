@@ -1,5 +1,5 @@
 import type { FormInfo} from "../../../domain/types";
-import {close_form, delete_form, publish_form} from "../../../server/users-server";
+import {closeForm, deleteForm, publishForm} from "../../../server/users-server";
 import React, {useCallback, useEffect} from "react";
 
 import {useNavigate, useOutletContext} from "react-router-dom";
@@ -36,7 +36,7 @@ export function DisplayFrom() {
     }, [form])
 
     const {mutate} = useMutation({
-        mutationFn:delete_form,
+        mutationFn:deleteForm,
         onSuccess:()=>{
             toast.success("Form deleted successfully!")
             navigate('/me/forms')
@@ -56,7 +56,7 @@ export function DisplayFrom() {
     }
 
     const publishForm = useMutation({
-        mutationFn:publish_form,
+        mutationFn:publishForm,
         onSuccess:async ()=>{
             setFormStatus(()=>"Published")
             await queryClient.invalidateQueries({queryKey:['form']});
@@ -67,7 +67,7 @@ export function DisplayFrom() {
     })
 
     const closeForm = useMutation({
-        mutationFn:close_form,
+        mutationFn:closeForm,
         onSuccess:async ()=>{
             setFormStatus(()=>"Closed")
             await queryClient.invalidateQueries({queryKey:['form']});

@@ -1,4 +1,4 @@
-import json
+import json, secrets, hashlib
 
 from pwdlib import PasswordHash
 from datetime import datetime, timedelta, timezone
@@ -51,6 +51,14 @@ def generate_access_token(data : dict, expiration_time : timedelta | None = None
 
     return jwt.encode(payload=data_copy, key=SECURE_JWT_KEY, algorithm=ALG)
 
+# genereaza un refresh token, care expira dupa numarul precizat de zile
+def generate_refresh_token() -> tuple[str, str]:
+
+    rf_tok:str = secrets.token_urlsafe(32)
+    hash_rf_tok:str = hashlib.sha256(rf_tok.encode("utf-8")).hexdigest()
+
+    return rf_tok, hash_rf_tok
+
 # genereaza o cheie de access pentru un chestionar
 def generate_key(data:Key)->str:
 
@@ -72,4 +80,3 @@ def decode_key(token:str)->Key|None:
         print(token)
         # print("Could not decode paseto token: " + str(e))
         return None
-0

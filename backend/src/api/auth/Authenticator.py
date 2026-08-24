@@ -13,6 +13,7 @@ db_connector:DBConnector = get_db()
 
 oauth2_scheme = OAuth2PasswordBearerWithCookies(tokenUrl="api/users/token")
 
+# Verifica daca token-ul de autentificare este valid, si returneaza detaliile utilizatorului.
 async def authenticate(token : Annotated[str, Depends(oauth2_scheme)])->User:
 
     # eroare daca validarea da rateuri
@@ -32,7 +33,12 @@ async def authenticate(token : Annotated[str, Depends(oauth2_scheme)])->User:
         db_response = db_connector.find_user(user_id = user_id)
         if db_response.status != 200: raise validation_error
 
-        return User(id=user_id, username=payload.get("username"), isAdmin=payload.get('isAdmin'))
+        return User(
+            id=user_id,
+            username=payload.get("username"),
+            isAdmin=payload.get('isAdmin'),
+            email=payload.get("email"),
+        )
 
     except ExpiredSignatureError:
 

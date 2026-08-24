@@ -1,5 +1,5 @@
 import type { FormInfo} from "../../domain/types";
-import {get_form} from "../../server/users-server";
+import {getForm} from "../../server/users-server";
 import React, {useEffect} from "react";
 
 
@@ -13,7 +13,7 @@ export function Form() {
 
     const {data, isLoading, isError, error} = useQuery({
         queryKey:["form"],
-        queryFn:async():Promise<FormInfo|undefined>=>get_form(formId),
+        queryFn:async():Promise<FormInfo|undefined>=>getForm(formId),
         retry:0,
         refetchOnWindowFocus:false
     })

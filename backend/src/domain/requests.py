@@ -7,6 +7,7 @@ class RegisterRequest(BaseModel):
 
     username:str
     password:str
+    email:str
 
 class CheckKeyRequest(BaseModel):
     key:str

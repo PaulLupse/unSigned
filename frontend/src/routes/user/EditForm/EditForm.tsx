@@ -4,7 +4,7 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {add_form, auto_login, get_form, update_form} from "../../../server/users-server";
+import {addForm, getUserData, getForm, updateForm} from "../../../server/users-server";
 import type {FormInfo, NewForm} from "../../../domain/types";
 import type {TextQuestion, GridQuestion} from "../../../domain/types";
 import {useNavigate, useOutletContext} from "react-router-dom";
@@ -55,7 +55,7 @@ export default function EditForm() {
     const formQuestions = watch("questions");
 
     const {mutate} = useMutation({
-        mutationFn:update_form,
+        mutationFn:updateForm,
         onSuccess:async ()=>{
             toast.success("Form updated successfully!");
             await queryClient.invalidateQueries({queryKey:['form']})

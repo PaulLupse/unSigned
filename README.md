@@ -11,9 +11,7 @@ Rularea proiectului necesită rularea a două servere: cel de backend (FastAPI &
 Webpack dev server).
 
 Întrucât aplicația se folosește de variabile de mediu (environment variables), care nu sunt distribuite alături de codul
-sursă și fișierele de configurație.
-
-Astfel, este necesară setarea următoarelor variabile de mediu:
+sursă și fișierele de configurație, este necesară setarea următoarelor variabile de mediu:
 
     SECURE_JWT_KEY
     SECURE_PYSETO_KEY
@@ -26,12 +24,11 @@ Astfel, este necesară setarea următoarelor variabile de mediu:
 
 1) SECURE_JWT_KEY: o cheie de 256 de biți, sub format hexazecimal
 2) SECURE_PYSETO_KEY: o cheie de 256 de biți, sub format hexazecimal
-3) BACKEND_ADDRESS: adresa server-ului FastAPI (de regulă http://127.0.0.1:8000)
-4) FRONTEND_PORT: port-ul serverului FastAPI (de regulă 8000)
-5) JWT_ALG: algoritmul pt semnarea JWT-ului
-6) DB_ADDRESS: adresa bazei de date, în acest caz MongoDB (de regulă mongodb://localhost:27017/)
-7) SENDER_EMAIL: adresa care trimite email-urile având cheile de acces. Email-ul trebuie să fie gmail și contul gmail trebuie să aibă pornită autentificarea în doi pași
-8) GMAIL_APP_PASSWORD: parola de aplicație, configurată în contul google
+3) BACKEND_ADDRESS: adresa server-ului FastAPI (default http://127.0.0.1:8000)
+4) JWT_ALG: algoritmul pt semnarea JWT-ului
+5) DB_ADDRESS: adresa bazei de date, în acest caz MongoDB (de regulă mongodb://localhost:27017/)
+6) SENDER_EMAIL: adresa care trimite email-urile având cheile de acces. Email-ul trebuie să fie gmail și contul gmail trebuie să aibă pornită autentificarea în doi pași
+7) GMAIL_APP_PASSWORD: parola de aplicație, configurată în contul google
 
 ### Rularea serverului de backend
 

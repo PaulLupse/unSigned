@@ -16,11 +16,11 @@ from src.domain.models import TextQuestionAnswerStatistic, GridQuestionAnswerSta
 from src.db.DBConnector import DBResult
 from src.domain.requests import RegisterRequest, EditFormRequest
 from src.api.Limiter import limiter
-from src.api.auth.KeyDistributor import distribute_keys
+from src.api.KeyDistributor import distribute_keys
 from src.domain.auth import Key, KeyPayload, User
 from src.domain.models import MinimalFormInfo, NewForm, Form
 from src.db.DBConnector import DBConnector, get_db
-from src.api.auth.auth import generate_access_token, generate_key
+from src.api.auth.utils import generate_access_token, generate_key
 
 logger = logging.getLogger('uvicorn.error')
 logger.setLevel(logging.DEBUG)
@@ -32,86 +32,6 @@ router:APIRouter = APIRouter(prefix="/users", tags=["users"])
 
 class TokenData(BaseModel):
     username:str
-
-
-EXP = 60
-@router.post("/token", response_class=JSONResponse)
-@limiter.limit("60/minute")
-async def get_token(credentials: Annotated[OAuth2PasswordRequestForm, Depends()], request: Request):
-
-    logger.debug("Token called.")
-
-    tk = request.cookies.get("access_token")
-    if tk:
-        try:
-            jwt.decode(tk.split(' ')[1], key=os.getenv("SECURE_JWT_KEY"), algorithms=[os.getenv("JWT_ALG")])
-            raise HTTPException(status_code=409, detail="Already logged in.", headers={"WWW-Authenticate":"Bearer"})
-        except ExpiredSignatureError:
-            ...
-
-    # accesam baza de date pentru a verifica validitatea credentialelor
-    db_response:DBResult[User] = db_connector.validate_credentials(credentials.username, credentials.password)
-
-    # daca credentialele nu sunt valide
-    if db_response.status != 200: raise HTTPException(status_code=db_response.status, detail=db_response.message, headers={"WWW-Authenticate":"Bearer"})
-
-
-    if db_response.data is None: raise ValueError("No user data returned!")
-    # generam un jeton de acces
-    access_token:str=generate_access_token({"sub": db_response.data.id, "username": db_response.data.username, "isAdmin":db_response.data.isAdmin}, expiration_time=timedelta(minutes=EXP))
-
-    response : JSONResponse = JSONResponse(content={"status": "success", "loggedIn": True})
-
-    # raspunsului ii adaugam un HTTPOnly cookie ce retine jetonul de acces. ACest Cookie e memorat in browser automat
-    # si este adaugat la orice apel de API ulterior, pentru autentificare.
-    response.set_cookie(
-        key="access_token",
-        value=f"Bearer {access_token}",
-        httponly=True
-    )
-
-    return response
-
-
-@router.post("/me", response_model=User, status_code=200)
-@limiter.limit("60/minute")
-async def me(user:Annotated[User, Depends(authenticate)], request: Request):
-
-    return user
-
-
-@router.put("/register", response_class=JSONResponse)
-@limiter.limit("60/minute")
-async def register_user(register_request:RegisterRequest, request: Request):
-
-    register_response:DBResult[str] = db_connector.register_user(username=register_request.username,
-                                                   password=register_request.password)
-
-    if register_response.status != 201:
-        raise HTTPException(status_code=register_response.status, detail=register_response.message)
-
-    return JSONResponse(status_code=200, content={"message":"Registered succesfully."})
-
-
-@router.post("/me/logout", response_class=JSONResponse, dependencies=[Depends(authenticate)])
-@limiter.limit("60/minute")
-async def logout_user(request: Request):
-
-    response:JSONResponse = JSONResponse(content={"message":f"Logged out succesfully."}, status_code=status.HTTP_200_OK)
-    response.set_cookie(key="access_token", value="")
-
-    return response
-
-
-@router.post("/me/delete", response_class=JSONResponse)
-@limiter.limit("60/minute")
-async def delete_user(user:Annotated[User, Depends(authenticate)], request: Request):
-
-    result:DBResult = db_connector.delete_user(user.id)
-
-    if result.status == 200:
-        return JSONResponse(content={"message":"Deleted user succesfully."}, status_code=200)
-    else: return JSONResponse(content={"message":result.message}, status_code=result.status)
 
 
 @router.get("/me/forms")
@@ -212,7 +132,7 @@ class Email(BaseModel):
 class DistributeKeysRequest(BaseModel):
     emails:list[Email]
 
-
+# Trimite chei de access la formularul cu id-ul specificat, email-urilor specificate.
 @router.post("/me/form/{form_id}/distribute_keys", response_class=JSONResponse)
 @limiter.limit("60/minute")
 async def dist_keys(dist_key_req:DistributeKeysRequest, user : Annotated[User, Depends(authenticate)], form_id:str, request: Request):

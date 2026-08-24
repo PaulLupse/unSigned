@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from src.db.DBConnector import DBResult
 from src.domain.requests import CheckKeyRequest
 from src.api.Limiter import limiter
-from src.api.auth.auth import decode_key
+from src.api.auth.utils import decode_key
 from src.domain.models import Submission, Form
 from src.domain.auth import Key
 from src.db.DBConnector import DBConnector, get_db

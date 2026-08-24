@@ -45,12 +45,12 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
 
-    "baseUrl": "..", // Tells TS to look for non-relative modules starting from here
+    "baseUrl": "./", // Tells TS to look for non-relative modules starting from here
     "paths": {
-      "src/*": ["src/*"] // Maps any "src/..." import to the actual src folder
+      "@/*": ["src/*"] // Maps any "src/..." import to the actual src folder
     }
   },
   "include": ["src"],
   "exclude": [
-    "../node_modules", "dist"]
+    "/node_modules/", "dist"]
 }

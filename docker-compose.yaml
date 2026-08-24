@@ -1,7 +1,6 @@
 
-version: "0.1"
-
 services:
+
   db:
     image: mongo:latest
     container_name: db
@@ -11,7 +10,7 @@ services:
       - proiect-chestionare-db:/data/db
 
     networks:
-      - chestionare
+      - proiect-chestionare
 
   backend:
     build: ./backend
@@ -26,25 +25,13 @@ services:
       - db
 
     networks:
-      - chestionare
+      - proiect-chestionare
 
-  frontend:
-    build: ./frontend
-    container_name: frontend
-    ports: ["3000:3000"]
-
-    environment:
-      - BACKEND_ADDRESS=http://backend:8000
-
-    depends_on:
-      - backend
-
-    networks:
-      - chestionare
 
 networks:
-  chestionare:
+  proiect-chestionare:
     driver: bridge
+    external: true
 
 volumes:
-  proiect-chestionare-db:
+  proiect-chestionare-db: # folosit la baza de date

@@ -1,6 +1,6 @@
 import {useLocation, useNavigate, useOutletContext} from "react-router-dom";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
-import {get_templates} from "src/server/users-server";
+import {getTemplates} from "src/server/users-server";
 import Loading from "src/components/Loading";
 import {Table} from "src/components/Table/Table";
 import type {MinimalTemplate, User} from "src/domain/types";
@@ -37,7 +37,7 @@ export function ListTemplates() {
 
 
     const getTemplates = useQuery({
-        queryFn:async()=>await get_templates({type:type}),
+        queryFn:async()=>await getTemplates({type:type}),
         queryKey:['templates']
     })
 
