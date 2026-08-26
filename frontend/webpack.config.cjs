@@ -82,7 +82,7 @@ module.exports = {
         static: {
             directory: path.join(__dirname, 'static'),
             watch: {
-                poll: 1000, // Check for changes every second
+                poll: 500, // Check for changes every second
                 ignored: /node_modules/, // Omit node_modules to save CPU
             }
         },

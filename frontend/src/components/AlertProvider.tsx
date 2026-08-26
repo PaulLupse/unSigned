@@ -1,7 +1,7 @@
 import React, {createContext, useContext, useState} from 'react';
-import {Dialog, type DialogButtonProps} from "./Dialog/Dialog";
+import {Alert, type AlertButtonProps} from "./Alert/Alert";
 
-const AlertContext = createContext({showAlert:(message: string, buttons: DialogButtonProps[]):void=>{}});
+const AlertContext = createContext({showAlert:(message: string, buttons: AlertButtonProps[]):void=>{}});
 
 interface AlertProviderProps {
     children:any
@@ -10,9 +10,9 @@ interface AlertProviderProps {
 export const AlertProvider = ({children}:AlertProviderProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [text, setText] = useState("");
-    const [buttons, setButtons] = useState<DialogButtonProps[]>(new Array<DialogButtonProps>);
+    const [buttons, setButtons] = useState<AlertButtonProps[]>(new Array<AlertButtonProps>);
 
-    const showAlert = (message:string, buttons:DialogButtonProps[]) => {
+    const showAlert = (message:string, buttons:AlertButtonProps[]) => {
         setIsOpen(true);
         setText(message);
         setButtons(buttons);
@@ -25,7 +25,7 @@ export const AlertProvider = ({children}:AlertProviderProps) => {
     return (
         <AlertContext value={{showAlert}}>
             {children}
-            <Dialog text={text} open={isOpen} buttons={buttons} setClose={closeAlert} />
+            <Alert text={text} open={isOpen} buttons={buttons} setClose={closeAlert} />
         </AlertContext>
     );
 };

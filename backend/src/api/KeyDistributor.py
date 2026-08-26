@@ -21,13 +21,9 @@ async def distribute_keys(emails:list[str], keys:list[str], form_owner_username:
     shuffle(emails)
     shuffle(keys)
 
-    with yagmail.SMTP(user=os.getenv("SENDER_EMAIL"), password=os.getenv("GMAIL_APP_PASSWORD")) as yag:
+    with yagmail.SMTP(user=SENDER_EMAIL, password=GMAIL_APP_PASSWORD) as yag:
 
         for i in range(0, len(emails)):
             yag.send(to=emails[i],
                      subject=f"Key to access a form created by user {form_owner_username} on unSigned.",
                      contents=f"Key: {keys[i]} \nComplete the form here: http://localhost:3000/complete-form/{form_id}")
-
-if __name__ == "__main__":
-
-    distribute_keys(["lupsepaul2006@gmail.com", "pp422820@gmail.com"], ["lol1", "lol2"], "lol")

@@ -14,7 +14,7 @@ body {
 
 html, body, button, input, select, textarea {
     font-family: 'Poppins', sans-serif;
-    font-size: 15px;
+    font-size: 20px;
 }
 
 button {
@@ -69,10 +69,9 @@ option:active {
 
 p, h1, h2, h3, h4, a, h5, td, th, input, button, label, select, option {
 
-
     overflow-wrap: break-word;
     word-break: break-all;
-    padding: 5px 10px 5px 10px;
+    padding: 0.25rem 0.5rem;
     margin: 0;
 }
 

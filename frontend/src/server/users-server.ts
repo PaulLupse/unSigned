@@ -8,9 +8,11 @@ import {
     type NewForm,
     type MinimalFormInfo,
     type Email,
-    type MinimalTemplate, type Template, type TextQuestionAnswerStatistic, type GridQuestionAnswerStatistic, type User
+    type MinimalTemplate, type Template, type TextQuestionAnswerStatistic, type GridQuestionAnswerStatistic, type User,
+    type RegisterData
 } from "src/domain/types";
 import {
+    emailSchema,
     formInfoSchema,
     minimalFormInfoSchema,
     minimalTemplateSchema,
@@ -18,6 +20,7 @@ import {
     userSchema
 } from "src/domain/schemas";
 import {fetch} from "src/utilities/Utilities";
+import {z} from "zod";
 const requestWithPayloadHeaders = new Headers({
         'Accept': "application/json",
         'Content-Type': "application/json"
@@ -36,16 +39,16 @@ async function getAccessToken(loginInfo:LoginInfo) {
 
 // Incearca autorizarea utilizatorului folosind nume si parola.
 // Arunca erori daca autorizarea a esuat, cu motivele esuarii.
-export async function login({username, password}:{username:string, password:string}):Promise<void>{
+export async function login({identifier, password}:{identifier:string, password:string}):Promise<void>{
 
 
-    const tokenResponse: Response = await getAccessToken(new LoginInfo(username, password));
+    const tokenResponse: Response = await getAccessToken(new LoginInfo(identifier, password));
 
     if (!tokenResponse.ok) {
         if (tokenResponse.status == 404) {
-            throw new CredentialError("User not found", {password:'', username:'User not found'}, 404)
+            throw new CredentialError("User not found", {password:'', identifier:'User not found'}, 404)
         } else if (tokenResponse.status == 400) {
-            throw new CredentialError("Wrong password", {username:'', password:'Wrong password'}, 400)
+            throw new CredentialError("Wrong password", {identifier:'', password:'Wrong password'}, 400)
         } else if (tokenResponse.status == 409)
         throw new CustomError("Already logged in!", 409)
         else if (tokenResponse.status == 429) {
@@ -56,7 +59,7 @@ export async function login({username, password}:{username:string, password:stri
 
 // Inregistreaza utilizatorul.
 // Arunca erori daca inregistrarea a esuat, cu motivele esuarii.
-export async function register({username, password, email}:{username: string, password: string, email:string}):Promise<void> {
+export async function registerUser({username, password, email}:RegisterData):Promise<void> {
 
     const request = new Request("/api/auth/register", {
         method: "PUT",
@@ -71,13 +74,53 @@ export async function register({username, password, email}:{username: string, pa
     const response = await fetch(request);
     if (!response.ok)  {
         if(response.status == 409) {
-            throw new CredentialError("User already exists", {username:'User already exists', password:''}, 409)
+            throw new CredentialError("User already exists", {identifier:'User already exists', password:''}, 409)
         }
         else if (response.status == 429) {
             throw new CustomError("Slow down! (you are being rate limited)", 429)
         }
     }
 
+}
+
+// Trimite o cerere de verificare a email-ului specificat.
+export async function requestVerificationCode({email}:z.infer<typeof emailSchema>) {
+
+    const request = new Request("api/auth/verification-code/request",{
+        method:"PUT",
+        body:JSON.stringify({email:email}),
+        headers:requestWithPayloadHeaders
+    })
+
+    const response = await fetch(request)
+
+    if (!response.ok) {
+        if (response.status === 409)
+            throw new CustomError("Email already in use.", 409)
+        if (response.status === 500)
+            throw new CustomError("Email could not be sent. Please try again", 500)
+    }
+}
+
+// Trimite cerere de verificare a codului primit ca urmare a utilizarii functiei anterioare.
+export async function verifyVerifcationCode({email, code}:{email:string, code:string}) {
+
+    const request = new Request("api/auth/verification-code/check",{
+        method:"PUT",
+        body:JSON.stringify({email:email, code:code}),
+        headers:requestWithPayloadHeaders
+    })
+
+    const response = await fetch(request)
+
+    if (!response.ok) {
+        switch (response.status) {
+            case 400:
+                throw new CustomError("Invalid code", 400)
+            case 404:
+                throw new CustomError("Code not found", 404)
+        }
+    }
 }
 
 // Verifica daca utilizatorul este logat.
@@ -112,7 +155,6 @@ export async function getUserData():Promise<User|undefined>{
 
 }
 
-
 // Deautorizeaza utilizatorul.
 export async function logout():Promise<boolean> {
 
@@ -127,6 +169,23 @@ export async function logout():Promise<boolean> {
         return true
     else throw new CustomError("Could not log out.", 500)
 
+}
+
+// Sterge utilizatorul curent
+export async function deleteUser() {
+
+    const req = new Request("/api/auth/me/delete",  {
+        method:"DELETE"
+    })
+
+    const response = await fetch(req)
+
+    if (!response.ok) {
+        switch (response.status) {
+            case 403:
+                throw new CustomError("You are not authorized to delete this account.", 403)
+        }
+    }
 }
 
 // Cauta un formular dupa id si il returneaza (daca il gaseste).

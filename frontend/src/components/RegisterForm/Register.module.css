@@ -1,0 +1,41 @@
+.frame {
+
+    flex-grow: 1;
+    padding:30px;
+    border: 1px solid;
+}
+
+.frame > form {
+    display: flex;
+    flex-direction: column;
+    justify-items: center;
+}
+
+.frame > form > input {
+    margin-bottom: 10px;
+}
+
+.emailInputFrame {
+    display:flex;
+    flex-direction: column;
+    gap:10px;
+}
+
+.emailInputFrame > p {
+    border: 2px dotted;
+    background-color: lightgray;
+}
+
+.passwordInputFrame {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.passwordInputFrame > input {
+    flex-grow: 1;
+}
+
+.passwordInputFrame > button {
+    margin-left: 10px;
+}

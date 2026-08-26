@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@types/lodash": "^4.17.24",
+    "@types/react-spinner": "^0.2.4",
     "dotenv": "^17.4.2",
     "ts-loader": "^9.5.4",
     "typescript": "^5.9.3",
@@ -47,6 +48,8 @@
     "react-hooks": "^1.0.1",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.13.1",
+    "react-spinner": "^0.2.7",
+    "react-spinners": "^0.17.0",
     "react-tooltip": "^5.30.0",
     "style-loader": "^4.0.0",
     "ts-to-zod": "^5.1.0",

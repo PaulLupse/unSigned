@@ -1,6 +1,5 @@
-import React, {type RefObject, useEffect, useRef} from 'react';
-import './dialog.css'
-import ReactDOM, {createPortal} from "react-dom";
+import React, {useEffect, useRef} from 'react';
+import * as style from './Alert.module.css'
 
 interface DialogWithButtonProps {
     buttonText:string
@@ -8,7 +7,6 @@ interface DialogWithButtonProps {
     buttonOnClick:()=>void
     text:string
 }
-
 export function DialogWithButton(props:DialogWithButtonProps) {
 
     const dialogRef = useRef<HTMLDialogElement>(null);
@@ -46,19 +44,17 @@ export function DialogWithButton(props:DialogWithButtonProps) {
     )
 }
 
-export interface DialogButtonProps {
+export interface AlertButtonProps {
     text:string
     action?:()=>void
 }
-
-export interface DialogProps {
+export interface AlertProps {
     text:string
     open:boolean
     setClose:()=>void
-    buttons:DialogButtonProps[]
+    buttons:AlertButtonProps[]
 }
-
-export function Dialog(props:DialogProps) {
+export function Alert(props:AlertProps) {
 
     const ref = useRef<HTMLDialogElement>(null);
 
@@ -76,13 +72,13 @@ export function Dialog(props:DialogProps) {
     }, [props.open])
 
     return (
-        <dialog ref={ref}>
+        <dialog ref={ref} className={style.alertDialog}>
             <p>
                 {props.text}
             </p>
-            <div className={'actions-div'}>
+            <div className={style.actionsDiv}>
                 {
-                    props.buttons.map((buttonOptions:DialogButtonProps, index)=>{
+                    props.buttons.map((buttonOptions:AlertButtonProps, index)=>{
                         return (
                             <button type='button' className={'plain-button'} style={{flexGrow:'1'}} onClick={()=>{closeModal(); if(buttonOptions.action)buttonOptions.action()}}>
                                 {buttonOptions.text}

@@ -1,5 +1,5 @@
-import React from "react";
-import type {FieldArrayWithId, FieldErrors, UseFormRegister} from "react-hook-form";
+import type {registerData} from "src/domain/schemas";
+import {z} from "zod";
 
 export class LoginInfo {
     private _username;
@@ -89,7 +89,7 @@ export interface MinimalTemplate {
 }
 
 export interface Credentials {
-    username:string
+    identifier:string
     password:string
 }
 
@@ -143,4 +143,7 @@ export interface User {
     username:string
     id:string
     isAdmin:boolean
+    email:string
 }
+
+export type RegisterData = z.infer<typeof registerData>

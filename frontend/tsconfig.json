@@ -47,7 +47,7 @@
 
     "baseUrl": "./", // Tells TS to look for non-relative modules starting from here
     "paths": {
-      "@/*": ["src/*"] // Maps any "src/..." import to the actual src folder
+      "src/*": ["src/*"] // Maps any "src/..." import to the actual src folder
     }
   },
   "include": ["src"],

@@ -63,7 +63,7 @@ export const newFormSchema = z.object({
 });
 
 export const credentialsSchema = z.object({
-    username:z.string().min(1, "This field is required!"),
+    identifier:z.string().min(1, "This field is required!"),
     password:z.string().min(1, "This field is required!")
 });
 
@@ -89,5 +89,14 @@ export const minimalTemplateSchema = z.object({
 export const userSchema = z.object({
     username:z.string(),
     id:z.string(),
-    isAdmin:z.boolean()
+    isAdmin:z.boolean(),
+    email:z.string()
+})
+
+export const registerData = z.object({
+    username:z.string().min(1, "Field required!"),
+    password:z.string().min(1, "Field required!"),
+    email:z.string()
+        .min(1, "Field required!")
+        .regex(/\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/, "Invalid email!")
 })

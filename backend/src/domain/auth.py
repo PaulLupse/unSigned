@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel
 from typing import Optional
 
@@ -17,5 +19,11 @@ class KeyFooter(BaseModel):
 class Key(BaseModel):
     payload: KeyPayload
     footer: Optional[KeyFooter] = KeyFooter()
+
+class VerificationCode(BaseModel):
+
+    id:str
+    code:str
+    expiresAt:datetime
 
 

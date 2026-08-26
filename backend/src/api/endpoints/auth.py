@@ -1,5 +1,9 @@
 import hashlib
+import random
+import re
+import secrets
 
+import yagmail
 from fastapi import APIRouter, status, HTTPException, Request
 from fastapi.params import Depends
 from fastapi.responses import JSONResponse, Response
@@ -10,15 +14,15 @@ from typing import Annotated
 import logging, jwt, os
 from datetime import timedelta
 
+from src.api.EmailSender import send_verification_email
 from src.api.auth.Authenticator import authenticate
 from src.db.DBConnector import DBResult
-from src.domain.requests import RegisterRequest
+from src.domain.requests import RegisterRequest, VerificationCodeRequest, VerifyEmailRequest
 from src.api.Limiter import limiter
 from src.domain.auth import User
 from src.db.DBConnector import DBConnector, get_db
 from src.api.auth.utils import generate_access_token, generate_refresh_token
-
-
+from src.utilities import validate_email
 
 router:APIRouter = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -157,6 +161,52 @@ async def me(user:Annotated[User, Depends(authenticate)], request: Request):
 
     return user
 
+# Cere crearea unui cod de verificare al unui email.
+@router.put("/verification-code/request", status_code=200)
+async def request_verification_code(req:VerificationCodeRequest):
+
+    if not validate_email(req.email): raise HTTPException(status_code=404, detail="Invalid email.")
+
+    # Daca emailul este deja folosit de un utilizator, nu se poate crea un alt cont cu el.
+    find_user_result = db_connector.find_user(email=req.email)
+    if find_user_result.ok(): raise HTTPException(status_code=409, detail="Email in use.")
+
+    code:int = random.randint(100000, 999999)
+    if send_verification_email(code, email=req.email):
+
+        # Daca s-a reuist trimiterea codului de verificare, il stocam in baza de date
+        db_connector.store_verification_code(str(code), email=req.email)
+
+    else: raise HTTPException(status_code=500, detail="Verification code could not be sent.")
+
+@router.put("/verification-code/check", status_code=200)
+async def check_verification_code(req: VerifyEmailRequest, response: Response):
+
+    invalid_code_exception = HTTPException(status_code=404, detail="Invalid code.")
+
+    try:
+
+        code:int = int(req.code)
+        if 0 <= code <= 999999:
+
+            # verificam validitatea codului
+            check_code_response:DBResult[str|None] = db_connector.check_verification_code(verification_code=str(code), email=req.email)
+            if check_code_response.ok() and check_code_response.data is not None:
+
+                # stergem codul din baza de date
+                db_connector.delete_verification_code(verification_code_id=check_code_response.data)
+
+                response.status_code = 200
+                return response
+
+            else: raise HTTPException(status_code=check_code_response.status, detail=check_code_response.message)
+
+        else: raise invalid_code_exception
+
+    except ValueError: # daca codul nu este o valoare intreaga, e invalid
+        raise invalid_code_exception
+
+
 # Inregistreaza un utilizator folosind email, nume de utilizator si parola
 @router.put("/register", response_class=JSONResponse)
 @limiter.limit("60/minute")
@@ -192,7 +242,7 @@ async def logout_user(request: Request, user:Annotated[User, Depends(authenticat
     return response
 
 
-@router.post("/me/delete", status_code=200)
+@router.delete("/me/delete", status_code=200)
 @limiter.limit("60/minute")
 async def delete_user(user:Annotated[User, Depends(authenticate)], request: Request, response: Response):
 
@@ -205,6 +255,7 @@ async def delete_user(user:Annotated[User, Depends(authenticate)], request: Requ
         response.delete_cookie(key="access_token")
         response.delete_cookie(key="refresh_token")
 
+        response.status_code = 200
         return response
     else:
         raise HTTPException(status_code=401, detail=result.message)

@@ -1,0 +1,12 @@
+.alertDialog {
+    border:2px solid
+}
+
+.alertDialog > .actionsDiv {
+    display:flex;
+    gap:10px
+}
+
+.alertDialog > .actionsDiv > button {
+    flex-grow: 1;
+}

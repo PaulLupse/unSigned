@@ -1,5 +1,4 @@
 import React, {useCallback, useRef} from 'react';
-import './credential-form.css'
 import {type SubmitHandler, useForm} from "react-hook-form";
 import {useNavigate} from "react-router-dom";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
@@ -7,48 +6,71 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import type {Credentials} from "src/domain/types";
 import {credentialsSchema} from "src/domain/schemas";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
-import {CredentialError} from "src/utilities/Utilities";
+import {CredentialError, CustomError} from "src/utilities/Utilities";
 
-interface CredentialFormProps {
-    type:string
-    callback: ({ username, password }:{username: string, password: string})=>Promise<void>
-}
+import * as style from "./credential-form.module.css"
+import {ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
+import toast from "react-hot-toast";
+import {login} from "src/server/users-server";
 
-export function CredentialForm(props: CredentialFormProps) {
+// Componenta ce expune un formular de autentificare.
+export function LoginForm() {
 
-    const {register, handleSubmit, formState:{errors}, setError} = useForm<Credentials>({resolver:zodResolver(credentialsSchema)})
     const navigate = useNavigate()
-    const qC = useQueryClient();
-    const [passwordInputType, setPasswordInputType] = React.useState('password');
+    const queryClient = useQueryClient();
+    const [hidePassword, setHidePassword] = React.useState(true);
+
+    // Folosim un formular
+    const {register,
+        handleSubmit,
+        formState:{errors},
+        setError} = useForm<Credentials>(
+            {resolver:zodResolver(credentialsSchema)}
+        )
 
     const submitButton = useRef<HTMLButtonElement>(null);
-
-    const toggleSubmitButton = useCallback(()=>
-    {
-        if (submitButton.current)
-            submitButton.current.disabled = !submitButton?.current.disabled}, [submitButton]
+    const toggleSubmitButton = useCallback(()=> {
+            if (submitButton.current)
+                submitButton.current.disabled = !submitButton?.current.disabled
+        }, [submitButton]
     )
 
-    const {mutate} = useMutation({
-        mutationFn:props.callback,
-        onSuccess: async ()=>{
-            if(props.type === "Login") {
+    const wrappedLogin = async(data:Credentials)=>{
 
-                await qC.invalidateQueries({queryKey:['username'], refetchType:'all'})
-                await qC.refetchQueries({queryKey:['user']})
-                navigate('/me', {replace:true})
-
-            } else {
-                navigate('/login', {replace:true})
+        await toast.promise(async()=>login(data), {
+                loading:'Logging in . . .',
+                error:(error:CustomError)=> {
+                    if (error.status == 409) {
+                        navigate('/me', {replace:true})
+                        return "Already logged in!"
+                    }
+                    return 'Could not log in: ' + error.message
+                },
+                success:'Logged in successfully!'
             }
+            )}
+
+    // Folosim react query pentru a trimite cererea de autentificare
+    const {mutate} = useMutation({
+        mutationFn:wrappedLogin,
+        onSuccess: async ()=>{
+
+            // Daca operatia de autentificare a fost realizata cu succes, actualizam datele legate de utilizator
+            await queryClient.invalidateQueries({queryKey:['username'], refetchType:'all'})
+            await queryClient.refetchQueries({queryKey:['user']})
+
+            // Redirectionam spre pagina de profil
+            navigate('/me', {replace:true})
         },
         onError: (error)=>{
+
+            // In caz de eroare, setam mesajele aferente erorilor
             toggleSubmitButton()
             if(error instanceof CredentialError) {
-                if(error.detail.username !== '')
-                    setError("username", {
+                if(error.detail.identifier !== '')
+                    setError("identifier", {
                         type:"manual",
-                        message:error.detail.username
+                        message:error.detail.identifier
                     })
                 if(error.detail.password !== '')
                     setError("password", {
@@ -59,49 +81,55 @@ export function CredentialForm(props: CredentialFormProps) {
         }
     })
 
-    async function togglePasswordInputType() {
-        if(passwordInputType === 'password') {
-            setPasswordInputType('text');
-            return
-        }
-        setPasswordInputType('password');
-    }
+    // Ascunde sau afiseaza parola
+    const togglePasswordVisibility = async ()=> setHidePassword(!hidePassword)
 
     const onSubmit:SubmitHandler<Credentials> = async (data:Credentials) => {
         toggleSubmitButton();
-        mutate({username:data.username, password:data.password})
+        mutate({identifier:data.identifier, password:data.password})
     }
 
-
     return (
-        <div data-tooltip-id={"root"} className={"frame"}>
+        <div data-tooltip-id={"root"} className={style.frame}>
             <form onSubmit={handleSubmit(onSubmit)}>
 
-                <h2 style={{textAlign:'center', marginBottom:'25px'}}>
-                    {props.type}
+                <h2>
+                    Login
                 </h2>
 
-                <input data-tooltip-id={'username'} {...register('username')} style={{marginBottom: '10px'}} placeholder='Username'/>
-                <FormInputErrorPopup name={"username"} errors={errors} place={"left"} />
+                {/* Input pentru identificator */}
+                <input data-tooltip-id={'identifier'}
+                       {...register('identifier')}
+                       placeholder='Username or email'/>
 
-                <div style={{marginBottom: '10px', display:'flex'}}>
 
-                    <input data-tooltip-id={"password"} {...register('password')} placeholder='Password' type={passwordInputType}
-                        style={{flexGrow:'1'}}/>
+                <FormInputErrorPopup name={"identifier"} errors={errors} place={"left"} />
+
+                <div className={style.passwordInputFrame} >
+
+                    {/* Input pentru parola */}
+                    <input data-tooltip-id={"password"}
+                           {...register('password')}
+                           placeholder='Password'
+                           type={hidePassword?"password":"text"}/>
+
                     <FormInputErrorPopup name={"password"} errors={errors} place={"left"} />
 
-                    <button type={'button'} onClick={togglePasswordInputType}
-                        style={{marginLeft:'10px'}}>
-                        {passwordInputType==='password'?'Show':'Hide'}
-                    </button>
+                    <ToggleButtonWithIcon isOn={!hidePassword}
+                                          toggleIsOn={()=>setHidePassword}
+                                          offImg={"images/hide.png"}
+                                          onImg={"images/view.png"}
+
+                                          type={'button'}
+                                          onClick={togglePasswordVisibility}>
+                    </ToggleButtonWithIcon>
 
                 </div>
 
-                <div style={{display:'grid', alignItems:'center', justifyItems:'center'}}>
-                    <button ref={submitButton} type={'submit'}>
-                        Submit
-                    </button>
-                </div>
+                <button ref={submitButton}
+                        type={'submit'}>
+                    Submit
+                </button>
 
             </form>
             <FormInputErrorPopup name={'root'} errors={errors} place={'top'} />

@@ -1,0 +1,8 @@
+.dialog {
+    border: 3px solid;
+    background-color: white;
+}
+
+.dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0);
+}

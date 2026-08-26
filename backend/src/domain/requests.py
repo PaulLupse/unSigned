@@ -17,3 +17,12 @@ class EditFormRequest(BaseModel):
 
     name: str | None = None
     questions:list[GridQuestion|TextQuestion]|None = None
+
+class VerificationCodeRequest(BaseModel):
+
+    email:str
+
+class VerifyEmailRequest(BaseModel):
+
+    email:str
+    code:str

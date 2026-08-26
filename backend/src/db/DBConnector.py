@@ -68,6 +68,7 @@ class DBConnector:
             self.keys_table = database["keys"]
             self.templates_table = database["templates"]
             self.sessions_table = database.get_collection("sessions", codec_options=opt)
+            self.verification_codes_table = database.get_collection("verification_codes", codec_options=opt)
 
         except ServerSelectionTimeoutError as e:
             print("ERROR: Server Selection Timeout. Check server connection.")
@@ -142,8 +143,10 @@ class DBConnector:
     def check_refresh_token(self, hashed_ref_token:str)->DBResult[User|None]:
 
         result_from_db = self.sessions_table.find_one({"hashed_ref_token":hashed_ref_token})
+        if not result_from_db: return DBResult(404, "Token not found.")
+
         result = RefreshToken(
-            userId=result_from_db["user_id"],
+            userId=str(result_from_db["_id"]),
             hash=result_from_db["hashed_ref_token"],
             isUsed=result_from_db["is_used"],
             expiresAt=result_from_db["expires_at"]
@@ -167,9 +170,17 @@ class DBConnector:
             return DBResult(401, "Token is invalid.")
 
 
-    def find_user(self, user_id:str)->DBResult[User|None]:
+    def find_user(self,
+                  user_id:str|None = None,
+                  email:str|None = None,
+                  username:str|None = None)->DBResult[User|None]:
 
-        user = self.users_table.find_one({"_id":ObjectId(user_id)})
+        search_filter = {}
+        if user_id: search_filter.update({"_id":ObjectId(user_id)})
+        if email: search_filter.update({"email":email})
+        if username: search_filter.update({"username":username})
+
+        user = self.users_table.find_one(search_filter)
 
         if user:
 
@@ -200,6 +211,51 @@ class DBConnector:
         except pymongo.errors.DuplicateKeyError:
 
             return DBResult(409, "Username taken.")
+
+    # Memoreaza un cod de verificare a unui email.
+    def store_verification_code(self, verification_code:str, email:str)->DBResult[str]:
+
+        exp_date = datetime.now(timezone.utc) + timedelta(minutes=5)
+
+        # Daca exista deja un cod de verificare pentru un email, acesta este suprascris, impreuna cu data de expirare.
+        self.verification_codes_table.update_one(
+            update={
+                "$set":{
+                    "verification_code": verification_code,
+                    "email": email,
+                    "expiresAt": exp_date
+                },
+            }, filter={"email":email}, upsert=True)
+
+        return DBResult(200, "Verification code stored.")
+
+    # Verifica existenta si validitatea unui cod de verificare. Returneaza id-ul codului (spre a fii sters).
+    def check_verification_code(self, verification_code:str, email:str)->DBResult[str|None]:
+
+        check_result = self.verification_codes_table.find_one({"email":email})
+
+        if check_result:
+
+            if check_result["verification_code"] != verification_code:
+                return DBResult(400, "Verification code invalid.")
+
+            if check_result["expiresAt"] < datetime.now(timezone.utc):
+                return DBResult(400, "Verification code expired.")
+
+            return DBResult(200, "Ok.", data=str(check_result["_id"]))
+
+        # Daca email-ul nu detine un cod de verificare, il consideram invalid.
+        return DBResult(404, "No verification code found.")
+
+    # Sterge codul de verificare cu id-ul specificat
+    def delete_verification_code(self, verification_code_id:str)->DBResult[str]:
+
+        delete_result = self.verification_codes_table.delete_one({"_id":ObjectId(verification_code_id)})
+
+        if not delete_result.deleted_count:
+            return DBResult(404, "Verification code not found.")
+
+        return DBResult(200, "Deleted.")
 
     # sterge un utilizator pe baza username-ului
     def delete_user(self, user_id:str)->DBResult:
@@ -398,6 +454,7 @@ class DBConnector:
 
         except Exception as e:
             return DBResult(500, "Unexpected error: " + str(e))
+
 
     def check_authorization(self, template_id:str, owner_id:str, is_admin:bool, req:Literal['read','write'])->DBResult[Template]:
 

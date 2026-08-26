@@ -46,3 +46,10 @@
     width: 100px;
     height: 100px;
 }
+
+.line {
+    border:1px solid gray;
+    width:100%;
+    box-sizing:border-box;
+    margin: 20px 0;
+}
