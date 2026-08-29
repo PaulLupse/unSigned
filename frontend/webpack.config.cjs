@@ -1,8 +1,13 @@
 var path = require('path');
 const reactMatch = /\.(ts|js)x?$/
 require('dotenv').config();
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { watch } = require('fs');
+
+const BACKEND_ADDRESS =  process.env.BACKEND_ADDRESS
+if (!BACKEND_ADDRESS) throw new Error("BACKEND_ADDRESS not configured.")
+
 
 module.exports = {
     context: __dirname,
@@ -67,7 +72,10 @@ module.exports = {
         new HtmlWebpackPlugin({
             template: "./static/html/index.html",
             filename:'index.html'
-        })
+        }),
+        new webpack.DefinePlugin({
+            'process.env.GOOGLE_OAUTH_CLIENT_ID': JSON.stringify(process.env.GOOGLE_OAUTH_CLIENT_ID),
+        }),
     ],
     devServer: {
         port: process.env.FRONTEND_PORT,

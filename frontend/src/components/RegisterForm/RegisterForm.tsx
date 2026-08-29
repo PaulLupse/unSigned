@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import {CredentialError, CustomError} from "src/utilities/Utilities";
 import {useNavigate} from "react-router-dom";
 import {useLoading} from "src/components/LoadingOverlayProvider";
-import {ButtonWithIcon, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
+import {ButtonWithIcon, ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
 
 
 
@@ -31,15 +31,15 @@ interface EmailInputProps {
 function EmailInput({processing, setProcessing, register, errors, email, nextPage}:EmailInputProps) {
 
     const {showLoading, hideLoading} = useLoading()
-    
+
     const {mutate} = useMutation({
         mutationFn: requestVerificationCode,
-        onSuccess:()=>{
+        onSuccess: () => {
             setProcessing(false)
             hideLoading()
             nextPage()
         },
-        onError:(error)=>{
+        onError: (error) => {
             setProcessing(false)
             hideLoading()
             toast.error(error.message)
@@ -48,34 +48,42 @@ function EmailInput({processing, setProcessing, register, errors, email, nextPag
 
     return (
         <div className={style.emailInputFrame}>
+
+            <ContinueWithGoogleButton/>
+
+            <div className={style.orFrame}>
+                <hr/>
+                <p>or</p>
+                <hr/>
+            </div>
+
             <input
                 data-tooltip-id={"email"}
-                placeholder={"Email"}
+                placeholder={"Input email"}
                 {...register("email")}/>
 
-            <FormInputErrorPopup name={"email"} errors={errors} place={"top"} />
+            <FormInputErrorPopup name={"email"} errors={errors} place={"top"}/>
 
             {/* Butonul este dezactivat daca email-ul e invalid sau nu a fost introdus inca */}
             <button
                 type={'button'}
                 disabled={
                     (!!errors.email) ||
-                    (email?(email.length<1):true) ||
+                    (email ? (email.length < 1) : true) ||
                     (processing)
-                    }
-                onClick={async ()=>{
+                }
+                onClick={async () => {
                     if (email) {
                         setProcessing(true)
                         showLoading();
                         mutate({email});
-                    }
-                    else toast.error("Please input an email")
+                    } else toast.error("Please input an email")
                 }}
-            > Next </button>
+            > Next
+            </button>
         </div>
     )
 }
-
 
 interface VerificationCodeInputProps {
     nextPage:()=>void

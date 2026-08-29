@@ -42,6 +42,9 @@ import {ListTemplates} from "./routes/user/ListTemplates";
 import "./general.css"
 import Loading from "src/components/Loading";
 import {LoadingOverlayProvider} from "src/components/LoadingOverlayProvider";
+import {GoogleOAuthProvider} from "@react-oauth/google";
+
+
 
 function Index() {
 
@@ -123,6 +126,7 @@ window.onload = ()=>{
     const root = createRoot(rootDiv);
 
     root.render(
+        <GoogleOAuthProvider clientId={"783786984384-n5hhnq51lruano07me2q82e3lp9lil2k.apps.googleusercontent.com"}>
         <QueryClientProvider client={queryClient} >
         <LoadingOverlayProvider>
         <AlertProvider>
@@ -173,6 +177,7 @@ window.onload = ()=>{
         </AlertProvider>
         </LoadingOverlayProvider>
         </QueryClientProvider>
+        </GoogleOAuthProvider>
     );
 }
 

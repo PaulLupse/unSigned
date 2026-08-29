@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 .env
 
+backend/.env
+frontend/.env
+.env

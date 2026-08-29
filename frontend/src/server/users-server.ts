@@ -83,6 +83,22 @@ export async function registerUser({username, password, email}:RegisterData):Pro
 
 }
 
+
+export async function handleGoogleUser({googleCode}:{googleCode:string}) {
+
+    const request = new Request("/api/auth/google", {
+        method:"POST",
+        headers:requestWithPayloadHeaders,
+        body:JSON.stringify({googleCode: googleCode})
+    })
+
+    const response = await window.fetch(request)
+
+    if (!response.ok)
+        throw new Error("Failed to authenticate trough Google.")
+}
+
+
 // Trimite o cerere de verificare a email-ului specificat.
 export async function requestVerificationCode({email}:z.infer<typeof emailSchema>) {
 

@@ -9,6 +9,9 @@ class RegisterRequest(BaseModel):
     password:str
     email:str
 
+class HandleGoogleUserRequest(BaseModel):
+    googleCode:str
+
 class CheckKeyRequest(BaseModel):
     key:str
     formId:str

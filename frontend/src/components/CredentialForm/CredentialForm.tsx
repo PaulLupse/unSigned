@@ -9,9 +9,10 @@ import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErr
 import {CredentialError, CustomError} from "src/utilities/Utilities";
 
 import * as style from "./credential-form.module.css"
-import {ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
+import {ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
 import toast from "react-hot-toast";
 import {login} from "src/server/users-server";
+import {GoogleLogin, useGoogleLogin} from "@react-oauth/google";
 
 // Componenta ce expune un formular de autentificare.
 export function LoginForm() {
@@ -97,10 +98,17 @@ export function LoginForm() {
                     Login
                 </h2>
 
+                <ContinueWithGoogleButton />
+
+                <div className={style.orFrame}>
+                    <hr /> <p>or</p> <hr />
+                </div>
+
+
                 {/* Input pentru identificator */}
                 <input data-tooltip-id={'identifier'}
                        {...register('identifier')}
-                       placeholder='Username or email'/>
+                       placeholder='Input username or email'/>
 
 
                 <FormInputErrorPopup name={"identifier"} errors={errors} place={"left"} />
@@ -110,7 +118,7 @@ export function LoginForm() {
                     {/* Input pentru parola */}
                     <input data-tooltip-id={"password"}
                            {...register('password')}
-                           placeholder='Password'
+                           placeholder='Input password'
                            type={hidePassword?"password":"text"}/>
 
                     <FormInputErrorPopup name={"password"} errors={errors} place={"left"} />

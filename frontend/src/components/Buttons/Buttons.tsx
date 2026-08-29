@@ -1,5 +1,11 @@
 import React, {useEffect, useRef} from "react";
-import {type To, useNavigate} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
+import {useGoogleLogin} from "@react-oauth/google";
+
+import * as style from './Buttons.module.css'
+import {handleGoogleUser} from "src/server/users-server";
+import toast from "react-hot-toast";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 
 interface NavButtonProps extends React.ComponentPropsWithoutRef<'button'> {
     children:React.ReactNode
@@ -114,6 +120,53 @@ export function ButtonWithIcon({onClick, icon, style, ...rest}:ButtonWithIconPro
                 display:"block",
             }}
                  src={icon} alt=''></img>
+        </button>
+    )
+}
+
+// Buton pentru login/register cu google
+export function ContinueWithGoogleButton() {
+
+    const navigate = useNavigate()
+    const queryClient = useQueryClient()
+
+    const {mutate} = useMutation({
+        mutationFn:handleGoogleUser,
+        onSuccess:async ()=>{
+            toast.success("Logged in successfully!")
+
+            await queryClient.invalidateQueries({queryKey:['username'], refetchType:'all'})
+            await queryClient.refetchQueries({queryKey:['user']})
+
+            navigate('/me')
+        },
+        onError:(error)=>{
+            toast.error(error.message)
+        }
+    })
+
+
+    const login = useGoogleLogin({
+            flow: "auth-code",
+            onSuccess: async (codeResponse) => {
+                mutate({googleCode: codeResponse.code})
+            }
+        }
+    );
+
+    return (
+        <button
+            onClick={() => login()}
+            type={"button"}
+            className={style.continueWithGoogleButton}
+        >
+        <img
+            src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+            alt="Google"
+            width={20}
+            height={20}
+        />
+            Continue with Google
         </button>
     )
 }

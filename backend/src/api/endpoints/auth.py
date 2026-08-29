@@ -1,23 +1,23 @@
-import hashlib
-import random
-import re
-import secrets
-
-import yagmail
+from annotated_doc import Doc
 from fastapi import APIRouter, status, HTTPException, Request
 from fastapi.params import Depends
 from fastapi.responses import JSONResponse, Response
 from fastapi.security import OAuth2PasswordRequestForm
 
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
 from jwt import ExpiredSignatureError
-from typing import Annotated
-import logging, jwt, os
+from typing import Annotated, Tuple
+import logging, jwt, os, hashlib, random, requests
 from datetime import timedelta
+
+from pydantic import BaseModel
 
 from src.api.EmailSender import send_verification_email
 from src.api.auth.Authenticator import authenticate
 from src.db.DBConnector import DBResult
-from src.domain.requests import RegisterRequest, VerificationCodeRequest, VerifyEmailRequest
+from src.domain.requests import RegisterRequest, VerificationCodeRequest, VerifyEmailRequest, HandleGoogleUserRequest
 from src.api.Limiter import limiter
 from src.domain.auth import User
 from src.db.DBConnector import DBConnector, get_db
@@ -31,58 +31,74 @@ logger.setLevel(logging.DEBUG)
 
 db_connector:DBConnector = get_db()
 
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
 
-EXP = 1
+if GOOGLE_CLIENT_ID is None:  raise ValueError("GOOGLE_CLIENT_ID not set.")
+if GOOGLE_CLIENT_SECRET is None:  raise ValueError("GOOGLE_CLIENT_SECRET not set.")
 
 
-# Autentificare folosind username is parola.
-# Campul "username" poate tine ori username-ul, ori email-ul utilizatorului
-@router.post("/token", response_class=Response)
-@limiter.limit("60/minute")
-async def token(credentials: Annotated[OAuth2PasswordRequestForm, Depends()], request: Request):
-
-    logger.debug("Token called.")
+# Verifica starea de autentificare a utilizatorului.
+def check_login_state(request: Request)->bool:
 
     tk = request.cookies.get("access_token")
-
-    if tk: # In caz ca utilizatorul este deja autentificat . . .
+    if tk:
         try:
             jwt.decode(tk.split(' ')[1], key=os.getenv("SECURE_JWT_KEY"), algorithms=[os.getenv("JWT_ALG")])
-            raise HTTPException(status_code=409, detail="Already logged in.", headers={"WWW-Authenticate":"Bearer"})
+            return True
         except ExpiredSignatureError:
             ...
 
+    return False
+
+# Creeaza si returneaza:
+# - un access token
+# - un refresh token
+# - hash-ul refresh token-ului (pentru a fii stocat in db)
+def generate_tokens(user:User):
+
+    access_token: str = generate_access_token(
+        data={
+            "sub": user.id,
+            "username": user.username,
+            "isAdmin": user.isAdmin,
+            "email": user.email,
+        },
+        expiration_time=timedelta(minutes=EXP))
+
+    # generam un nou refresh token, care vine la pachet cu jetonul de acces
+    refresh_token, hashed_refresh_token = generate_refresh_token()
+    return access_token, refresh_token, hashed_refresh_token
+
+# Verifica detaliile de autentificare ale unui utilizator. Daca sunt valide, returneaza un token de acces si un token de
+# reimprospatare (in acea ordine), care trebuiesc setate manual in api response.
+def create_session(identifier:Annotated[str, Doc("Username or email")], password:str) -> Tuple[str, str]:
+
+
     # accesam baza de date pentru a verifica validitatea credentialelor
-    db_response:DBResult[User] = db_connector.validate_credentials(password=credentials.password,
-                                                                   identifier=credentials.username)
+    db_response: DBResult[User] = db_connector.validate_credentials(password=password,
+                                                                    identifier=identifier)
 
     # daca credentialele nu sunt valide
     if db_response.status != 200:
-        raise HTTPException(status_code=db_response.status, detail=db_response.message, headers={"WWW-Authenticate":"Bearer"})
+        raise HTTPException(status_code=db_response.status, detail=db_response.message,
+                            headers={"WWW-Authenticate": "Bearer"})
 
+    # in caz ca nu au fost returnate date despre utilizator
     if db_response.data is None: raise ValueError("No user data returned!")
 
-    # generam un jeton de acces
-    access_token:str=generate_access_token(
-        data={
-            "sub": db_response.data.id,
-            "username": db_response.data.username,
-            "isAdmin":db_response.data.isAdmin,
-            "email": db_response.data.email,
-        },
-        expiration_time=timedelta(minutes=EXP))
+    access_token, refresh_token, hashed_refresh_token = generate_tokens(user=db_response.data)
+    db_connector.store_refresh_token(user_id=db_response.data.id, hashed_refresh_token=hashed_refresh_token)
 
     # stergem orice sesiune activa pe care o are utilizatorul
     db_connector.end_user_session(user_id=db_response.data.id)
 
-    # generam un nou refresh token, care vine la pachet cu jetonul de acces
-    refresh_token, hashed_refresh_token = generate_refresh_token()
-    db_connector.store_refresh_token(user_id=db_response.data.id, hashed_refresh_token=hashed_refresh_token)
+    return access_token, refresh_token
 
-    response = Response()
 
-    # raspunsului ii adaugam un HTTPOnly cookie ce retine jetonul de acces. Acest Cookie e memorat in browser automat
-    # si este adaugat la orice apel de API ulterior, pentru autentificare.
+# Ataseaza token-urile de acces si reimprospatare la un raspuns.
+def set_response_auth_cookies(response:Response, access_token:str, refresh_token:str):
+
     response.set_cookie(
         key="access_token",
         value=f"Bearer {access_token}",
@@ -98,6 +114,34 @@ async def token(credentials: Annotated[OAuth2PasswordRequestForm, Depends()], re
         path="/api/auth/refresh"
     )
 
+    return response
+
+EXP = 60
+
+
+# Autentificare folosind username/email is parola.
+# Campul "username" poate tine ori username-ul, ori email-ul utilizatorului
+@router.post("/token", response_class=Response)
+@limiter.limit("60/minute")
+async def login(credentials: Annotated[OAuth2PasswordRequestForm, Depends()], request: Request, response:Response):
+
+    logger.debug("User logging in.")
+
+    if check_login_state(request):
+        raise HTTPException(status_code=409,
+                            detail="Already logged in.",
+                            headers={"WWW-Authenticate": "Bearer"})
+
+    access_token, refresh_token = create_session(identifier=credentials.username,
+                                                password=credentials.password)
+
+    # raspunsului ii adaugam un HTTPOnly cookie ce retine jetonul de acces. Acest Cookie e memorat in browser automat
+    # si este adaugat la orice apel de API ulterior, pentru autentificare.
+    response = set_response_auth_cookies(response=response,
+                                    access_token=access_token,
+                                    refresh_token=refresh_token)
+
+    response.status_code = 200
     return response
 
 # Proceseaza cererea de utilizare a refresh token-ului
@@ -118,34 +162,15 @@ async def use_refresh_token(request: Request, response: Response):
 
     if user is not None: # Daca token-ul este valid
 
-        # Generam un nou token de acces...
-        new_access_token: str = generate_access_token(
-            {"sub": user.id,
-             "username": user.username,
-             "isAdmin": user.isAdmin,
-             "email": user.email},
-            expiration_time=timedelta(minutes=EXP))
-
-        # ...si un nou refresh token
-        new_refresh_token, hashed_new_refresh_token = generate_refresh_token()
+        new_access_token, new_refresh_token, hashed_new_refresh_token = generate_tokens(user=user)
 
         db_connector.invalidate_refresh_token(hashed_ref_token=hashlib.sha256(refresh_token.encode()).hexdigest()) # Invalidam refresh token-ul vechi...
-        db_connector.store_refresh_token(user_id=user.id, hashed_refresh_token=hashed_new_refresh_token) # ...si il stocam pe cel nou
+        db_connector.store_refresh_token(user_id=user.id,
+                                         hashed_refresh_token=hashed_new_refresh_token) # ...si il stocam pe cel nou
 
-        response.set_cookie(
-            key="access_token",
-            value=f"Bearer {new_access_token}",
-            httponly=True,
-            path="/",
-        )
-
-        response.set_cookie(
-            key="refresh_token",
-            value=f"{new_refresh_token}",
-            httponly=True,
-            samesite="strict",
-            path="/api/auth/refresh"
-        )
+        response = set_response_auth_cookies(response=response,
+                                        access_token=new_access_token,
+                                        refresh_token=new_refresh_token)
 
         response.status_code = 200
         return response
@@ -223,6 +248,115 @@ async def register_user(register_request:RegisterRequest, request: Request):
         raise HTTPException(status_code=register_response.status, detail=register_response.message)
 
     return JSONResponse(status_code=200, content={"message":"Registered succesfully."})
+
+
+class GoogleUserData(BaseModel):
+    email:str
+    user_id:str
+
+# Returneaza datele despre un utilizator google, folosind codul de acces pasat.
+def get_google_user_data(google_code:str)->GoogleUserData:
+
+    # Trebuie sa trimitem o cerere catre serverul de autentificare google pentru a primi datele legate de utilizator.
+    url = "https://oauth2.googleapis.com/token"
+    data = { # Payload-ul
+        "code": google_code,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uri": "postmessage",  # IMPORTANT !
+        "grant_type": "authorization_code",
+    }
+
+    response = requests.post(url, data=data)
+    if not response.ok: raise HTTPException(status_code=401, detail=f"Failed to exchange code: {response.text}")
+
+    # Preluam jwt-ul de identificare...
+    google_id_token = response.json().get("id_token")
+
+    # ... si ii verificam autenticitatea
+    user_info = id_token.verify_oauth2_token(
+        google_id_token,
+        google_requests.Request(),
+        GOOGLE_CLIENT_ID,
+        clock_skew_in_seconds=10
+    )
+
+    return GoogleUserData(
+        email=user_info["email"],
+        user_id=user_info["sub"]
+    )
+
+# Se ocupa de autentificarea/inregistrarea unui untilizator google
+@router.post("/google", response_class=JSONResponse, status_code=200)
+async def handle_google_user(handle_request: HandleGoogleUserRequest, request:Request, response:Response):
+
+
+    if check_login_state(request):
+        raise HTTPException(status_code=409,
+                            detail="Already logged in.",
+                            headers={"WWW-Authenticate": "Bearer"})
+
+    user_data:GoogleUserData = get_google_user_data(handle_request.googleCode)
+
+    logger.warning(user_data.email)
+
+    user = db_connector.find_user(provider="google", provider_user_id=user_data.user_id, email=user_data.email).data
+    if user: # Daca a fost gasit un utilizator cu detaliile specificate, autentificam utilizatorul
+
+        logger.info(f"Found GOOGLE user with email {user_data.email}")
+
+        access_token, refresh_token, hashed_refresh_token = generate_tokens(user)
+        db_connector.end_user_session(user_id=user.id)
+        db_connector.store_refresh_token(user_id=user.id, hashed_refresh_token=hashed_refresh_token)
+
+        response = set_response_auth_cookies(response, access_token, refresh_token)
+
+        response.status_code = 200
+        return response
+
+
+    user = db_connector.find_user(email=user_data.email).data
+    if user: # Daca exista deja un utilizator cu acelasi email, legam contul deja existent cu contul google
+
+        logger.info(f"Found user with email {user_data.email}")
+
+        db_connector.link_user_account(user_id=user.id, provider="google", provider_user_id=user_data.user_id)
+
+        access_token, refresh_token, hashed_refresh_token = generate_tokens(user)
+        db_connector.end_user_session(user_id=user.id)
+        db_connector.store_refresh_token(user_id=user.id, hashed_refresh_token=hashed_refresh_token)
+
+        response = set_response_auth_cookies(response, access_token, refresh_token)
+
+        response.status_code = 200
+        return response
+
+
+    # Daca nu a fost gasit un utilizator cu acest email, il inregistram ca si un utilizator google
+
+    default_username = user_data.email.split("@")[0]
+    user_id = db_connector.register_user(username=default_username,
+                               password=None,
+                               email=user_data.email,
+                               provider="google",
+                               provider_user_id=user_data.user_id).data
+
+    if not user_id: raise HTTPException(status_code=500)
+
+    # Totodata autentificam utilizatorul
+    user = User(id=user_id,
+                username=default_username,
+                isAdmin=False, # Initial, utilizatorul nu este administrator, deci este sigur sa setam false
+                email=user_data.email)
+
+    access_token, refresh_token, hashed_refresh_token = generate_tokens(user)
+    db_connector.end_user_session(user_id=user_id)
+    db_connector.store_refresh_token(user_id=user_id, hashed_refresh_token=hashed_refresh_token)
+
+    response = set_response_auth_cookies(response, access_token, refresh_token)
+
+    response.status_code = 200
+    return response
 
 
 @router.post("/me/logout", response_class=JSONResponse, dependencies=[Depends(authenticate)])

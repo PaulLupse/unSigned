@@ -96,6 +96,9 @@ class DBConnector:
             username:str = user['username']
             email:str = user['email']
 
+            if password_in_db is None:
+                return DBResult(400, "No password set.")
+
             if verify_password(plain_password=password, hashed_password=password_in_db):
                 return DBResult[User](200,
                                       "Valid credentials.",
@@ -173,12 +176,26 @@ class DBConnector:
     def find_user(self,
                   user_id:str|None = None,
                   email:str|None = None,
-                  username:str|None = None)->DBResult[User|None]:
+                  username:str|None = None,
+                  provider_user_id:str|None = None,
+                  provider:str|None = None)->DBResult[User|None]:
 
         search_filter = {}
         if user_id: search_filter.update({"_id":ObjectId(user_id)})
         if email: search_filter.update({"email":email})
         if username: search_filter.update({"username":username})
+        if provider and provider_user_id:
+            print("DEBUG:    "+provider + "::" + provider_user_id)
+            search_filter.update({
+                "providers":{
+                    "$elemMatch":{
+                        "provider":provider,
+                        "provider_user_id":provider_user_id
+                    }
+                }
+            })
+
+
 
         user = self.users_table.find_one(search_filter)
 
@@ -192,25 +209,44 @@ class DBConnector:
             return DBResult(200, "User exists.", data=user)
         else: return DBResult(404, "User not found.", data=None)
 
-    # metoda ce inregistreaza un utilizator
+    # Metoda ce inregistreaza un utilizator
     # inregistreaza parola in baza de date sub forma 'hash'-uita, folosind un string generat aleator
     # returneaza id-ul utilizatorului
-    def register_user(self, username:str, password:str, email:str)->DBResult[str]:
+    def register_user(self,
+                      username:str,
+                      password:str|None,
+                      email:str,
+                      provider:str|None = None,
+                      provider_user_id:str|None=None)->DBResult[str]:
+
+        hashed_password = hash_password(password) if password else None
+        new_user_data:dict = {"username":username,
+                             "password":hashed_password,
+                             "email":email,
+                             "isAdmin":False}
+
+        if provider and provider_user_id:
+            new_user_data.update(
+                {
+                    "providers": [
+                        {
+                            "provider": provider,
+                            "provider_user_id": provider_user_id
+                        }
+                    ],
+                }
+            )
 
         try:
 
-            hashed_password = hash_password(password)
-            result:InsertOneResult = self.users_table.insert_one(
-                {"username":username,
-                 "password":hashed_password,
-                 "email":email,
-                 "isAdmin":False})
+            result:InsertOneResult = self.users_table.insert_one(new_user_data)
 
             return DBResult(201, "Created.", str(result.inserted_id))
 
         except pymongo.errors.DuplicateKeyError:
 
             return DBResult(409, "Username taken.")
+
 
     # Memoreaza un cod de verificare a unui email.
     def store_verification_code(self, verification_code:str, email:str)->DBResult[str]:
@@ -256,6 +292,25 @@ class DBConnector:
             return DBResult(404, "Verification code not found.")
 
         return DBResult(200, "Deleted.")
+
+    # Adauga un provider la un cont de utilizator
+    def link_user_account(self, user_id:str, provider:str, provider_user_id)->DBResult[str]:
+
+        result = self.users_table.update_one(
+            filter={"_id":ObjectId(user_id)},
+            update={
+                "$push":{
+                    "providers":{
+                        "provider": provider,
+                        "provider_user_id": provider_user_id
+                    }
+                }
+            }
+        )
+
+        if not result.modified_count: return DBResult(404, "User not found.")
+
+        return DBResult(200, f"Linked user {user_id} to provider: {provider}")
 
     # sterge un utilizator pe baza username-ului
     def delete_user(self, user_id:str)->DBResult:

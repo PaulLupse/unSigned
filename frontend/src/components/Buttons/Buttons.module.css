@@ -1,0 +1,17 @@
+.continueWithGoogleButton {
+    display:grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid black;
+    background-color: white;
+    cursor: pointer;
+}
+
+.continueWithGoogleButton:hover {
+    background-color: var(--button-hover);
+}
+
+.continueWithGoogleButton:active {
+    background-color: var(--button-clicked);
+}
