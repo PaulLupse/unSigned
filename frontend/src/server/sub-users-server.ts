@@ -1,8 +1,14 @@
 import {type FormInfo, type Submission} from "src/domain/types";
 import {z} from 'zod'
 import {formInfoSchema, submissionSchema} from "src/domain/schemas";
+import {fetch} from "src/utilities/Utilities";
 
-const baseURL:string = ''
+
+
+const requestWithPayloadHeaders = new Headers({
+        'Accept': "application/json",
+        'Content-Type': "application/json"
+    });
 
 const UseKeyResponseSchema = z.object(
     {
@@ -14,13 +20,10 @@ type UseKeyResponseType = z.TypeOf<typeof UseKeyResponseSchema>;
 
 
 export async function checkFormId(formId:string):Promise<boolean|undefined> {
-    const checkFormIdRequest = new Request(baseURL + `/api/sub-users/check/${formId}`, {
+    const checkFormIdRequest = new Request(`/api/sub-user/check/${formId}`, {
         method:'POST',
         body:JSON.stringify({formId:formId}),
-        headers:{
-            'Accept': "application/json",
-            'Content-Type': "application/json"
-        },
+        headers:requestWithPayloadHeaders
     })
     const checkFormIdResponse = await fetch(checkFormIdRequest);
     if(checkFormIdResponse.ok)
@@ -30,15 +33,15 @@ export async function checkFormId(formId:string):Promise<boolean|undefined> {
 }
 
 export async function checkKey({key, formId}: { key: string, formId: string }):Promise<void> {
-    const checkKeyRequest = new Request(baseURL + '/api/sub-users/check-key', {
+    const checkKeyRequest = new Request('/api/sub-user/check-key', {
         method:'POST',
         body:JSON.stringify({key:key, formId:formId}),
-        headers:{
-            'Accept': "application/json",
-            'Content-Type': "application/json"
-        },
+        headers:requestWithPayloadHeaders
     })
     const checkKeyResponse = await fetch(checkKeyRequest);
+
+    console.log(checkKeyResponse)
+
     if(checkKeyResponse.status == 400) throw new Error("Invalid key.")
     else if(checkKeyResponse.status == 410) throw new Error("Form deleted.")
     else if(checkKeyResponse.status == 423) throw new Error("Form unavailable.")
@@ -48,13 +51,10 @@ export async function useKey({k, formId}:{k: string, formId: string}):Promise<Fo
 
     if (k === '') throw new Error("Please input key again.")
 
-    const useKeyRequest :Request = new Request(baseURL+'/api/sub-users/use-key',
+    const useKeyRequest :Request = new Request('/api/sub-user/use-key',
         {
             method:'post',
-            headers:{
-                'Accept': "application/json",
-                'Content-Type': "application/json"
-            },
+            headers:requestWithPayloadHeaders,
             body:JSON.stringify({
                 key: k,
                 formId:formId
@@ -83,13 +83,10 @@ export async function submitForm({key, formId, submission}:{key: string, formId:
         throw new Error("Invalid submission parameters.")
     }
 
-    const submitFormRequest = new Request(baseURL+'/api/sub-users/submit-form',
+    const submitFormRequest = new Request('/api/sub-user/submit-form',
         {
             method:'POST',
-            headers:{
-                'Accept':'application/json',
-                "Content-Type":'application/json'
-            },
+            headers:requestWithPayloadHeaders,
             body:JSON.stringify({
                 key:key,
                 submission:submission,

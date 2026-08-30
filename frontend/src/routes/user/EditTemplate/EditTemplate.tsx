@@ -4,16 +4,16 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {updateTemplate} from "../../../server/users-server";
-import type {NewForm, Template, User} from "../../../domain/types";
-import type {TextQuestion, GridQuestion} from "../../../domain/types";
+import {updateTemplate} from "src/server/users-server";
+import type {NewForm, Template, User} from "src/domain/types";
+import type {TextQuestion, GridQuestion} from "src/domain/types";
 import {useNavigate, useOutletContext} from "react-router-dom";
 
-import {newFormSchema, templateSchema} from "../../../domain/schemas";
+import {newFormSchema, templateSchema} from "src/domain/schemas";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import ButtonBar from "../../../components/Buttons/ButtonBar/ButtonBar";
-import {FormEditor} from "../../../components/Form/FormEditor/FormEditor";
+import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
+import {FormEditor} from "src/components/Form/FormEditor/FormEditor";
 
 import 'src/components/Form/CommonFormStyle.css'
 import 'src/components/Form/QuestionEditor/QuestionEditor.css'
@@ -99,9 +99,7 @@ export default function EditForm() {
 
             <FixedElement>
                   <ButtonBar>
-                        {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}
                       <NavButton to={`/templates/${parseResult.data?.id}/view`} >Cancel</NavButton>
-                        {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}
                       <button form={"barosan"} type='submit' className='plain-button'>Done</button>
                   </ButtonBar>
             </FixedElement>

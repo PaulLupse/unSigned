@@ -69,8 +69,6 @@ option:active {
 
 p, h1, h2, h3, h4, a, h5, td, th, input, button, label, select, option {
 
-    overflow-wrap: break-word;
-    word-break: break-all;
     padding: 0.25rem 0.5rem;
     margin: 0;
 }

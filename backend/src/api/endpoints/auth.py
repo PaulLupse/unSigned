@@ -95,7 +95,6 @@ def create_session(identifier:Annotated[str, Doc("Username or email")], password
 
     return access_token, refresh_token
 
-
 # Ataseaza token-urile de acces si reimprospatare la un raspuns.
 def set_response_auth_cookies(response:Response, access_token:str, refresh_token:str):
 
@@ -103,6 +102,7 @@ def set_response_auth_cookies(response:Response, access_token:str, refresh_token
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
+        expires=1 * 24 * 60 * 60,
         path="/",
     )
 
@@ -110,6 +110,7 @@ def set_response_auth_cookies(response:Response, access_token:str, refresh_token
         key="refresh_token",
         value=f"{refresh_token}",
         httponly=True,
+        expires=7 * 24 * 60 * 60,
         samesite="strict",
         path="/api/auth/refresh"
     )

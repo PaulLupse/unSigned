@@ -13,20 +13,17 @@ from src.db.DBConnector import DBConnector, get_db
 
 db_connector:DBConnector = get_db()
 
-router:APIRouter = APIRouter(prefix="/sub-users", tags=["sub-users"])
+router:APIRouter = APIRouter(prefix="/sub-user", tags=["sub-users"])
 
 
 def validate_key(key:str, form_id:str)->Key|None:
 
     key:Key|None = decode_key(key)
     if not key:
-        print("AICI 1")
         return None
     if key.payload.formId != form_id:
-        print("AICI 2")
         return None
     if db_connector.check_key_usage(key):
-        print("AICI 3")
         return None
     return key
 
@@ -45,6 +42,7 @@ async def check_form_id(form_id:str, request: Request):
 @router.post("/check-key", response_class=HTMLResponse)
 @limiter.limit("60/minute")
 async def check_key(chk_key_req: CheckKeyRequest, request: Request):
+
 
     if validate_key(chk_key_req.key, chk_key_req.formId):
 

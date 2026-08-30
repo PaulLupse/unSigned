@@ -4,7 +4,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import {emailSchema, registerData} from "src/domain/schemas";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 
-import {login, registerUser, requestVerificationCode, verifyVerifcationCode} from "src/server/users-server";
+import {login, registerUser, requestVerificationCode, verifyVerifcationCode} from "src/server/auth";
 import {z} from "zod";
 
 import * as style from "./Register.module.css"

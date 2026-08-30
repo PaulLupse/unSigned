@@ -4,16 +4,16 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {addForm, getTemplate} from "../../../server/users-server";
-import type {FormInfo, NewForm} from "../../../domain/types";
-import type {TextQuestion, GridQuestion} from "../../../domain/types";
+import {addForm, getTemplate} from "src/server/users-server";
+import type {FormInfo, NewForm} from "src/domain/types";
+import type {TextQuestion, GridQuestion} from "src/domain/types";
 import {useNavigate, useParams, useSearchParams} from "react-router-dom";
 
-import {formInfoSchema, newFormSchema} from "../../../domain/schemas";
+import {formInfoSchema, newFormSchema} from "src/domain/schemas";
 import {useMutation, useQuery} from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import ButtonBar from "../../../components/Buttons/ButtonBar/ButtonBar";
-import {FormEditor} from "../../../components/Form/FormEditor/FormEditor";
+import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
+import {FormEditor} from "src/components/Form/FormEditor/FormEditor";
 
 import 'src/components/Form/CommonFormStyle.css'
 import 'src/components/Form/QuestionEditor/QuestionEditor.css'
@@ -145,7 +145,7 @@ export default function FormCreator() {
                                       options={[
                                           {text:'From public templates', action:()=>{navigate('/templates/public')}},
                                           {text:'From official templates', action:()=>{navigate('/templates/official')}},
-                                          {text:'From my templates', action:()=>{navigate('/templates/mine')}}
+                                          {text:'From my templates', action:()=>{navigate('/templates/private')}}
                                       ]} />
 
                         {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}

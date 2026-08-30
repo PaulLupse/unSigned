@@ -21,6 +21,7 @@ import {BackButton, NavButton} from "src/components/Buttons/Buttons";
 import {FormDisplayer} from "src/components/Form/FormDisplayer";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {useAlert} from "src/components/AlertProvider";
+import Loading from "src/components/Loading";
 
 interface KeyFormInput {
     key:string
@@ -91,11 +92,7 @@ export function ShowFormComponent() {
     <>
 
         {(data === undefined)?
-            <div className={'loading'}>
-                <p>
-                    Loading...
-                </p>
-            </div>
+            <Loading />
         :
 
         <form id={"barosan"} onSubmit={handleSubmit(onSubmit)} className={style.formFrame}>

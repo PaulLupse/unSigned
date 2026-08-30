@@ -1,6 +1,7 @@
 import {Link, useNavigate, useOutletContext} from "react-router-dom";
 import React from "react";
-import {deleteUser, getForms, getTemplates, logout} from "src/server/users-server";
+import {getForms, getTemplates} from "src/server/users-server";
+
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import type {User} from "src/domain/types";
 import toast from "react-hot-toast";
@@ -8,6 +9,7 @@ import {NavButton} from "src/components/Buttons/Buttons";
 import {useAlert} from "src/components/AlertProvider";
 
 import * as style from './Profile.module.css'
+import {deleteUser, logout} from "src/server/auth";
 
 function NotLoggedInPanel() {
     return (
@@ -53,13 +55,13 @@ function DataDisplay({user}:{user:User}) {
     }
 
     const getUserForms = useQuery({
-        queryFn:getForms,
+        queryFn:async()=>getForms({user_id:user.id}),
         queryKey:['forms'],
         retry:0
     })
 
     const getUserTemplates = useQuery({
-        queryFn:async()=>getTemplates({type:'mine'}),
+        queryFn:async()=>getTemplates({type:'private', userId:user.id}),
         queryKey:['templates'],
         retry:0
     })
@@ -96,7 +98,7 @@ function DataDisplay({user}:{user:User}) {
                 <hr className={style.line} />
                 <div className={style.footer}>
                     <NavButton to={'/me/forms'}>My forms</NavButton>
-                    <NavButton to={'/templates/mine'}>My templates</NavButton>
+                    <NavButton to={'/templates/private'}>My templates</NavButton>
                 </div>
                 <hr className={style.line} />
                 <button onClick={deleteAccount}>

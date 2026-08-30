@@ -1,13 +1,13 @@
 import React, {useCallback, useRef} from "react";
 import {type SubmitHandler, useFieldArray, useForm} from "react-hook-form";
-import type {Email, FormInfo} from "../../../domain/types";
+import type {Email, FormInfo} from "src/domain/types";
 import {z} from "zod";
-import {emailSchema, formInfoSchema} from "../../../domain/schemas";
+import {emailSchema, formInfoSchema} from "src/domain/schemas";
 import {zodResolver} from "@hookform/resolvers/zod";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {useNavigate, useOutletContext} from "react-router-dom";
-import {distributeKeys} from "../../../server/users-server";
-import {useAlert} from "../../../components/AlertProvider";
+import {distributeKeys} from "src/server/users-server";
+import {useAlert} from "src/components/AlertProvider";
 import {useMutation} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import * as style from './DistributeKeys.module.css'

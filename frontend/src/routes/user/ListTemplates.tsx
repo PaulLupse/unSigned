@@ -23,28 +23,28 @@ export function ListTemplates() {
     }, [context])
 
     const pathSegments = loc.pathname.split('/')
-    const type:'public'|'mine'|'official' = pathSegments[pathSegments.length - 1] as 'public'|'mine'|'official'
-    let displayType :string = ''
+    const type:'public'|'private'|'official' = pathSegments[pathSegments.length - 1] as 'public'|'private'|'official'
+    let dispayText :string = ''
 
     switch (type){
         case "public":
-            displayType='Public'; break
-        case 'mine':
-            displayType="My"; break
+            dispayText='Public'; break
+        case 'private':
+            dispayText="My"; break
         default:
-            displayType="Official"; break
+            dispayText="Official"; break
     }
 
 
-    const getTemplates = useQuery({
-        queryFn:async()=>await getTemplates({type:type}),
+    const getUserTemplates = useQuery({
+        queryFn:async()=>await getTemplates({type:type, userId:user?.id}),
         queryKey:['templates']
     })
 
     return(
         // folosim un grid pentru a aseza sectiunile din continut
         // o sectiune va fii dedicata vizualizarea chestionarelor create de utilizator
-        getTemplates.isLoading?<Loading />:
+        getUserTemplates.isLoading ? <Loading /> :
         <div style={{
             display:'grid',
             justifyItems:'center'
@@ -64,18 +64,18 @@ export function ListTemplates() {
             }}>
                 <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:'10px'}}>
 
-                    <h3 style={{width:'100%', boxSizing:'border-box'}}>{displayType} templates</h3>
+                    <h3 style={{width:'100%', boxSizing:'border-box'}}>{dispayText} templates</h3>
 
                     {
-                        getTemplates.isSuccess&&
+                        getUserTemplates.isSuccess&&
                             <Table<MinimalTemplate> columns={["Name", "# of questions"]}
                                                     columnNames={['name', "questionCount"]}
-                                                    data={getTemplates.data?getTemplates.data:[]}
+                                                    data={getUserTemplates.data?getUserTemplates.data:[]}
                                                     rowOnClick={(minimalTemplate:MinimalTemplate)=>navigate(`/templates/${minimalTemplate.id}/view`)}
                                                     style={{width:'100%', boxSizing:'border-box'}}/>
                     }
                     {
-                        (type=='mine' || (type=='official' && user?.isAdmin)) &&
+                        (type=='private' || (type=='official' && user?.isAdmin)) &&
                         <NavButton to={"/templates/create" + (type==='official'?'/official':'')} style={{height: '3rem', aspectRatio: '1/1'}}>
                             +
                         </NavButton>

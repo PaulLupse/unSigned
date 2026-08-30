@@ -6,7 +6,7 @@ import type {
     TextAnswer,
     TextQuestion,
     TextQuestionAnswerStatistic
-} from "../../../domain/types";
+} from "src/domain/types";
 import {useNavigate, useOutletContext} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import {useQuery} from "@tanstack/react-query";

@@ -12,21 +12,17 @@ from slowapi import _rate_limit_exceeded_handler
 import logging
 
 from src.api.auth.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
-from src.api.endpoints.users import router as users_router
+from src.api.endpoints.form import router as forms_router
+from src.api.endpoints.user import router as users_router
 from src.api.endpoints.auth import router as auth_router
-from src.api.endpoints.sub_users import router as sub_users_router
+from src.api.endpoints.sub_user import router as sub_users_router
 from src.api.endpoints.admin import router as admin_router
-from src.api.endpoints.templates import router as templates_router
+from src.api.endpoints.template import router as templates_router
 from src.api.Limiter import limiter
-
-
-logger = logging.getLogger('uvicorn.error')
-logger.setLevel(logging.DEBUG)
-
-oauth2_scheme = OAuth2PasswordBearerWithCookies(tokenUrl="token")
 
 app = FastAPI()
 app.include_router(users_router, prefix="/api")
+app.include_router(forms_router, prefix="/api")
 app.include_router(sub_users_router, prefix="/api")
 app.include_router(admin_router, prefix="/api")
 app.include_router(templates_router, prefix="/api")

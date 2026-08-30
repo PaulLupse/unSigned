@@ -1,19 +1,21 @@
-import {useNavigate} from "react-router-dom";
+import {useNavigate, useOutletContext} from "react-router-dom";
 import {useQuery} from "@tanstack/react-query";
-import {getForms, getTemplates} from "src/server/users-server";
+import {getForms} from "src/server/users-server";
 import {Table} from "src/components/Table/Table";
-import type {MinimalFormInfo, MinimalTemplate} from "src/domain/types";
+import type {MinimalFormInfo, User} from "src/domain/types";
 import {makePair} from "src/utilities/Utilities";
 import {NavButton} from "src/components/Buttons/Buttons";
-import React, {useEffect} from "react";
+import React from "react";
 import Loading from "src/components/Loading";
 
 export function DisplayForms() {
 
     const navigate = useNavigate();
+    const outletContext = useOutletContext<{user:User}>()
+    const user = outletContext.user
 
-    const getForms = useQuery({
-        queryFn:getForms,
+    const getUserForms = useQuery({
+        queryFn:()=>getForms({user_id:user.id}),
         queryKey:['forms'],
         retry:0,
         refetchOnWindowFocus:false
@@ -22,7 +24,7 @@ export function DisplayForms() {
     return(
         // folosim un grid pentru a aseza sectiunile din continut
         // o sectiune va fii dedicata vizualizarea chestionarelor create de utilizator
-        getForms.isLoading?<Loading />:
+        getUserForms.isLoading?<Loading />:
         <div style={{
             display:'grid',
             justifyItems:'center'
@@ -45,14 +47,14 @@ export function DisplayForms() {
                     <h3 style={{width:'100%', boxSizing:'border-box'}}>My Forms</h3>
 
                     {
-                        getForms.isSuccess&&
+                        getUserForms.isSuccess&&
                     <Table<MinimalFormInfo> columns={["Name", "Date created", "Date published", "Date closed" , "Submissions"]}
                                      columnNames={['name',
                                          makePair('dateCreated', (date:Date)=>date?date.toISOString().split('T')[0]:'-'),
                                          makePair('datePublished', (date:Date|null)=>date?date.toISOString().split('T')[0]:'-'),
                                          makePair('dateClosed', (date:Date|null)=>date?date.toISOString().split('T')[0]:'-'),
                                          'submissionsCount']}
-                                     data={getForms.data?getForms.data:[]}
+                                     data={getUserForms.data?getUserForms.data:[]}
                                      rowOnClick=
                                         {(form:MinimalFormInfo):void => {
                                             console.log(form.id)

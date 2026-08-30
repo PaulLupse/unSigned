@@ -24,6 +24,8 @@ from datetime import date, datetime, timezone, timedelta
 
 import dotenv, os
 
+from src.utilities import format_mongodb_id_field
+
 dotenv.load_dotenv()
 
 DB_URL = os.getenv("DB_ADDRESS")
@@ -341,7 +343,7 @@ class DBConnector:
             return DBResult(409, "Form with this name already exists.")
 
     # seteaza proprietatea de publicare a unui formular la 'true'
-    def publish_form(self, form_id:str, owner_id:str)->DBResult:
+    def open_form(self, form_id:str, owner_id:str)->DBResult:
 
         form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id})
         if not form_from_db: return DBResult(404, "Form not found.")
@@ -360,7 +362,7 @@ class DBConnector:
         form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id})
         if not form_from_db: return DBResult(404, "Form not found.")
 
-        form_from_db['id'] = str(form_from_db.pop('_id'))
+        format_mongodb_id_field(form_from_db)
         form = Form.model_validate(form_from_db)
 
         print(form)
@@ -378,7 +380,7 @@ class DBConnector:
 
         # necesar sa schimbam numele campului id
         for form in forms_from_db:
-            form['id'] = str(form.pop('_id'))
+            format_mongodb_id_field(form)
 
         forms_from_db = TypeAdapter(list[Form]).validate_python(forms_from_db)
 
@@ -402,16 +404,20 @@ class DBConnector:
         return DBResult(404, "Form not found.")
 
     # returneaza un singur formular
-    def get_form(self, form_id:str, owner_id:str|None = None)->DBResult[Form]:
+    def get_form(self, form_id:str)->DBResult[Form]:
 
-        filter_params = {"_id":ObjectId(form_id)}
-        if owner_id:
-            filter_params['ownerId'] = owner_id
+        if not ObjectId.is_valid(form_id):
+            return DBResult(400, "Bad form id.")
 
-        form_from_db = self.forms_table.find_one(filter_params)
+        form_from_db = self.forms_table.find_one(
+            {
+                "_id":ObjectId(form_id)
+            }
+        )
 
         if form_from_db:
-            form_from_db['id'] = str(form_from_db.pop('_id'))
+
+            format_mongodb_id_field(form_from_db)
             form:Form = Form.model_validate(form_from_db)
 
             return DBResult(200, "Queried successfully.", form)
@@ -536,15 +542,19 @@ class DBConnector:
             return DBResult(500, "Unexpected error: " + str(e))
 
     # returneaza un template dupa id
-    def get_template(self, template_id:str, user:User)->DBResult[Template]:
+    def get_template(self, template_id:str)->DBResult[Template]:
 
         try:
 
-            chk_auth:DBResult[Template] = self.check_authorization(template_id, user.id, user.isAdmin, "read")
-            if chk_auth.status != 200:
-                return DBResult(chk_auth.status, chk_auth.message)
+            template_from_db = self.templates_table.find_one(
+                {"_id": ObjectId(template_id)})
 
-            return DBResult(200, "Queried.", chk_auth.data)
+            if template_from_db is None: return DBResult(404, "Template not found.")
+
+            format_mongodb_id_field(template_from_db)
+            template:Template = Template.model_validate(template_from_db)
+
+            return DBResult(200, "Ok.", template)
 
         except ValidationError as e:
             return DBResult(500, "Database error: " + str(e))
@@ -665,16 +675,21 @@ class DBConnector:
 
         return questions_answers
 
-    def get_submission_data(self, form_id, owner_id:str)->DBResult[list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic]]:
+    def get_submission_data(self,
+                            form_id,
+                            owner_id:str,
+                            form:Form|None=None)->DBResult[list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic]]:
 
         try:
 
-            form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id})
+            if not form or (form and form.id != form_id):
 
-            if not form_from_db: return DBResult(404, "Form not found.")
+                form_from_db = self.forms_table.find_one({"_id":ObjectId(form_id), "ownerId":owner_id})
 
-            form_from_db['id'] = str(form_from_db.pop('_id'))
-            form = Form.model_validate(form_from_db)
+                if not form_from_db: return DBResult(404, "Form not found.")
+
+                form_from_db['id'] = str(form_from_db.pop('_id'))
+                form = Form.model_validate(form_from_db)
 
             questions:list[TextQuestion|GridQuestion] = form.questions
             submissions:list[Submission]|None = form.submissions

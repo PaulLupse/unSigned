@@ -26,7 +26,7 @@ export default function DisplayTemplate() {
             mutationFn:deleteTemplate,
             onSuccess:()=>{
                 toast.success("Template deleted successfully!")
-                navigate('/templates/mine')
+                navigate('/templates/private')
             },
             onError:(error)=>{
                 toast.error("Could not delete template: " + error.message)
@@ -34,7 +34,7 @@ export default function DisplayTemplate() {
         }
     )
 
-    const deleteTemplate = useCallback(
+    const deleteButtonHandler = useCallback(
         ()=>{
             deleteMutation.mutate({templateId:template.id})
         }, [template]
@@ -48,7 +48,7 @@ export default function DisplayTemplate() {
             <FixedElement>
                 <ButtonBar>
 
-                    <NavButton to={`/templates/${template.status=='private'?'mine':template.status}`} onClick={async ()=>{queryClient.removeQueries({queryKey:['template']})}}>
+                    <NavButton to={`/templates/${template.status}`} onClick={async ()=>{queryClient.removeQueries({queryKey:['template']})}}>
                         Back
                     </NavButton>
                     {
@@ -57,7 +57,7 @@ export default function DisplayTemplate() {
                             <NavButton to={`/templates/${template.id}/edit`}>
                                 Edit
                             </NavButton>
-                            <button onClick={deleteTemplate}>
+                            <button onClick={deleteButtonHandler}>
                                 Delete
                             </button>
                         </>

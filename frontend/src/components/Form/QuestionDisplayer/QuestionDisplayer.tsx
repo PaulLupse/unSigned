@@ -1,6 +1,6 @@
 // acest script contine componente folosite pentru afisarea intrebarilor
 
-import type {GridQuestion, TextQuestion} from "../../../domain/types";
+import type {GridQuestion, TextQuestion} from "src/domain/types";
 import React, {useMemo} from "react";
 
 import * as style from './QuestionDisplayer.module.css'

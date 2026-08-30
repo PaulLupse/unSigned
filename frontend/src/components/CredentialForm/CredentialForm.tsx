@@ -11,7 +11,7 @@ import {CredentialError, CustomError} from "src/utilities/Utilities";
 import * as style from "./credential-form.module.css"
 import {ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
 import toast from "react-hot-toast";
-import {login} from "src/server/users-server";
+import {login} from "src/server/auth";
 import {GoogleLogin, useGoogleLogin} from "@react-oauth/google";
 
 // Componenta ce expune un formular de autentificare.

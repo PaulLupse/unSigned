@@ -4,7 +4,7 @@ import {BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate
 import {QueryCache, QueryClient, QueryClientProvider, useQuery, useQueryClient} from "@tanstack/react-query";
 import {AlertProvider} from "./components/AlertProvider";
 
-import {getUserData} from "./server/users-server";
+import {getUserData} from "./server/auth";
 
 import FormCreator from "./routes/user/FormCreator/FormCreator";
 import {Form} from "./routes/user/Form";
@@ -98,8 +98,7 @@ function Index() {
             <main>
                 {
                     isLoading?
-                    <Loading />:
-                        <Outlet context={{user:data?data:undefined}}/>
+                    <Loading /> : <Outlet context={{user:data?data:undefined}}/>
                 }
                 <SideBar isOpen={sidebarIsOpen} setIsOpen={setSidebarIsOpen} anchor={'right'} />
             </main>
@@ -131,48 +130,48 @@ window.onload = ()=>{
         <LoadingOverlayProvider>
         <AlertProvider>
         <StyledEngineProvider injectFirst={true}>
-            <BrowserRouter>
-                <Routes>
-                    <Route path='/' element={<Index />}>
-                        <Route index element={<Presentation />} />
-                        <Route path='me' >
-                            <Route index element={<Profile />} />
-                            <Route path='forms' element={<DisplayForms />} />
-                            <Route path={'forms/:formId'} element={<Form />}>
-                                <Route path="view" element={<DisplayFrom />} />
-                                <Route path="edit" element={<EditForm />} />
-                                <Route path='submissions' element={<SubmissionData />} />
-                                <Route path='keys' element={<DistributeKeys />}/>
-                            </Route>
-                        </Route>
-                        <Route path='login' element={<LoginComponent />}/>
-                        <Route path='register' element={<RegisterComponent />}/>
-                        <Route path='form/create' element={<FormCreator />} />
-                        <Route path='templates' >
-                            <Route index element={<TemplatesMenu />} />
-                            <Route path={"official"} element={<ListTemplates/>} />
-                            <Route path={"mine"} element={<ListTemplates/>}  />
-                            <Route path={"public"} element={<ListTemplates/>}  />
-                            <Route path={'create'} element={<TemplateCreator />}/>
-                            <Route path={'create/official'} element={<TemplateCreator />}/>
-                            <Route path={':templateId'} element={<Template />}>
-                                <Route path="view" element={<DisplayTemplate />}/>
-                                <Route path='edit' element={<EditTemplate />}/>
-                            </Route>
+        <BrowserRouter>
+            <Routes>
+                <Route path='/' element={<Index />}>
+                    <Route index element={<Presentation />} />
+                    <Route path='me' >
+                        <Route index element={<Profile />} />
+                        <Route path='forms' element={<DisplayForms />} />
+                        <Route path={'forms/:formId'} element={<Form />}>
+                            <Route path="view" element={<DisplayFrom />} />
+                            <Route path="edit" element={<EditForm />} />
+                            <Route path='submissions' element={<SubmissionData />} />
+                            <Route path='keys' element={<DistributeKeys />}/>
                         </Route>
                     </Route>
-                    {/* ruta /complete-form este separata de ruta principala deoarece este menita sa fie accesata de sub-utilizatori */}
-                    <Route path='complete-form' element={<SubUsersMain />}>
-                        <Route index element={<FormIdInputComponent />}></Route>
-                        <Route path={":formId"} element={<BaseComponent />}>
-                            <Route index element={<KeyInputComponent />} ></Route>
-                            <Route path={"complete"} element={<ShowFormComponent />} ></Route>
-                            <Route path={"done"} element={<ThankYou />}></Route>
+                    <Route path='login' element={<LoginComponent />}/>
+                    <Route path='register' element={<RegisterComponent />}/>
+                    <Route path='form/create' element={<FormCreator />} />
+                    <Route path='templates' >
+                        <Route index element={<TemplatesMenu />} />
+                        <Route path={"official"} element={<ListTemplates/>} />
+                        <Route path={"private"} element={<ListTemplates/>}  />
+                        <Route path={"public"} element={<ListTemplates/>}  />
+                        <Route path={'create'} element={<TemplateCreator />}/>
+                        <Route path={'create/official'} element={<TemplateCreator />}/>
+                        <Route path={':templateId'} element={<Template />}>
+                            <Route path="view" element={<DisplayTemplate />}/>
+                            <Route path='edit' element={<EditTemplate />}/>
                         </Route>
                     </Route>
-                    <Route path='/*' element={<Navigate to={'/'} replace={true} />} ></Route>
-                </Routes>
-            </BrowserRouter>
+                </Route>
+                {/* ruta /complete-form este separata de ruta principala deoarece este menita sa fie accesata de sub-utilizatori */}
+                <Route path='complete-form' element={<SubUsersMain />}>
+                    <Route index element={<FormIdInputComponent />}></Route>
+                    <Route path={":formId"} element={<BaseComponent />}>
+                        <Route index element={<KeyInputComponent />} ></Route>
+                        <Route path={"complete"} element={<ShowFormComponent />} ></Route>
+                        <Route path={"done"} element={<ThankYou />}></Route>
+                    </Route>
+                </Route>
+                <Route path='/*' element={<Navigate to={'/'} replace={true} />} ></Route>
+            </Routes>
+        </BrowserRouter>
         </StyledEngineProvider>
         </AlertProvider>
         </LoadingOverlayProvider>

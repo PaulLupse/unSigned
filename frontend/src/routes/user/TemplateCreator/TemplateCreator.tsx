@@ -4,16 +4,16 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {addForm, createTemplate} from "../../../server/users-server";
-import type {NewForm} from "../../../domain/types";
-import type {TextQuestion, GridQuestion} from "../../../domain/types";
+import {addForm, createTemplate} from "src/server/users-server";
+import type {NewForm} from "src/domain/types";
+import type {TextQuestion, GridQuestion} from "src/domain/types";
 import {useLocation, useNavigate} from "react-router-dom";
 
-import {newFormSchema} from "../../../domain/schemas";
+import {newFormSchema} from "src/domain/schemas";
 import {useMutation} from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import ButtonBar from "../../../components/Buttons/ButtonBar/ButtonBar";
-import {FormEditor} from "../../../components/Form/FormEditor/FormEditor";
+import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
+import {FormEditor} from "src/components/Form/FormEditor/FormEditor";
 
 import 'src/components/Form/CommonFormStyle.css'
 import 'src/components/Form/QuestionEditor/QuestionEditor.css'

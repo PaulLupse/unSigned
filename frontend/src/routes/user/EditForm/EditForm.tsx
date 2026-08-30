@@ -4,16 +4,16 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {addForm, getUserData, getForm, updateForm} from "../../../server/users-server";
-import type {FormInfo, NewForm} from "../../../domain/types";
-import type {TextQuestion, GridQuestion} from "../../../domain/types";
+import {updateForm} from "src/server/users-server";
+import type {NewForm} from "src/domain/types";
+import type {TextQuestion, GridQuestion} from "src/domain/types";
 import {useNavigate, useOutletContext} from "react-router-dom";
 
-import {formInfoSchema, newFormSchema} from "../../../domain/schemas";
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {formInfoSchema, newFormSchema} from "src/domain/schemas";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import ButtonBar from "../../../components/Buttons/ButtonBar/ButtonBar";
-import {FormEditor} from "../../../components/Form/FormEditor/FormEditor";
+import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
+import {FormEditor} from "src/components/Form/FormEditor/FormEditor";
 
 import 'src/components/Form/CommonFormStyle.css'
 import 'src/components/Form/QuestionEditor/QuestionEditor.css'
@@ -21,7 +21,6 @@ import 'src/components/Form/QuestionDisplayer/QuestionDisplayer.module.css'
 import * as style from './EditForm.module.css'
 import {FixedElement} from "src/components/FixedElement/FixedElement"
 import {NavButton} from "src/components/Buttons/Buttons";
-import ButtonWithMenu from "src/components/FloatingMenu/FloatingMenu";
 
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.

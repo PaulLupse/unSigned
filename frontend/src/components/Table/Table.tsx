@@ -92,7 +92,6 @@ function TableRow<lineInterface extends Object>({index, onClick, line, dataField
             {
                 dataFields.map(
                     (entry:string|pair<string, (arg:any)=>any>, index:number)=> {
-                        console.log(entry)
                         return (
                             <td key={index} style={{maxWidth:'200px'}}>
                                 <p>

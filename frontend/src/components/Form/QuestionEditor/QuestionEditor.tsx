@@ -17,10 +17,10 @@ import type {
     QuestionOptions,
     GridChoice,
     GridOptions, TextOptions
-} from "../../../domain/types";
+} from "src/domain/types";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 
-import {gridQuestionSchema, textQuestionSchema} from "../../../domain/schemas";
+import {gridQuestionSchema, textQuestionSchema} from "src/domain/schemas";
 
 interface QuestionOptionsComponentProps {
     register:UseFormRegister<QuestionOptions>

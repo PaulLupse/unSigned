@@ -5,6 +5,7 @@ import React, {useEffect} from "react";
 
 import {Outlet, useNavigate, useParams} from "react-router-dom";
 import {useQuery} from "@tanstack/react-query";
+import Loading from "src/components/Loading";
 
 export function Form() {
 
@@ -25,11 +26,7 @@ export function Form() {
     // daca nu punem conditia de loading, crapa codu la refresh in /submissions ca nu apuca sa dea fetch
     return (
         isLoading?
-            <div className={'loading'}>
-                <h2>
-                    Loading...
-                </h2>
-            </div>:
+            <Loading />:
             isError?
                 <div className={'loading'}>
                     <h2>

@@ -1,7 +1,7 @@
 import React from 'react';
 import {LoginForm} from "src/components/CredentialForm/CredentialForm";
 
-import {registerUser} from "src/server/users-server";
+import {registerUser} from "src/server/auth";
 import {Link} from "react-router-dom";
 import toast from "react-hot-toast";
 

@@ -1,15 +1,15 @@
-import type { FormInfo} from "../../../domain/types";
-import {closeForm, deleteForm, publishForm} from "../../../server/users-server";
+import type { FormInfo} from "src/domain/types";
+import {closeForm, deleteForm, openForm} from "src/server/users-server";
 import React, {useCallback, useEffect} from "react";
 
 import {useNavigate, useOutletContext} from "react-router-dom";
-import {formInfoSchema} from "../../../domain/schemas";
+import {formInfoSchema} from "src/domain/schemas";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
-import {BackButton, NavButton} from "../../../components/Buttons/Buttons";
+import {BackButton, NavButton} from "src/components/Buttons/Buttons";
 import toast from "react-hot-toast";
-import {FormDisplayer} from "../../../components/Form/FormDisplayer";
-import ButtonBar from "../../../components/Buttons/ButtonBar/ButtonBar";
-import {FixedElement} from "../../../components/FixedElement/FixedElement";
+import {FormDisplayer} from "src/components/Form/FormDisplayer";
+import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
+import {FixedElement} from "src/components/FixedElement/FixedElement";
 
 import * as styles from './DisplayForm.module.css'
 import {useAlert} from "src/components/AlertProvider";
@@ -46,17 +46,21 @@ export function DisplayFrom() {
         }
     })
 
-    async function deleteForm() {
+    async function deleteButtonHandler() {
         showAlert("Are you sure? This action cannot be undone!", [
-                {text:'No'},
+                {
+                    text:'No'
+                },
                 {
                     text:'Yes',
                     action:()=>mutate(form.id)
-                }])
+                }
+            ]
+        )
     }
 
-    const publishForm = useMutation({
-        mutationFn:publishForm,
+    const publishFormMutation = useMutation({
+        mutationFn:openForm,
         onSuccess:async ()=>{
             setFormStatus(()=>"Published")
             await queryClient.invalidateQueries({queryKey:['form']});
@@ -66,7 +70,7 @@ export function DisplayFrom() {
         }
     })
 
-    const closeForm = useMutation({
+    const closeFormMutation = useMutation({
         mutationFn:closeForm,
         onSuccess:async ()=>{
             setFormStatus(()=>"Closed")
@@ -81,11 +85,11 @@ export function DisplayFrom() {
 
         if (formStatus !== "Published") {
             showAlert("Are you sure? You won't be able to modify the form afterwards.",
-                [{text:"No"}, {text:"Yes", action:()=>{publishForm.mutate(form.id)}}]
+                [{text:"No"}, {text:"Yes", action:()=>{publishFormMutation.mutate(form.id)}}]
             )
         } else {
             showAlert("Are you sure? People won't be able to make any submissions afterwards.",
-                [{text:"No"}, {text:"Yes", action:()=>{closeForm.mutate(form.id)}}])
+                [{text:"No"}, {text:"Yes", action:()=>{closeFormMutation.mutate(form.id)}}])
         }
     }, [formStatus])
 
@@ -124,7 +128,7 @@ export function DisplayFrom() {
                     {
                         formStatus!="Closed"&&
                         <NavButton to={`/me/forms/${form.id}/keys`}>
-                            Distribute keys
+                            Access
                         </NavButton>
                     }
 
@@ -132,7 +136,7 @@ export function DisplayFrom() {
                         See results
                     </NavButton>
 
-                    <button onClick={deleteForm}>
+                    <button onClick={deleteButtonHandler}>
                         Delete
                     </button>
                 </ButtonBar>
