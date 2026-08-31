@@ -133,9 +133,9 @@ export async function verifyVerifcationCode({email, code}:{email:string, code:st
 export async function getUserData():Promise<User|undefined>{
 
     const loginRequest = new Request(
-        "/api/auth/me",
+        "/api/user/me",
         {
-            method:"POST",
+            method:"GET",
             credentials:'include'
         });
 

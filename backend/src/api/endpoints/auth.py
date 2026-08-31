@@ -179,14 +179,6 @@ async def use_refresh_token(request: Request, response: Response):
     logger.warning(check_response.message)
     raise HTTPException(status_code=401, detail="Refresh token invalid or not found (in db).")
 
-
-# Returneaza datele utilizatorului (daca este autentificat).
-@router.post("/me", response_model=User, status_code=200)
-@limiter.limit("60/minute")
-async def me(user:Annotated[User, Depends(authenticate)], request: Request):
-
-    return user
-
 # Cere crearea unui cod de verificare al unui email.
 @router.put("/verification-code/request", status_code=200)
 async def request_verification_code(req:VerificationCodeRequest):

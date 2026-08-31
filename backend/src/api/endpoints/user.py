@@ -1,27 +1,18 @@
-from bson import ObjectId
 from fastapi import APIRouter, status, HTTPException, Request
 from fastapi.params import Depends
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.encoders import jsonable_encoder
 
-from jwt import ExpiredSignatureError
-from pydantic import BaseModel
 from typing import Annotated
-import logging, jwt, os
-from datetime import timedelta
+import logging
 
 from src.api.auth.Authenticator import authenticate
-from src.domain.models import TextQuestionAnswerStatistic, GridQuestionAnswerStatistic, MinimalTemplateInfo
+from src.domain.models import MinimalTemplateInfo
 from src.db.DBConnector import DBResult
-from src.domain.requests import RegisterRequest, EditFormRequest
 from src.api.Limiter import limiter
-from src.api.KeyDistributor import distribute_keys
-from src.domain.auth import Key, KeyPayload, User
-from src.domain.models import MinimalFormInfo, NewForm, Form
+from src.domain.auth import User, UserStats
+from src.domain.models import MinimalFormInfo
 from src.db.DBConnector import DBConnector, get_db
-from src.api.auth.utils import generate_access_token, generate_key
-from src.utilities import Action
 
 logger = logging.getLogger('uvicorn.error')
 logger.setLevel(logging.DEBUG)
@@ -30,6 +21,35 @@ logger.setLevel(logging.DEBUG)
 db_connector:DBConnector = get_db()
 
 router:APIRouter = APIRouter(prefix="/user", tags=["users"])
+
+# Returneaza datele utilizatorului curent (daca este autentificat)
+@router.get("/me", response_model=User, status_code=200)
+@limiter.limit("60/minute")
+async def me(user:Annotated[User, Depends(authenticate)], request: Request):
+
+    return user
+
+# Returneaza datele despre un anumit utilizator
+@router.get("/{user_id}", response_model=User, status_code=200)
+@limiter.limit("60/minute")
+async def get_user_data(user_id:str,
+                        request: Request):
+
+    result:DBResult[User|None] = db_connector.find_user(user_id=user_id)
+
+    if not result.ok():
+        raise HTTPException(status_code=result.status, detail=result.message)
+
+    return result.data
+
+@router.get("/{user_id}/stats", response_model=UserStats, status_code=200)
+@limiter.limit("60/minute")
+async def get_user_stats(user_id:str,
+                         request: Request):
+
+    result:DBResult[UserStats] = db_connector.get_user_stats(user_id=user_id)
+
+    return result.data
 
 @router.get("/{user_id}/forms")
 @limiter.limit("60/minute")

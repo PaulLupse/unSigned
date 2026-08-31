@@ -18,7 +18,7 @@ from src.domain.models import MinimalTemplateInfo, Template
 from src.domain.models import TextQuestion, GridQuestion
 from src.api.auth.utils import hash_password, verify_password
 from src.domain.models import Form, Submission, MinimalFormInfo, NewForm
-from src.domain.auth import Key, User
+from src.domain.auth import Key, User, UserStats
 
 from datetime import date, datetime, timezone, timedelta
 
@@ -317,11 +317,21 @@ class DBConnector:
     # sterge un utilizator pe baza username-ului
     def delete_user(self, user_id:str)->DBResult:
 
+        self.templates_table.delete_many({"ownerId":user_id})
+        self.forms_table.delete_many({"ownerId":user_id})
         result:DeleteResult = self.users_table.delete_one({"_id":ObjectId(user_id)})
 
         if result.deleted_count == 0: return DBResult(404, "User not found.")
 
         return DBResult(200, "Deleted.")
+
+
+    def get_user_stats(self, user_id:str)->DBResult[UserStats]:
+
+        form_count:int = self.forms_table.count_documents(filter={"ownerId":user_id})
+        template_count:int = self.templates_table.count_documents(filter={"ownerId":user_id})
+
+        return DBResult(200, "Ok", UserStats(formCount=form_count, templateCount=template_count))
 
     # adauga un formular, returneaza id-ul
     def add_form(self, new_form:NewForm, owner_id:str)->DBResult[str]:

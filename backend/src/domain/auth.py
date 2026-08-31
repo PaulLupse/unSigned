@@ -26,4 +26,8 @@ class VerificationCode(BaseModel):
     code:str
     expiresAt:datetime
 
+class UserStats(BaseModel):
+    formCount: int
+    templateCount: int
+
 
