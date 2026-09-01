@@ -74,7 +74,7 @@ module.exports = {
             filename:'index.html'
         }),
         new webpack.DefinePlugin({
-            'process.env.GOOGLE_OAUTH_CLIENT_ID': JSON.stringify(process.env.GOOGLE_OAUTH_CLIENT_ID),
+            'process.env.GOOGLE_CLIENT_ID': JSON.stringify(process.env.GOOGLE_CLIENT_ID),
         }),
     ],
     devServer: {

@@ -1,15 +1,10 @@
 import dotenv, os
 import yagmail
 
+from src.config import SENDER_EMAIL, GMAIL_APP_PASSWORD
+
 dotenv.load_dotenv()
 
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-if not SENDER_EMAIL:
-    raise ValueError("SENDER_EMAIL .env variable not set")
-
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
-if not GMAIL_APP_PASSWORD:
-    raise ValueError("GMAIL_APP_PASSWORD .env variable not set")
 
 # Trimite un e-mail catre adresa de email specificata, continand codul de verificare a adresei.
 def send_verification_email(code, email)->bool:

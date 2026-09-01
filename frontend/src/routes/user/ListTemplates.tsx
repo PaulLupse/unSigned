@@ -38,7 +38,8 @@ export function ListTemplates() {
 
     const getUserTemplates = useQuery({
         queryFn:async()=>await getTemplates({type:type, userId:user?.id}),
-        queryKey:['templates']
+        queryKey:['templates'],
+        refetchOnWindowFocus:false
     })
 
     return(

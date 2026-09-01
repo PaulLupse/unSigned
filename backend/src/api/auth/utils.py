@@ -4,6 +4,7 @@ from pwdlib import PasswordHash
 from datetime import datetime, timedelta, timezone
 import jwt, bcrypt, dotenv, os, pyseto, uuid
 
+from src.config import SECURE_PYSETO_KEY, SECURE_JWT_KEY
 from src.domain.auth import Key, KeyFooter, KeyPayload
 
 dotenv.load_dotenv()
@@ -11,11 +12,6 @@ dotenv.load_dotenv()
 ALG = "HS256"
 hash_alg = PasswordHash.recommended()
 
-SECURE_JWT_KEY:str|None = os.getenv("SECURE_JWT_KEY")
-SECURE_PYSETO_KEY:str|None = os.getenv("SECURE_PYSETO_KEY")
-
-if SECURE_JWT_KEY is None: raise ValueError("SECURE_JWT_KEY not set")
-if SECURE_PYSETO_KEY is None: raise ValueError("SECURE_PYSETO_KEY not set")
 
 paseto_key = pyseto.Key.new(version=4, purpose='local', key=bytes(SECURE_PYSETO_KEY, 'utf-8'))
 

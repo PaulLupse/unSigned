@@ -1,24 +1,20 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.middleware import SlowAPIMiddleware
 
-from starlette.responses import FileResponse, RedirectResponse
+from starlette.responses import RedirectResponse
 
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
-import logging
-
-from src.api.auth.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
 from src.api.endpoints.form import router as forms_router
 from src.api.endpoints.user import router as users_router
 from src.api.endpoints.auth import router as auth_router
 from src.api.endpoints.sub_user import router as sub_users_router
 from src.api.endpoints.admin import router as admin_router
 from src.api.endpoints.template import router as templates_router
-from src.api.Limiter import limiter
+from src.common import limiter
 
 app = FastAPI()
 app.include_router(users_router, prefix="/api")

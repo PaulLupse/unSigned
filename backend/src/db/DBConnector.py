@@ -12,8 +12,9 @@ from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError
 from pymongo.results import DeleteResult, InsertOneResult
 
-from src.domain.models import TextAnswer, TextQuestionAnswerStatistic, GridQuestionAnswerStatistic, \
-    GridAnswer
+from src.common import logger
+from src.config import DB_URL, REFRESH_TOKEN_LIFESPAN
+from src.domain.models import TextAnswer, TextQuestionAnswerStatistic, GridQuestionAnswerStatistic, GridAnswer
 from src.domain.models import MinimalTemplateInfo, Template
 from src.domain.models import TextQuestion, GridQuestion
 from src.api.auth.utils import hash_password, verify_password
@@ -22,15 +23,8 @@ from src.domain.auth import Key, User, UserStats
 
 from datetime import date, datetime, timezone, timedelta
 
-import dotenv, os
-
 from src.utilities import format_mongodb_id_field
 
-dotenv.load_dotenv()
-
-DB_URL = os.getenv("DB_ADDRESS")
-if not DB_URL:
-    raise ValueError("DB_ADDRESS not set.")
 
 mongo_client = MongoClient(DB_URL)
 
@@ -42,7 +36,7 @@ class RefreshToken(BaseModel):
     isUsed:bool
     expiresAt:datetime # numarul de zile pt care va fii valabil
 
-    def isExpired(self)->bool:
+    def is_expired(self)->bool:
 
         return datetime.now(timezone.utc) > self.expiresAt
 
@@ -116,7 +110,7 @@ class DBConnector:
 
     def store_refresh_token(self, user_id:str, hashed_refresh_token:str)->DBResult[str]:
 
-        expiration_date = datetime.now(timezone.utc) + timedelta(days=7)
+        expiration_date = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_LIFESPAN)
 
         res:InsertOneResult = self.sessions_table.insert_one(
             {"user_id":user_id,
@@ -151,7 +145,7 @@ class DBConnector:
         if not result_from_db: return DBResult(404, "Token not found.")
 
         result = RefreshToken(
-            userId=str(result_from_db["_id"]),
+            userId=str(result_from_db["user_id"]),
             hash=result_from_db["hashed_ref_token"],
             isUsed=result_from_db["is_used"],
             expiresAt=result_from_db["expires_at"]
@@ -162,8 +156,10 @@ class DBConnector:
             if result.isUsed:
                 return DBResult(401, "Token used.")
 
-            if result.isExpired():
+            if result.is_expired():
                 return DBResult(401, "Token expired.")
+
+            logger.warning(result)
 
             find_res = self.find_user(user_id=result.userId)
 

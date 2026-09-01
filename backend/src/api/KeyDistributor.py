@@ -1,29 +1,23 @@
 import yagmail, dotenv, os
 from random import shuffle
 
+from src.api.auth.utils import generate_key
+from src.config import SENDER_EMAIL, GMAIL_APP_PASSWORD
+from src.domain.auth import Key, KeyPayload
+
 dotenv.load_dotenv()
 
-SENDER_EMAIL = os.getenv("SENDER_EMAIL")
-if not SENDER_EMAIL:
-    raise ValueError("SENDER_EMAIL .env variable not set")
+# Distribuie chei catre utilizatorii avand email-urile listate. Pentru fiecare email este generat o noua cheie chiar
+# inainte de trimiterea email-ului. Email-ul nu intra in generarea cheii, aceasta depinzand doar de id-ul formularului
+# pentru care este oferit accesul.
+async def distribute_keys(emails:list[str], form_owner_username:str, form_id:str) -> None:
 
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
-if not GMAIL_APP_PASSWORD:
-    raise ValueError("GMAIL_APP_PASSWORD .env variable not set")
-
-
-# functie pentru distribuirea cheilor catre utilizatorii avand emailurile listate
-async def distribute_keys(emails:list[str], keys:list[str], form_owner_username:str, form_id:str) -> None:
-
-    if len(emails)!=len(keys): raise ValueError('Emails and Keys must have the same length')
-
-    # nu e nevoie sa stim care cheie la cine se trimite (intrucat fiecare cheie ofera accesul la acelasi formular)
     shuffle(emails)
-    shuffle(keys)
 
     with yagmail.SMTP(user=SENDER_EMAIL, password=GMAIL_APP_PASSWORD) as yag:
 
         for i in range(0, len(emails)):
             yag.send(to=emails[i],
                      subject=f"Key to access a form created by user {form_owner_username} on unSigned.",
-                     contents=f"Key: {keys[i]} \nComplete the form here: http://localhost:3000/complete-form/{form_id}")
+                     contents=f'''Key:\n <h1> {generate_key(data=Key(payload=KeyPayload(formId=form_id)))} </h1> 
+                     \nComplete the form here: http://localhost:3000/complete-form/{form_id}''')

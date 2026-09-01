@@ -9,13 +9,12 @@ import logging
 from src.api.auth.Authenticator import authenticate
 from src.domain.models import MinimalTemplateInfo
 from src.db.DBConnector import DBResult
-from src.api.Limiter import limiter
+from src.common import limiter
 from src.domain.auth import User, UserStats
 from src.domain.models import MinimalFormInfo
 from src.db.DBConnector import DBConnector, get_db
 
-logger = logging.getLogger('uvicorn.error')
-logger.setLevel(logging.DEBUG)
+from src.common import logger
 
 
 db_connector:DBConnector = get_db()

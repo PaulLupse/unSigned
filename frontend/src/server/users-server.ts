@@ -22,6 +22,10 @@ const requestWithPayloadHeaders = new Headers({
     });
 
 
+export async function getUserStats({user_id}:{user_id:string}):Promise<undefined> {
+
+}
+
 // Cauta un formular dupa id si il returneaza (daca il gaseste).
 export async function getForm(formId:string):Promise<FormInfo|undefined> {
 

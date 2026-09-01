@@ -1,5 +1,5 @@
-import {Link, useNavigate, useOutletContext} from "react-router-dom";
-import React from "react";
+import {Link, useNavigate, useOutletContext, useParams} from "react-router-dom";
+import React, {use} from "react";
 import {getForms, getTemplates} from "src/server/users-server";
 
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
@@ -26,7 +26,15 @@ function NotLoggedInPanel() {
 function DataDisplay({user}:{user:User}) {
 
     const queryClient = useQueryClient();
+
     const navigate = useNavigate();
+    const params = useParams();
+    const userId:string|undefined = params.userId
+
+    // if (userId)
+    //     toast.success(userId)
+    // else toast.error("No user id selected")
+
     const {showAlert} = useAlert()
 
 
@@ -57,13 +65,15 @@ function DataDisplay({user}:{user:User}) {
     const getUserForms = useQuery({
         queryFn:async()=>getForms({user_id:user.id}),
         queryKey:['forms'],
-        retry:0
+        retry:0,
+        refetchOnWindowFocus:false
     })
 
     const getUserTemplates = useQuery({
         queryFn:async()=>getTemplates({type:'private', userId:user.id}),
         queryKey:['templates'],
-        retry:0
+        retry:0,
+        refetchOnWindowFocus:false
     })
 
     const logoutMutation = useMutation({
@@ -88,19 +98,19 @@ function DataDisplay({user}:{user:User}) {
                     <h2>{user.username}</h2>
                     <button onClick={logoutUser}>Log out</button>
                 </div>
-                <hr className={style.line} />
+                <hr className={style.sectionDivider} />
                 <div className={style.content}>
                     <p>User id:</p> <p>{user.id}</p>
                     <p>Email:</p> <p>{user.email}</p>
                     <p>Forms:</p> <p>{getUserForms.data?.length}</p>
                     <p>Templates:</p> <p>{getUserTemplates.data?.length}</p>
                 </div>
-                <hr className={style.line} />
+                <hr className={style.sectionDivider} />
                 <div className={style.footer}>
                     <NavButton to={'/me/forms'}>My forms</NavButton>
                     <NavButton to={'/templates/private'}>My templates</NavButton>
                 </div>
-                <hr className={style.line} />
+                <hr className={style.sectionDivider} />
                 <button onClick={deleteAccount}>
                     Delete account
                 </button>

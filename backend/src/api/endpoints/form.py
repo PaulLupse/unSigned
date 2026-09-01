@@ -15,16 +15,13 @@ from src.api.auth.Authenticator import authenticate
 from src.domain.models import TextQuestionAnswerStatistic, GridQuestionAnswerStatistic
 from src.db.DBConnector import DBResult
 from src.domain.requests import RegisterRequest, EditFormRequest
-from src.api.Limiter import limiter
+from src.common import limiter
 from src.api.KeyDistributor import distribute_keys
 from src.domain.auth import Key, KeyPayload, User
 from src.domain.models import MinimalFormInfo, NewForm, Form
 from src.db.DBConnector import DBConnector, get_db
-from src.api.auth.utils import generate_access_token, generate_key
 
-logger = logging.getLogger('uvicorn.error')
-logger.setLevel(logging.DEBUG)
-
+from src.common import logger
 
 db_connector:DBConnector = get_db()
 
@@ -188,8 +185,10 @@ async def distribute_form_keys(dist_key_req:DistributeKeysRequest,
                                form_id:str,
                                request: Request):
 
-    keys = [generate_key(data=Key(payload=KeyPayload(formId=form_id))) for _ in range(len(dist_key_req.emails))]
-    await distribute_keys(keys=keys, emails=[email.email for email in dist_key_req.emails], form_owner_username=user.username, form_id = form_id)
+
+    await distribute_keys(emails=[email.email for email in dist_key_req.emails],
+                          form_owner_username=user.username,
+                          form_id = form_id)
 
     return JSONResponse(content={"message":"Successfully distributed keys."}, status_code=200)
 

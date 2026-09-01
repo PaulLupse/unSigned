@@ -225,7 +225,8 @@ export function SubmissionData() {
     const statisticData = useQuery({
         queryFn:async()=>getFormSubmissionData(form.id),
         queryKey:['submissionData'],
-        retry:0
+        retry:0,
+        refetchOnWindowFocus:false
     })
 
     useEffect(()=>{if(statisticData.isError)navigate(`/me/forms/${form.id}/view`)})

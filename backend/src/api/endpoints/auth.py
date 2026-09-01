@@ -9,16 +9,18 @@ from google.auth.transport import requests as google_requests
 
 from jwt import ExpiredSignatureError
 from typing import Annotated, Tuple
-import logging, jwt, os, hashlib, random, requests
-from datetime import timedelta
+import jwt, hashlib, random, requests
+from datetime import timedelta, datetime, timezone
 
 from pydantic import BaseModel
 
-from src.api.EmailSender import send_verification_email
+from src.api.VerificationCodeSender import send_verification_email
 from src.api.auth.Authenticator import authenticate
+from src.config import ACCESS_TOKEN_LIFESPAN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SECURE_JWT_KEY, JWT_ALG, \
+    REFRESH_TOKEN_LIFESPAN
 from src.db.DBConnector import DBResult
 from src.domain.requests import RegisterRequest, VerificationCodeRequest, VerifyEmailRequest, HandleGoogleUserRequest
-from src.api.Limiter import limiter
+from src.common import limiter
 from src.domain.auth import User
 from src.db.DBConnector import DBConnector, get_db
 from src.api.auth.utils import generate_access_token, generate_refresh_token
@@ -26,16 +28,9 @@ from src.utilities import validate_email
 
 router:APIRouter = APIRouter(prefix="/auth", tags=["auth"])
 
-logger = logging.getLogger('uvicorn.error')
-logger.setLevel(logging.DEBUG)
+from src.common import logger
 
 db_connector:DBConnector = get_db()
-
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
-
-if GOOGLE_CLIENT_ID is None:  raise ValueError("GOOGLE_CLIENT_ID not set.")
-if GOOGLE_CLIENT_SECRET is None:  raise ValueError("GOOGLE_CLIENT_SECRET not set.")
 
 
 # Verifica starea de autentificare a utilizatorului.
@@ -44,7 +39,7 @@ def check_login_state(request: Request)->bool:
     tk = request.cookies.get("access_token")
     if tk:
         try:
-            jwt.decode(tk.split(' ')[1], key=os.getenv("SECURE_JWT_KEY"), algorithms=[os.getenv("JWT_ALG")])
+            jwt.decode(tk.split(' ')[1], key=SECURE_JWT_KEY, algorithms=[JWT_ALG])
             return True
         except ExpiredSignatureError:
             ...
@@ -64,8 +59,7 @@ def generate_tokens(user:User):
             "isAdmin": user.isAdmin,
             "email": user.email,
         },
-        expiration_time=timedelta(minutes=EXP))
-
+        expiration_time=timedelta(minutes=ACCESS_TOKEN_LIFESPAN))
     # generam un nou refresh token, care vine la pachet cu jetonul de acces
     refresh_token, hashed_refresh_token = generate_refresh_token()
     return access_token, refresh_token, hashed_refresh_token
@@ -102,7 +96,8 @@ def set_response_auth_cookies(response:Response, access_token:str, refresh_token
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
-        expires=1 * 24 * 60 * 60,
+        expires=datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_LIFESPAN),
+        samesite='strict',
         path="/",
     )
 
@@ -110,14 +105,13 @@ def set_response_auth_cookies(response:Response, access_token:str, refresh_token
         key="refresh_token",
         value=f"{refresh_token}",
         httponly=True,
-        expires=7 * 24 * 60 * 60,
+        expires=datetime.now(timezone.utc) + timedelta(minutes=REFRESH_TOKEN_LIFESPAN),
         samesite="strict",
         path="/api/auth/refresh"
     )
 
     return response
 
-EXP = 60
 
 
 # Autentificare folosind username/email is parola.
@@ -159,10 +153,12 @@ async def use_refresh_token(request: Request, response: Response):
     hashed_refresh_token:str = hashlib.sha256(refresh_token.encode()).hexdigest()
 
     check_response = db_connector.check_refresh_token(hashed_ref_token=hashed_refresh_token)
-    user = check_response.data
 
-    if user is not None: # Daca token-ul este valid
+    logger.warning(check_response)
 
+    if check_response.ok() and check_response.data: # Daca token-ul este valid
+
+        user = check_response.data
         new_access_token, new_refresh_token, hashed_new_refresh_token = generate_tokens(user=user)
 
         db_connector.invalidate_refresh_token(hashed_ref_token=hashlib.sha256(refresh_token.encode()).hexdigest()) # Invalidam refresh token-ul vechi...
@@ -176,8 +172,8 @@ async def use_refresh_token(request: Request, response: Response):
         response.status_code = 200
         return response
 
-    logger.warning(check_response.message)
-    raise HTTPException(status_code=401, detail="Refresh token invalid or not found (in db).")
+
+    raise HTTPException(status_code=401, detail="Refresh token invalid.")
 
 # Cere crearea unui cod de verificare al unui email.
 @router.put("/verification-code/request", status_code=200)
@@ -192,7 +188,7 @@ async def request_verification_code(req:VerificationCodeRequest):
     code:int = random.randint(100000, 999999)
     if send_verification_email(code, email=req.email):
 
-        # Daca s-a reuist trimiterea codului de verificare, il stocam in baza de date
+        # Daca s-a reusit trimiterea codului de verificare, il stocam in baza de date
         db_connector.store_verification_code(str(code), email=req.email)
 
     else: raise HTTPException(status_code=500, detail="Verification code could not be sent.")

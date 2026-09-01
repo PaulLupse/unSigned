@@ -6,6 +6,7 @@ from fastapi import Depends, HTTPException, status
 from jwt import ExpiredSignatureError, InvalidTokenError
 
 from src.api.auth.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
+from src.config import SECURE_JWT_KEY, JWT_ALG
 from src.db.DBConnector import DBConnector, get_db
 from src.domain.auth import User
 
@@ -24,7 +25,7 @@ async def authenticate(token : Annotated[str, Depends(oauth2_scheme)])->User:
     )
 
     try:
-        payload = jwt.decode(token, key=os.getenv("SECURE_JWT_KEY"), algorithms=[os.getenv("JWT_ALG")])
+        payload = jwt.decode(token, key=SECURE_JWT_KEY, algorithms=JWT_ALG)
         user_id = payload.get("sub")
 
         if user_id is None:
