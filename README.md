@@ -5,7 +5,7 @@
 Acest proiect este menit pentru a dezvolta un serviciu de creare și completare a unor formulare complet anonime, oferind 
 o interfață utilizarilor prin intermediul unui site web. 
 
-## Rulare proiect
+## Rulare proiect (outdated)
 
 Rularea proiectului necesită rularea a două servere: cel de backend (FastAPI & Uvicorn) și cel web (Node.js &
 Webpack dev server).
@@ -58,10 +58,6 @@ configurare package.json din directorul de bază. Instalarea modulelor se realiz
 Rularea serverului web se efectuează prin următoarea linie de comandă:
 
     npm start
-
-### Note
-
-Se poate rula aplicatia prin intermediul containerelor docker, voi detalia acest proces in push-uri ulterioare.
 
 
 ## Licență
