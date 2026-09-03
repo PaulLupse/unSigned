@@ -7,15 +7,19 @@ import {makePair} from "src/utilities/Utilities";
 import {NavButton} from "src/components/Buttons/Buttons";
 import React from "react";
 import Loading from "src/components/Loading";
+import {useAuth} from "src/components/AuthProvider";
 
-export function DisplayForms() {
+export function ListForms() {
 
     const navigate = useNavigate();
-    const outletContext = useOutletContext<{user:User}>()
-    const user = outletContext.user
+    const {user} = useAuth()
 
     const getUserForms = useQuery({
-        queryFn:()=>getForms({user_id:user.id}),
+        queryFn:async()=>{
+            if (user)
+                return await getForms({user_id:user.id})
+            else return []
+        },
         queryKey:['forms'],
         retry:0,
         refetchOnWindowFocus:false
@@ -58,7 +62,7 @@ export function DisplayForms() {
                                      rowOnClick=
                                         {(form:MinimalFormInfo):void => {
                                             console.log(form.id)
-                                            navigate(`/me/forms/${form.id}/view`);
+                                            navigate(`/form/${form.id}/view`);
                                         }}
                                     style={{overflowX:'auto', width:'100%'}}
                     />

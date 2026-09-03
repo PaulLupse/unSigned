@@ -19,6 +19,7 @@ export default function SideBar(props:SideBarProps) {
             anchor={props.anchor}
             open={props.isOpen}
             onClose={()=>props.setIsOpen(false)}
+            disableScrollLock={true}
             >
 
             <button className={'collapse-button'}

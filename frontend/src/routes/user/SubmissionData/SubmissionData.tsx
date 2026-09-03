@@ -229,7 +229,7 @@ export function SubmissionData() {
         refetchOnWindowFocus:false
     })
 
-    useEffect(()=>{if(statisticData.isError)navigate(`/me/forms/${form.id}/view`)})
+    useEffect(()=>{if(statisticData.isError)navigate(`/form/${form.id}/view`)})
 
     const [displayMode, setDisplayMode] = React.useState('individual');
 
@@ -264,7 +264,7 @@ export function SubmissionData() {
 
                 <FixedElement>
                     <ButtonBar>
-                        <NavButton to={`/me/forms/${form.id}/view`}>Back</NavButton>
+                        <NavButton to={`/form/${form.id}/view`}>Back</NavButton>
                         <div style={{display:'grid', gridTemplateColumns:'auto 1fr'}}>
                             <label>Display:</label>
                             <select onChange={(evt)=>setDisplayMode(evt.target.value)}>

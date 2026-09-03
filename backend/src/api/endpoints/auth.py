@@ -16,8 +16,8 @@ from pydantic import BaseModel
 
 from src.api.VerificationCodeSender import send_verification_email
 from src.api.auth.Authenticator import authenticate
-from src.config import ACCESS_TOKEN_LIFESPAN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SECURE_JWT_KEY, JWT_ALG, \
-    REFRESH_TOKEN_LIFESPAN
+from src.config import ACCESS_TOKEN_LIFESPAN_MINUTES, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SECURE_JWT_KEY, JWT_ALG, \
+    REFRESH_TOKEN_LIFESPAN_DAYS
 from src.db.DBConnector import DBResult
 from src.domain.requests import RegisterRequest, VerificationCodeRequest, VerifyEmailRequest, HandleGoogleUserRequest
 from src.common import limiter
@@ -59,7 +59,7 @@ def generate_tokens(user:User):
             "isAdmin": user.isAdmin,
             "email": user.email,
         },
-        expiration_time=timedelta(minutes=ACCESS_TOKEN_LIFESPAN))
+        expiration_time=timedelta(minutes=ACCESS_TOKEN_LIFESPAN_MINUTES))
     # generam un nou refresh token, care vine la pachet cu jetonul de acces
     refresh_token, hashed_refresh_token = generate_refresh_token()
     return access_token, refresh_token, hashed_refresh_token
@@ -96,7 +96,7 @@ def set_response_auth_cookies(response:Response, access_token:str, refresh_token
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
-        expires=datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_LIFESPAN),
+        expires=datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_LIFESPAN_MINUTES),
         samesite='strict',
         path="/",
     )
@@ -105,7 +105,7 @@ def set_response_auth_cookies(response:Response, access_token:str, refresh_token
         key="refresh_token",
         value=f"{refresh_token}",
         httponly=True,
-        expires=datetime.now(timezone.utc) + timedelta(minutes=REFRESH_TOKEN_LIFESPAN),
+        expires=datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_LIFESPAN_DAYS),
         samesite="strict",
         path="/api/auth/refresh"
     )
@@ -191,7 +191,8 @@ async def request_verification_code(req:VerificationCodeRequest):
         # Daca s-a reusit trimiterea codului de verificare, il stocam in baza de date
         db_connector.store_verification_code(str(code), email=req.email)
 
-    else: raise HTTPException(status_code=500, detail="Verification code could not be sent.")
+    else:
+        raise HTTPException(status_code=500, detail="Verification code could not be sent.")
 
 @router.put("/verification-code/check", status_code=200)
 async def check_verification_code(req: VerifyEmailRequest, response: Response):
@@ -365,20 +366,3 @@ async def logout_user(request: Request, user:Annotated[User, Depends(authenticat
     return response
 
 
-@router.delete("/me/delete", status_code=200)
-@limiter.limit("60/minute")
-async def delete_user(user:Annotated[User, Depends(authenticate)], request: Request, response: Response):
-
-    db_connector.end_user_session(user_id=user.id)
-    result:DBResult = db_connector.delete_user(user.id)
-
-    if result.status == 200:
-
-        # Important: Trebuiesc sterse cookie-urile
-        response.delete_cookie(key="access_token")
-        response.delete_cookie(key="refresh_token")
-
-        response.status_code = 200
-        return response
-    else:
-        raise HTTPException(status_code=401, detail=result.message)

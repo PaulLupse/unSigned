@@ -1,5 +1,15 @@
-import type {registerData} from "src/domain/schemas";
 import {z} from "zod";
+import {
+    answerSchema, answerStatisticSchema, credentialsSchema, emailSchema, formInfoSchema, formQuestionSchema,
+    gridAnswerSchema, gridChoiceSchema,
+    gridOptionsSchema,
+    gridQuestionAnswerStatisticSchema, gridQuestionSchema, minimalFormInfoSchema, minimalTemplateSchema, newFormSchema,
+    questionOptionsSchema,
+    type registerData,
+    submissionSchema, templateSchema,
+    textAnswerSchema, textOptionsSchema, textQuestionAnswerStatisticSchema, textQuestionSchema,
+    userDataWithStatsSchema, userSchema, userStatsSchema
+} from "src/domain/schemas";
 
 export class LoginInfo {
     private _username;
@@ -17,133 +27,29 @@ export class LoginInfo {
     public get password() { return this._password; }
 }
 
-export interface Answer {
-    type:'grid'|'text'
-}
 
-export interface GridAnswer extends Answer {
-    type:'grid'
-    choices:Array<number>
-}
-
-export interface TextAnswer extends Answer {
-    type:'text'
-    text:string
-}
-
-export interface Submission {
-    answers:Array<GridAnswer|TextAnswer>
-}
-
-export interface Question {
-    text:string
-    type:'text'|'grid'
-    isOptional:boolean
-}
-
-export interface GridQuestion extends Question{
-    isMultipleChoice:boolean
-    type:'grid'
-    choices:Array<string>
-}
-
-export interface TextQuestion extends Question{
-    maxChars:number
-    type:'text'
-}
-
-export interface FormInfo {
-    name:string
-    id:string
-    questions:Array<TextQuestion|GridQuestion>
-    dateCreated:Date|null
-    datePublished:Date|null
-    dateClosed:Date|null
-    submissions:Array<Submission>|null
-    ownerId:string
-}
-
-export interface MinimalFormInfo {
-    name:string
-    id:string
-    dateCreated:Date|null
-    datePublished:Date|null
-    dateClosed:Date|null
-    submissionsCount:number
-    ownerId:string
-}
-
-export interface Template {
-    id: string
-    name: string
-    questions:Array<TextQuestion|GridQuestion>
-    ownerId: string
-    status: 'official'|'public'|'private'
-}
-
-export interface MinimalTemplate {
-    id:string
-    name:string
-    questionCount:number
-    ownerId:string
-}
-
-export interface Credentials {
-    identifier:string
-    password:string
-}
-
-export interface Email {
-    email:string
-}
-
-export interface NewForm {
-    name:string
-    questions:Array<TextQuestion|GridQuestion>
-}
-
-export interface GridChoice {
-    text:string
-}
-
-export interface GridOptions{
-    isMultipleChoice:boolean
-    type:'grid'
-    choices:GridChoice[]
-}
-
-export interface TextOptions{
-    type:'text'
-    maxChars:number
-}
-
-export interface QuestionOptions {
-    text:string
-    isOptional:boolean
-    specificOptions:GridOptions|TextOptions
-}
-
-interface AnswerStatistic {
-    type:'text'|'grid'
-    engagement:number
-}
-
-export interface TextQuestionAnswerStatistic extends AnswerStatistic {
-    type:'text'
-    avgWordCount:number
-    frequentWords:string[]
-}
-
-export interface GridQuestionAnswerStatistic extends AnswerStatistic {
-    type:'grid'
-    answerRate:number[]
-}
-
-export interface User {
-    username:string
-    id:string
-    isAdmin:boolean
-    email:string
-}
-
+export type Answer = z.infer<typeof answerSchema>
+export type GridAnswer = z.infer<typeof gridAnswerSchema>
+export type TextAnswer = z.infer<typeof textAnswerSchema>
+export type Submission = z.infer<typeof submissionSchema>
+export type Question = z.infer<typeof formQuestionSchema>
+export type GridQuestion = z.infer<typeof gridQuestionSchema>
+export type TextQuestion = z.infer<typeof textQuestionSchema>
+export type FormInfo = z.infer<typeof formInfoSchema>
+export type MinimalFormInfo = z.infer<typeof minimalFormInfoSchema>
+export type Template = z.infer<typeof templateSchema>
+export type MinimalTemplate = z.infer<typeof minimalTemplateSchema>
+export type Credentials = z.infer<typeof credentialsSchema>
+export type Email = z.infer<typeof emailSchema>
+export type NewForm = z.infer<typeof newFormSchema>
+export type GridChoice = z.infer<typeof gridChoiceSchema>
+export type GridOptions = z.infer<typeof gridOptionsSchema>
+export type TextOptions = z.infer<typeof textOptionsSchema>
+export type QuestionOptions = z.infer<typeof questionOptionsSchema>
+export type AnswerStatistic = z.infer<typeof answerStatisticSchema>
+export type TextQuestionAnswerStatistic = z.infer<typeof textQuestionAnswerStatisticSchema>
+export type GridQuestionAnswerStatistic = z.infer<typeof gridQuestionAnswerStatisticSchema>
+export type User = z.infer<typeof userSchema>
+export type UserStats = z.infer<typeof userStatsSchema>
+export type UserDataWithStats = z.infer<typeof userDataWithStatsSchema>
 export type RegisterData = z.infer<typeof registerData>

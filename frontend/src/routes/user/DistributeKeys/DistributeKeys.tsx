@@ -118,7 +118,7 @@ export function DistributeKeys() {
 
             <FixedElement>
                 <ButtonBar>
-                    <NavButton to={`/me/forms/${form.id}/view`}>Back</NavButton>
+                    <NavButton to={`/form/${form.id}/view`}>Back</NavButton>
                     <button ref={distKeyButton} type={'submit'} form={'distKeyForm'}>
                         Distribute
                     </button>

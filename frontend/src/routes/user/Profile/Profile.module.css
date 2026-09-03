@@ -33,7 +33,6 @@
 
 .content {
     display:grid;
-    grid-template-columns: auto 1fr;
 }
 
 .footer {
@@ -45,6 +44,12 @@
 .pfp {
     width: 100px;
     height: 100px;
+}
+
+.profileEntry {
+    display:flex;
+    justify-content: space-between;
+    gap:10px;
 }
 
 .sectionDivider {

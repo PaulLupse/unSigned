@@ -57,8 +57,8 @@ export function LoginForm() {
         onSuccess: async ()=>{
 
             // Daca operatia de autentificare a fost realizata cu succes, actualizam datele legate de utilizator
-            await queryClient.invalidateQueries({queryKey:['username'], refetchType:'all'})
-            await queryClient.refetchQueries({queryKey:['user']})
+            await queryClient.invalidateQueries({queryKey:['currentUser'], refetchType:'all'})
+            // await queryClient.refetchQueries({queryKey:['user']})
 
             // Redirectionam spre pagina de profil
             navigate('/me', {replace:true})

@@ -28,7 +28,7 @@ export default function EditForm() {
 
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const context = useOutletContext<{template:Template, user:User}>()
+    const context = useOutletContext<{template:Template}>()
 
     // luam datele despre chestionar de la componenta parent UpdateForm, care da fetch la chestionar
     const parseResult = templateSchema.safeParse(context.template);

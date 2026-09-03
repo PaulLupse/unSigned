@@ -29,3 +29,7 @@ class VerifyEmailRequest(BaseModel):
 
     email:str
     code:str
+
+class ChangeUsernameRequest(BaseModel):
+
+    newUsername:str

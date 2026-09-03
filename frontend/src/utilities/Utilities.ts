@@ -124,3 +124,22 @@ export async function fetch(
     }
     return response // Daca raspunsul este ok, il returnam
 }
+
+// Se ocupa de raspunsurile cu anumite coduri de status (orice in afara de cele din intervalul 200-299),
+// sau raspunsuri cu status neprevazut, prin crearea unor erori cu mesaje generale.
+export function handleGenericErrorResponses(response:Response) {
+    if (response.status == 429)
+        throw new CustomError("Slow down! (you are being rate limited)", 429)
+
+    if(response.status == 401)
+        throw new CustomError("Please log in first.", 401)
+
+    if(response.status == 403)
+        throw new CustomError("You are not authorized to perform that action.", 403)
+
+    if(response.status == 500)
+        throw new CustomError("Internal server error.", 500)
+
+
+    throw new CustomError("Something went wrong . . .", 500)
+}

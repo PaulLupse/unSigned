@@ -2,13 +2,7 @@ import {type FormInfo, type Submission} from "src/domain/types";
 import {z} from 'zod'
 import {formInfoSchema, submissionSchema} from "src/domain/schemas";
 import {fetch} from "src/utilities/Utilities";
-
-
-
-const requestWithPayloadHeaders = new Headers({
-        'Accept': "application/json",
-        'Content-Type': "application/json"
-    });
+import {REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
 
 const UseKeyResponseSchema = z.object(
     {
@@ -18,35 +12,44 @@ const UseKeyResponseSchema = z.object(
 );
 type UseKeyResponseType = z.TypeOf<typeof UseKeyResponseSchema>;
 
+function handleGenericErrorResponses(response:Response) {
+    
+    if(response.status == 400) throw new Error("Invalid key.")
+    if(response.status == 410) throw new Error("Form deleted.")
+    if(response.status == 423) throw new Error("Form unavailable.")
+    
+    throw new Error("Internal server error.")
+}
 
+// Verifica existenta formularului
 export async function checkFormId(formId:string):Promise<boolean|undefined> {
     const checkFormIdRequest = new Request(`/api/sub-user/check/${formId}`, {
         method:'POST',
         body:JSON.stringify({formId:formId}),
-        headers:requestWithPayloadHeaders
+        headers:REQUEST_WITH_PAYLOAD_HEADERS
     })
     const checkFormIdResponse = await fetch(checkFormIdRequest);
     if(checkFormIdResponse.ok)
         return true;
-    else if(checkFormIdResponse.status == 404)
-        throw new Error("Form not found.")
+    
+    handleGenericErrorResponses(checkFormIdResponse)
 }
 
+// Verifica cheia
 export async function checkKey({key, formId}: { key: string, formId: string }):Promise<void> {
     const checkKeyRequest = new Request('/api/sub-user/check-key', {
         method:'POST',
         body:JSON.stringify({key:key, formId:formId}),
-        headers:requestWithPayloadHeaders
+        headers:REQUEST_WITH_PAYLOAD_HEADERS
     })
     const checkKeyResponse = await fetch(checkKeyRequest);
+    
+    if (checkKeyResponse.ok) return
 
-    console.log(checkKeyResponse)
-
-    if(checkKeyResponse.status == 400) throw new Error("Invalid key.")
-    else if(checkKeyResponse.status == 410) throw new Error("Form deleted.")
-    else if(checkKeyResponse.status == 423) throw new Error("Form unavailable.")
+    handleGenericErrorResponses(checkKeyResponse)
 }
 
+// Utilizeaza cheia pentru a obtine formularul
 export async function useKey({k, formId}:{k: string, formId: string}):Promise<FormInfo|undefined> {
 
     if (k === '') throw new Error("Please input key again.")
@@ -54,7 +57,7 @@ export async function useKey({k, formId}:{k: string, formId: string}):Promise<Fo
     const useKeyRequest :Request = new Request('/api/sub-user/use-key',
         {
             method:'post',
-            headers:requestWithPayloadHeaders,
+            headers:REQUEST_WITH_PAYLOAD_HEADERS,
             body:JSON.stringify({
                 key: k,
                 formId:formId
@@ -68,13 +71,11 @@ export async function useKey({k, formId}:{k: string, formId: string}):Promise<Fo
         const data:UseKeyResponseType = UseKeyResponseSchema.parse(await useKeyResponse.json());
         return data.form
     }
-    else {
-        if(useKeyResponse.status == 400) throw new Error("Invalid key.")
-        else if(useKeyResponse.status == 410) throw new Error("Form deleted.")
-        else if(useKeyResponse.status == 423) throw new Error("Form unavailable.")
-    }
+    
+    handleGenericErrorResponses(useKeyResponse)
 }
 
+// Trimite o submisie, utilizand cheia introdusa
 export async function submitForm({key, formId, submission}:{key: string, formId: string, submission: Submission}):Promise<void> {
 
     // verificam daca submission-ul este de forma schemei de submission-uri
@@ -86,7 +87,7 @@ export async function submitForm({key, formId, submission}:{key: string, formId:
     const submitFormRequest = new Request('/api/sub-user/submit-form',
         {
             method:'POST',
-            headers:requestWithPayloadHeaders,
+            headers:REQUEST_WITH_PAYLOAD_HEADERS,
             body:JSON.stringify({
                 key:key,
                 submission:submission,
@@ -95,9 +96,8 @@ export async function submitForm({key, formId, submission}:{key: string, formId:
         })
 
     const submitFormResponse = await fetch(submitFormRequest);
-    if(!submitFormResponse.ok) {
-        if(submitFormResponse.status == 400) throw new Error("Invalid key.")
-        else if(submitFormResponse.status == 410) throw new Error("Form deleted.")
-        else if(submitFormResponse.status == 423) throw new Error("Form unavailable.")
-    }
+    
+    if (submitFormResponse.ok) return
+    
+    handleGenericErrorResponses(submitFormResponse)
 }

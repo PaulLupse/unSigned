@@ -1,0 +1,9 @@
+.wrapper {
+    display:flex;
+    gap: 1em;
+    padding: 1em;
+}
+
+.wrapper input[type="checkbox"] {
+    color:black
+}

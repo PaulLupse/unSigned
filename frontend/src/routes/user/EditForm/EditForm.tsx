@@ -58,7 +58,7 @@ export default function EditForm() {
         onSuccess:async ()=>{
             toast.success("Form updated successfully!");
             await queryClient.invalidateQueries({queryKey:['form']})
-            navigate(`/me/forms/${parseResult?.data?.id}/view`)
+            navigate(`/form/${parseResult?.data?.id}/view`)
         },
         onError:(error)=>{
             toast.error("Could not update form. " + error?.message);
@@ -110,7 +110,7 @@ export default function EditForm() {
 
             <FixedElement>
                   <ButtonBar>
-                      <NavButton to={`/me/forms/${parseResult?.data}/view`}>Cancel</NavButton>
+                      <NavButton to={`/form/${parseResult?.data}/view`}>Cancel</NavButton>
 
                       <button form={"barosan"} type='submit' className='plain-button'>Done</button>
                   </ButtonBar>

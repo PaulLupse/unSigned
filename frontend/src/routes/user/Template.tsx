@@ -1,16 +1,14 @@
 import React from "react";
 import {useQuery} from "@tanstack/react-query";
-import {getForm, getTemplate} from "src/server/users-server";
-import {Outlet, useOutletContext, useParams} from "react-router-dom";
-import type {FormInfo, User} from "src/domain/types";
+import {getTemplate} from "src/server/users-server";
+import {Outlet, useParams} from "react-router-dom";
 import type {Template} from "src/domain/types";
+import Loading from "src/components/Loading";
 
 
 export default function Template() {
 
     const templateId = useParams().templateId as string;
-
-    const context = useOutletContext<{user:User}>()
 
     const {isLoading, isError, data, error} = useQuery({
         queryFn:async():Promise<Template|undefined>=>getTemplate({templateId}),
@@ -22,11 +20,7 @@ export default function Template() {
     return (
 
         isLoading?
-        <div className={'loading'}>
-            <h2>
-                Loading . . .
-            </h2>
-        </div>
+        <Loading />
             :
         isError?
         <div className={'loading'}>
@@ -35,7 +29,7 @@ export default function Template() {
             </h2>
         </div>
             :
-        <Outlet context={{template:data, user:context.user}} />
+        <Outlet context={{template:data}} />
 
     )
 }

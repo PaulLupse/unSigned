@@ -135,8 +135,8 @@ export function ContinueWithGoogleButton() {
         onSuccess:async ()=>{
             toast.success("Logged in successfully!")
 
-            await queryClient.invalidateQueries({queryKey:['username'], refetchType:'all'})
-            await queryClient.refetchQueries({queryKey:['user']})
+            await queryClient.invalidateQueries({queryKey:['currentUser'], refetchType:'all'})
+            await queryClient.refetchQueries({queryKey:['currentUser']})
 
             navigate('/me')
         },

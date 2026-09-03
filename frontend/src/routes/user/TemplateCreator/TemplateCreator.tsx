@@ -1,4 +1,4 @@
-import React, {useEffect} from "react";
+import React, {useEffect, useState} from "react";
 import {
     useForm,
     type SubmitHandler,
@@ -21,22 +21,23 @@ import 'src/components/Form/QuestionDisplayer/QuestionDisplayer.module.css'
 import * as style from './TemplateCreator.module.css'
 import {FixedElement} from "src/components/FixedElement/FixedElement"
 import Loading from "src/components/Loading";
+import {BackButton} from "src/components/Buttons/Buttons";
+import {Checkbox} from "src/components/Checkbox/Checkbox";
+import {useAuth} from "src/components/AuthProvider";
 
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
 export default function TemplateCreator() {
 
     const navigate = useNavigate();
-    const loc = useLocation();
-
-    const pathSegments = loc.pathname.split('/')
-    const type:string|undefined = pathSegments[pathSegments.length - 1]
+    const {user} = useAuth()
 
     const [loadingProgress, setLoadingProgress] = React.useState(false)
 
     const {register, formState:{errors}, handleSubmit, control, watch, getValues, setValue} = useForm<NewForm>({defaultValues:{questions:[], name:'New template'}});
     const {append, update, remove, swap} = useFieldArray({control, name:'questions'});
     const formQuestions = watch("questions");
+    const [isOfficial, setIsOfficial] = useState(false)
 
     const {mutate, isPending} = useMutation({
         mutationFn:createTemplate,
@@ -107,7 +108,7 @@ export default function TemplateCreator() {
                                 name:data.name,
                                 questions:data.questions,
                             })
-        mutate({templateData:newForm, type:type==='official'?'official':undefined});
+        mutate({templateData:newForm, type:isOfficial?'official':undefined});
     }
 
     return (
@@ -127,12 +128,28 @@ export default function TemplateCreator() {
             }
 
             <FixedElement>
-                  <ButtonBar>
-                        <button type='button' onClick={()=>{navigate(-1);}}>
-                            Back
-                        </button>
-                      <button form={"barosan"} type='submit' className='plain-button'>Done</button>
-                  </ButtonBar>
+                <ButtonBar>
+
+                    <BackButton>
+                        Back
+                    </BackButton>
+
+                    {
+                        user && (user.isAdmin) &&
+                        <Checkbox text={"Official"}
+                              checked={isOfficial}
+                              setChecked={setIsOfficial}
+                              location={'right'} />
+                    }
+
+
+                    <button form={"barosan"}
+                            type='submit'
+                            className='plain-button'>
+                        Done
+                    </button>
+
+                </ButtonBar>
             </FixedElement>
 
         </div>

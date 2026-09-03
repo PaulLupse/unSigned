@@ -10,6 +10,15 @@ class User(BaseModel):
     isAdmin:bool
     email:str
 
+class UserStats(BaseModel):
+    formCount: int
+    templateCount: int
+
+
+class UserProfileWithStats(BaseModel):
+    user:User
+    stats:UserStats
+
 class KeyPayload(BaseModel):
     formId: str
 
@@ -25,9 +34,5 @@ class VerificationCode(BaseModel):
     id:str
     code:str
     expiresAt:datetime
-
-class UserStats(BaseModel):
-    formCount: int
-    templateCount: int
 
 

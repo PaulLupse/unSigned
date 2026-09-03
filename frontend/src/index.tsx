@@ -1,10 +1,9 @@
-import React, {useMemo, useState} from 'react'
+import React, {StrictMode, useState} from 'react'
 import {createRoot} from "react-dom/client";
 import {BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate} from "react-router-dom";
-import {QueryCache, QueryClient, QueryClientProvider, useQuery, useQueryClient} from "@tanstack/react-query";
+import {QueryCache, QueryClient, QueryClientProvider, useQuery} from "@tanstack/react-query";
 import {AlertProvider} from "./components/AlertProvider";
 
-import {getUserData} from "./server/auth";
 
 import FormCreator from "./routes/user/FormCreator/FormCreator";
 import {Form} from "./routes/user/Form";
@@ -34,7 +33,7 @@ import DisplayTemplate from "./routes/user/DisplayTemplate/DisplayTemplate";
 import EditTemplate from "./routes/user/EditTemplate/EditTemplate";
 import {Presentation} from "./routes/user/Presentation/Presentation";
 import TemplateCreator from "./routes/user/TemplateCreator/TemplateCreator";
-import {DisplayForms} from "./routes/user/DisplayForms";
+import {ListForms} from "./routes/user/ListForms";
 import ThankYou from "./routes/sub-user/ThankYou";
 import TemplatesMenu from "./routes/user/TemplatesMenu";
 import {ListTemplates} from "./routes/user/ListTemplates";
@@ -43,33 +42,21 @@ import "./general.css"
 import Loading from "src/components/Loading";
 import {LoadingOverlayProvider} from "src/components/LoadingOverlayProvider";
 import {GoogleOAuthProvider} from "@react-oauth/google";
+import {AuthProvider, useAuth} from "src/components/AuthProvider";
+import {getCurrentUserData} from "src/server/auth";
+import {MeRedirect} from "src/components/MeRedirect";
 
 
 
 function Index() {
 
+    const [sidebarIsOpen, setSidebarIsOpen] = useState(false);
+    const {user, isLoading, isError, isSuccess} = useAuth()
+
     const loc = useLocation();
     const nav = useNavigate();
 
-    const queryClient = useQueryClient();
-    const {isSuccess, data, isLoading, isError, isStale} = useQuery(
-        {queryKey: ['user'], 
-        queryFn:getUserData,
-        retry:0,
-        refetchOnWindowFocus:false})
-
-    const [sidebarIsOpen, setSidebarIsOpen] = useState(false);
-
-    React.useEffect(()=> {
-            if(isError) {
-                if (!['/me', '/login', '/register', '/'].includes(loc.pathname))
-                    nav('/me', {replace:true});
-            }
-        },[loc, isSuccess, isError, isStale, isLoading]
-    );
-
     return (
-
         
         <div id="Pagina intreaga"
             style={{
@@ -77,7 +64,8 @@ function Index() {
                 display:'grid',
                 gridTemplateRows:'100px 1fr',
                 minHeight: '100dvh',
-                minWidth:'320px'}}>
+                minWidth:'320px',
+            }}>
 
             <Toaster position="top-center"
                 toastOptions={{
@@ -92,15 +80,15 @@ function Index() {
             <NavBar
                 sidebarIsOpen={sidebarIsOpen}
                 setSidebarIsOpen={setSidebarIsOpen}
-                isLoading={isLoading}
-                isSuccess={isSuccess}
                 queryClient={queryClient} />
             <main>
                 {
                     isLoading?
-                    <Loading /> : <Outlet context={{user:data?data:undefined}}/>
+                    <Loading /> : <Outlet />
                 }
-                <SideBar isOpen={sidebarIsOpen} setIsOpen={setSidebarIsOpen} anchor={'right'} />
+                <SideBar isOpen={sidebarIsOpen}
+                         setIsOpen={setSidebarIsOpen}
+                         anchor={'right'} />
             </main>
         </div>
     );
@@ -111,53 +99,51 @@ const queryClient = new QueryClient({
         onError:(error)=>{
             if('status' in error) // daca eroarea este de tip CustomError . . .
                 if(error.status == 401) {
-                    if (!['/me', '/login', '/register', '/'].includes(window.location.pathname)) 
-                        window.location.pathname='/login'
+                    // if (!['/me', '/login', '/register', '/'].includes(window.location.pathname))
+                    //     window.location.pathname='/login'
                     return;
                 }
-            toast.error(error.message);
         }
     })
 });
 
-window.onload = ()=>{
-    const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement
-    const root = createRoot(rootDiv);
+function RoutingLayout () {
 
-    root.render(
-        <GoogleOAuthProvider clientId={"783786984384-n5hhnq51lruano07me2q82e3lp9lil2k.apps.googleusercontent.com"}>
-        <QueryClientProvider client={queryClient} >
-        <LoadingOverlayProvider>
-        <AlertProvider>
-        <StyledEngineProvider injectFirst={true}>
+    const {user} = useAuth()
+
+    return (
         <BrowserRouter>
             <Routes>
                 <Route path='/' element={<Index />}>
                     <Route index element={<Presentation />} />
-                    <Route path='me' >
-                        <Route index element={<Profile />} />
-                        <Route path='forms' element={<DisplayForms />} />
-                        <Route path={'forms/:formId'} element={<Form />}>
-                            <Route path="view" element={<DisplayFrom />} />
-                            <Route path="edit" element={<EditForm />} />
-                            <Route path='submissions' element={<SubmissionData />} />
-                            <Route path='keys' element={<DistributeKeys />}/>
-                        </Route>
-                    </Route>
+                    <Route path='me/*' element={<MeRedirect user={user} />} />
                     <Route path='login' element={<LoginComponent />}/>
                     <Route path='register' element={<RegisterComponent />}/>
                     <Route path='form/create' element={<FormCreator />} />
+
+                    <Route path='user/:username' >
+                        <Route index element={<Profile />} />
+                        <Route path='forms' element={<ListForms />} />
+                        <Route path='templates' element={<ListTemplates type={'private'} />} />
+                    </Route>
+
+                    <Route path={'form/:formId'} element={<Form />}>
+                        <Route path="view" element={<DisplayFrom />} />
+                        <Route path="edit" element={<EditForm />} />
+                        <Route path='submissions' element={<SubmissionData />} />
+                        <Route path='keys' element={<DistributeKeys />}/>
+                    </Route>
+
+                    <Route path='template/:templateId' element={<Template />}>
+                        <Route path="view" element={<DisplayTemplate />}/>
+                        <Route path='edit' element={<EditTemplate />}/>
+                    </Route>
+
                     <Route path='templates' >
                         <Route index element={<TemplatesMenu />} />
-                        <Route path={"official"} element={<ListTemplates/>} />
-                        <Route path={"private"} element={<ListTemplates/>}  />
-                        <Route path={"public"} element={<ListTemplates/>}  />
+                        <Route path={"official"} element={<ListTemplates type={"official"} />} />
+                        <Route path={"public"} element={<ListTemplates type={"public"} />}  />
                         <Route path={'create'} element={<TemplateCreator />}/>
-                        <Route path={'create/official'} element={<TemplateCreator />}/>
-                        <Route path={':templateId'} element={<Template />}>
-                            <Route path="view" element={<DisplayTemplate />}/>
-                            <Route path='edit' element={<EditTemplate />}/>
-                        </Route>
                     </Route>
                 </Route>
                 {/* ruta /complete-form este separata de ruta principala deoarece este menita sa fie accesata de sub-utilizatori */}
@@ -172,11 +158,31 @@ window.onload = ()=>{
                 <Route path='/*' element={<Navigate to={'/'} replace={true} />} ></Route>
             </Routes>
         </BrowserRouter>
+    )
+}
+
+window.onload = ()=>{
+    const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement
+    const root = createRoot(rootDiv);
+
+    root.render(
+        <StrictMode>
+        <GoogleOAuthProvider clientId={"783786984384-n5hhnq51lruano07me2q82e3lp9lil2k.apps.googleusercontent.com"}>
+        <QueryClientProvider client={queryClient} >
+        <LoadingOverlayProvider>
+        <AlertProvider>
+        <StyledEngineProvider injectFirst={true}>
+        <AuthProvider>
+
+        <RoutingLayout />
+
+        </AuthProvider>
         </StyledEngineProvider>
         </AlertProvider>
         </LoadingOverlayProvider>
         </QueryClientProvider>
         </GoogleOAuthProvider>
+        </StrictMode>
     );
 }
 

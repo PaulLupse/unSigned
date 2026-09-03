@@ -54,18 +54,20 @@ def check_form_authorization(
     return get_form_response.data
 
 
-@router.post("/add", response_class=JSONResponse)
+@router.post("/add", status_code=201, response_class=JSONResponse)
 @limiter.limit("60/minute")
-async def create_form(user:Annotated[User, Depends(authenticate)], new_form:NewForm, request: Request):
+async def create_form(user:Annotated[User, Depends(authenticate)],
+                      new_form:NewForm,
+                      request: Request):
 
     result:DBResult[str] = db_connector.add_form(new_form, user.id)
     if not result.ok():
         raise HTTPException(status_code=result.status, detail=result.message)
 
-    return JSONResponse(status_code=201, content={"message":"Created successfully.", "formId":result.data})
+    return JSONResponse(content={"formId":result.data}, status_code=201)
 
 
-@router.post("/{form_id}/open", response_class=JSONResponse, dependencies=[Depends(check_form_authorization)])
+@router.post("/{form_id}/open", status_code=200, dependencies=[Depends(check_form_authorization)])
 @limiter.limit("60/minute")
 async def open_form(form_id: str,
                     user:Annotated[User, Depends(authenticate)],
@@ -76,33 +78,27 @@ async def open_form(form_id: str,
     if not result.ok():
         raise HTTPException(status_code=result.status, detail=result.message)
 
-    return JSONResponse(content={"message":"Form published successfully."}, status_code=200)
 
-
-@router.post("/{form_id}/close", response_class=JSONResponse, dependencies=[Depends(check_form_authorization)])
+@router.post("/{form_id}/close", status_code=200, dependencies=[Depends(check_form_authorization)])
 @limiter.limit("60/minute")
-async def close_form(form_id: str, request: Request, user:Annotated[User, Depends(authenticate)]):
+async def close_form(form_id: str,
+                     request: Request,
+                     user:Annotated[User, Depends(authenticate)]):
 
     result:DBResult = db_connector.close_form(form_id, user.id)
 
     if result.status != 200:
-        return JSONResponse(content={"message": result.message}, status_code=result.status)
-
-    return JSONResponse(content={"message": "Form closed successfully."}, status_code=200)
+        raise HTTPException(status_code=result.status, detail=result.message)
 
 
-@router.get("/{form_id}", response_class=JSONResponse)
+@router.get("/{form_id}", response_model=Form, status_code=200)
 @limiter.limit("60/minute")
 async def get_form(form_id:str,
                    user:Annotated[User, Depends(authenticate)], # Necesar pt functia "check_form_authorization"!
                    form:Annotated[Form, Depends(check_form_authorization)],
                    request:Request):
 
-    return JSONResponse(
-        content={
-            "message":"Queried successfully.",
-            'form':jsonable_encoder(form)},
-        status_code=status.HTTP_200_OK)
+    return form
 
 
 @router.put("/{form_id}/edit", dependencies=[Depends(authenticate)], status_code=200)
@@ -130,7 +126,7 @@ async def edit_form(form_id: str,
             detail=edit_form_result.message)
 
 
-@router.delete("/{form_id}/delete", response_class=JSONResponse, dependencies=[Depends(check_form_authorization)])
+@router.delete("/{form_id}/delete", status_code=200, dependencies=[Depends(check_form_authorization)])
 @limiter.limit("60/minute")
 async def delete_form(form_id:str,
                       user:Annotated[User, Depends(authenticate)],
@@ -142,12 +138,6 @@ async def delete_form(form_id:str,
         raise HTTPException(
             status_code=result.status,
             detail=result.message)
-
-    return JSONResponse(
-        content={
-            "message":"Queried successfully.",
-            'form':jsonable_encoder(result.data)},
-        status_code=status.HTTP_200_OK)
 
 
 @router.get("/{form_id}/submission-data", response_model=list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic])
@@ -178,19 +168,13 @@ class DistributeKeysRequest(BaseModel):
     emails:list[Email]
 
 # Trimite chei de access la formularul cu id-ul specificat, email-urilor specificate.
-@router.post("/{form_id}/distribute_keys", response_class=JSONResponse, dependencies=[Depends(check_form_authorization)])
+@router.post("/{form_id}/distribute_keys", status_code=200, dependencies=[Depends(check_form_authorization)])
 @limiter.limit("60/minute")
 async def distribute_form_keys(dist_key_req:DistributeKeysRequest,
                                user : Annotated[User, Depends(authenticate)],
                                form_id:str,
                                request: Request):
 
-
     await distribute_keys(emails=[email.email for email in dist_key_req.emails],
                           form_owner_username=user.username,
                           form_id = form_id)
-
-    return JSONResponse(content={"message":"Successfully distributed keys."}, status_code=200)
-
-
-

@@ -10,14 +10,15 @@ import {NavButton} from "src/components/Buttons/Buttons";
 import {deleteTemplate} from "src/server/users-server";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import {useAuth} from "src/components/AuthProvider";
 
 export default function DisplayTemplate() {
 
     const queryClient = useQueryClient()
-    const context = useOutletContext<{template:Template, user:User}>()
+    const context = useOutletContext<{template:Template}>()
+    const {user} = useAuth()
 
     const template:Template = templateSchema.parse(context.template)
-    const user:User = userSchema.parse(context.user)
 
     const navigate = useNavigate()
 
@@ -52,7 +53,7 @@ export default function DisplayTemplate() {
                         Back
                     </NavButton>
                     {
-                        ((template.status=='private' && user.id === template.ownerId) || (template.status=='official' && user?.isAdmin)) &&
+                        ((template.status=='private' && user?.id === template.ownerId) || (template.status=='official' && user?.isAdmin)) &&
                         <>
                             <NavButton to={`/templates/${template.id}/edit`}>
                                 Edit

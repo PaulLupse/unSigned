@@ -8,22 +8,15 @@ import {BackButton, NavButton} from "src/components/Buttons/Buttons";
 import React, {useMemo} from "react";
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import {userSchema} from "src/domain/schemas";
+import {useAuth} from "src/components/AuthProvider";
 
-export function ListTemplates() {
+export function ListTemplates({type}:{type:'public'|'private'|'official'}) {
 
     const navigate = useNavigate();
-    const loc = useLocation();
     const qC = useQueryClient();
-    const context = useOutletContext<{user:User}>()
 
-    const user:User|undefined = useMemo(()=>{
-        const parseResult = userSchema.safeParse(context.user)
-        if(parseResult.success)
-            return parseResult.data
-    }, [context])
+    const {user} = useAuth()
 
-    const pathSegments = loc.pathname.split('/')
-    const type:'public'|'private'|'official' = pathSegments[pathSegments.length - 1] as 'public'|'private'|'official'
     let dispayText :string = ''
 
     switch (type){
@@ -34,7 +27,6 @@ export function ListTemplates() {
         default:
             dispayText="Official"; break
     }
-
 
     const getUserTemplates = useQuery({
         queryFn:async()=>await getTemplates({type:type, userId:user?.id}),

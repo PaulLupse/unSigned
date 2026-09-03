@@ -1,5 +1,5 @@
 import React from 'react'
-import {logout} from "../../server/auth";
+import {logoutUser} from "../../server/auth";
 import type {QueryClient} from "@tanstack/react-query";
 import {useNavigate} from "react-router-dom";
 
@@ -9,8 +9,6 @@ import "./nav-bar.css"
 
 
 interface NavBarProps {
-    isLoading:boolean,
-    isSuccess:boolean,
     queryClient:QueryClient
     sidebarIsOpen:boolean,
     setSidebarIsOpen:(sidebarIsOpen:boolean)=>void

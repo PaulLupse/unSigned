@@ -13,7 +13,7 @@ from pymongo.errors import ServerSelectionTimeoutError
 from pymongo.results import DeleteResult, InsertOneResult
 
 from src.common import logger
-from src.config import DB_URL, REFRESH_TOKEN_LIFESPAN
+from src.config import DB_URL, REFRESH_TOKEN_LIFESPAN_DAYS
 from src.domain.models import TextAnswer, TextQuestionAnswerStatistic, GridQuestionAnswerStatistic, GridAnswer
 from src.domain.models import MinimalTemplateInfo, Template
 from src.domain.models import TextQuestion, GridQuestion
@@ -110,7 +110,7 @@ class DBConnector:
 
     def store_refresh_token(self, user_id:str, hashed_refresh_token:str)->DBResult[str]:
 
-        expiration_date = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_LIFESPAN)
+        expiration_date = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_LIFESPAN_DAYS)
 
         res:InsertOneResult = self.sessions_table.insert_one(
             {"user_id":user_id,
@@ -291,6 +291,15 @@ class DBConnector:
 
         return DBResult(200, "Deleted.")
 
+    # Modifica numele de utilizator al unui utilizator
+    def change_username(self, user_id:str, new_username:str)->DBResult:
+
+        result = self.users_table.update_one({"_id":ObjectId(user_id)}, update={"$set":{"username":new_username}})
+        if result.modified_count == 0:
+            return DBResult(404, "User not found.")
+
+        return DBResult(200, "Ok")
+
     # Adauga un provider la un cont de utilizator
     def link_user_account(self, user_id:str, provider:str, provider_user_id)->DBResult[str]:
 
@@ -316,6 +325,8 @@ class DBConnector:
         self.templates_table.delete_many({"ownerId":user_id})
         self.forms_table.delete_many({"ownerId":user_id})
         result:DeleteResult = self.users_table.delete_one({"_id":ObjectId(user_id)})
+
+        logger.warning(result)
 
         if result.deleted_count == 0: return DBResult(404, "User not found.")
 

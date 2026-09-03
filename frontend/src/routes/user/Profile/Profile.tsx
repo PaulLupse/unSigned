@@ -1,59 +1,100 @@
 import {Link, useNavigate, useOutletContext, useParams} from "react-router-dom";
-import React, {use} from "react";
-import {getForms, getTemplates} from "src/server/users-server";
+import React, {use, useEffect, useMemo, useState} from "react";
+import {getForms, getTemplates, getUserData, getUserDataAndStats} from "src/server/users-server";
 
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import type {User} from "src/domain/types";
+import type {User, UserStats} from "src/domain/types";
 import toast from "react-hot-toast";
 import {NavButton} from "src/components/Buttons/Buttons";
 import {useAlert} from "src/components/AlertProvider";
 
 import * as style from './Profile.module.css'
-import {deleteUser, logout} from "src/server/auth";
+import {deleteUser, logoutUser} from "src/server/auth";
+import Loading from "src/components/Loading";
+import {useAuth} from "src/components/AuthProvider";
 
-function NotLoggedInPanel() {
+
+function ProfileEntry ({text, value}:{text:string, value:string}) {
     return (
-        <div className={style.notLoggedInPanel}>
-            <h3>
-                You are not logged in.
-            </h3>
-            <Link to={'/login'}>Login</Link>
-            <Link to={'/register'}>Register</Link>
+        <div className={style.profileEntry}>
+            <p>{text}</p>
+            <p>{value}</p>
         </div>
     )
 }
 
-function DataDisplay({user}:{user:User}) {
+function Divider() {
+    return (
+        <hr className={style.sectionDivider} />
+    )
+}
+
+
+function useLogout () {
+
+    const queryClient = useQueryClient()
+
+    const {mutate} = useMutation({
+        mutationFn:logoutUser,
+        onSuccess:async()=>{
+
+            toast.success("Logged out successfully!")
+
+            await queryClient.resetQueries({queryKey:['currentUser']})
+
+            console.log(queryClient.getQueryData(['currentUser']))
+        },
+        onError:(error)=>{
+            toast.error(error.message)
+        }
+    })
+
+    return mutate
+}
+
+function useDeleteUser() {
+
+    const queryClient = useQueryClient()
+    const nav = useNavigate()
+
+
+    const {mutate} = useMutation({
+        mutationFn:deleteUser,
+        onSuccess:async ()=>{
+            toast.success("Deleted user successfully!")
+
+            await queryClient.resetQueries({queryKey:['user']})
+            await queryClient.resetQueries({queryKey:['currentUser']})
+
+            nav('/')
+        },
+        onError:(error)=>{
+            toast.error(error.message)
+        }
+    })
+
+    return mutate
+}
+
+
+function ProfileDataDisplay({user, stats}:{user:User, stats:UserStats}) {
 
     const queryClient = useQueryClient();
-
     const navigate = useNavigate();
-    const params = useParams();
-    const userId:string|undefined = params.userId
-
-    // if (userId)
-    //     toast.success(userId)
-    // else toast.error("No user id selected")
-
     const {showAlert} = useAlert()
 
+    const currentUser = useAuth()
+    const logout = useLogout()
+    const deleteUser = useDeleteUser()
 
-    const deleteMutation = useMutation({
-        mutationFn:deleteUser,
-        onSuccess:()=>{
-            toast.success("Accout deleted");
-            queryClient.removeQueries({queryKey:['user']})
-            navigate('/', {replace:true});
-        },
-        onError:(error)=>{toast.error(error.message)}
-    })
+    const canEdit = currentUser.user?.id === user.id
 
     const deleteAccount = async () => {
         showAlert("Are you sure? This action cannot be undone.",
             [
                 {
                     text:"Yes",
-                    action:deleteMutation.mutate
+                    action:()=>deleteUser({userId:user.id})
                 },
                 {
                     text:"No"
@@ -62,58 +103,46 @@ function DataDisplay({user}:{user:User}) {
         )
     }
 
-    const getUserForms = useQuery({
-        queryFn:async()=>getForms({user_id:user.id}),
-        queryKey:['forms'],
-        retry:0,
-        refetchOnWindowFocus:false
-    })
-
-    const getUserTemplates = useQuery({
-        queryFn:async()=>getTemplates({type:'private', userId:user.id}),
-        queryKey:['templates'],
-        retry:0,
-        refetchOnWindowFocus:false
-    })
-
-    const logoutMutation = useMutation({
-        mutationFn:logout,
-        onSuccess:async()=>{
-            toast.success("Logged out successfully!")
-            queryClient.removeQueries({queryKey:['user']})
-            navigate('/', {replace:true});
-        },
-        onError:(error)=>{
-            toast.error(error.message)
-        }
-    })
-
-    const logoutUser = ()=>{logoutMutation.mutate()}
-
     return(
         <div className={style.main}>
             <div className={style.profileCard}>
                 <div className={style.header}>
                     <img className={style.pfp} src='/images/account.png' alt={'pfp'}/>
                     <h2>{user.username}</h2>
-                    <button onClick={logoutUser}>Log out</button>
+
+                    {
+                        canEdit &&
+                        <button onClick={()=>{
+                            console.log(queryClient.getQueryData(['currentUser']))
+                            logout()
+                        }}>
+                            Log out
+                        </button>
+                    }
+
                 </div>
-                <hr className={style.sectionDivider} />
+                <Divider />
                 <div className={style.content}>
-                    <p>User id:</p> <p>{user.id}</p>
-                    <p>Email:</p> <p>{user.email}</p>
-                    <p>Forms:</p> <p>{getUserForms.data?.length}</p>
-                    <p>Templates:</p> <p>{getUserTemplates.data?.length}</p>
+                    <ProfileEntry text={'ID'} value={user.id} />
+                    <ProfileEntry text={'Email'} value={user.email}  />
+                    <ProfileEntry text={'Forms'} value={stats.formCount.toString()}  />
+                    <ProfileEntry text={'Templates'} value={stats.templateCount.toString()}  />
                 </div>
-                <hr className={style.sectionDivider} />
-                <div className={style.footer}>
-                    <NavButton to={'/me/forms'}>My forms</NavButton>
-                    <NavButton to={'/templates/private'}>My templates</NavButton>
-                </div>
-                <hr className={style.sectionDivider} />
-                <button onClick={deleteAccount}>
-                    Delete account
-                </button>
+                {
+                    canEdit &&
+                    <>
+                        <Divider />
+                        <div className={style.footer}>
+                            <NavButton to={'forms'}>My forms</NavButton>
+                            <NavButton to={'templates'}>My templates</NavButton>
+                        </div>
+                        <Divider />
+                        <button onClick={deleteAccount}>
+                            Delete account
+                        </button>
+                    </>
+                }
+
             </div>
         </div>
 
@@ -122,11 +151,26 @@ function DataDisplay({user}:{user:User}) {
 
 export function Profile() {
 
-    const {user}:{user:User|undefined} = useOutletContext();
-    return(
-        user?
-        <DataDisplay user={user} />
-        :
-        <NotLoggedInPanel />
-    );
+    const params = useParams();
+    const username:string|undefined = params.username
+
+    const {data, isLoading, isError, error} = useQuery({
+        queryFn:async()=>{
+            if (username)
+                return await getUserDataAndStats({username:username})
+            return undefined
+        },
+        queryKey:['user'],
+        retry:0,
+        refetchOnWindowFocus:false
+    })
+
+    if(isLoading) return <Loading />
+    else if(isError || data===undefined) return (
+        <h2>
+            {error?.message}
+        </h2>
+    )
+    else return <ProfileDataDisplay user={data.user}
+                             stats={data.stats} />
 }
