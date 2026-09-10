@@ -3,7 +3,8 @@ from fastapi.encoders import jsonable_encoder
 from starlette.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from src.db.DBConnector import DBResult
+from src.api.CamelCaseRoute import CamelCaseRoute
+from src.db.DBResult import DBResult
 from src.domain.requests import CheckKeyRequest
 from src.common import limiter
 from src.api.auth.utils import decode_key
@@ -13,7 +14,8 @@ from src.db.DBConnector import DBConnector, get_db
 
 db_connector:DBConnector = get_db()
 
-router:APIRouter = APIRouter(prefix="/sub-user", tags=["sub-users"])
+router:APIRouter = APIRouter(prefix="/sub-user",
+                             tags=["sub-users"])
 
 
 def validate_key(key:str, form_id:str)->Key|None:
@@ -21,7 +23,7 @@ def validate_key(key:str, form_id:str)->Key|None:
     key:Key|None = decode_key(key)
     if not key:
         return None
-    if key.payload.formId != form_id:
+    if key.payload.form_id != form_id:
         return None
     if db_connector.check_key_usage(key):
         return None
@@ -44,9 +46,9 @@ async def check_form_id(form_id:str, request: Request):
 async def check_key(chk_key_req: CheckKeyRequest, request: Request):
 
 
-    if validate_key(chk_key_req.key, chk_key_req.formId):
+    if validate_key(chk_key_req.key, chk_key_req.form_id):
 
-        result:DBResult[Form] = db_connector.get_form(chk_key_req.formId)
+        result:DBResult[Form] = db_connector.get_form(chk_key_req.form_id)
 
         if result.status == 404:
             return JSONResponse(status_code=status.HTTP_410_GONE,
@@ -54,7 +56,7 @@ async def check_key(chk_key_req: CheckKeyRequest, request: Request):
 
         if result.status == 200 and result.data:
 
-            if result.data.dateClosed is not None or result.data.datePublished is None:
+            if result.data.date_closed is not None or result.data.date_opened is None:
                 return JSONResponse(status_code=status.HTTP_423_LOCKED, content={"message": "Form unavailable."})
 
             return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Key verified."})
@@ -68,10 +70,10 @@ async def check_key(chk_key_req: CheckKeyRequest, request: Request):
 @limiter.limit("60/minute")
 async def use_key(chk_key_req: CheckKeyRequest, request: Request):
 
-    key:Key|None = validate_key(chk_key_req.key, chk_key_req.formId)
+    key:Key|None = validate_key(chk_key_req.key, chk_key_req.form_id)
 
     if key is not None:
-        result: DBResult[Form] = db_connector.get_form(chk_key_req.formId)
+        result: DBResult[Form] = db_connector.get_form(chk_key_req.form_id)
 
         if result.status == 404:
             return JSONResponse(status_code=status.HTTP_410_GONE,
@@ -79,7 +81,7 @@ async def use_key(chk_key_req: CheckKeyRequest, request: Request):
 
         if result.status == 200 and result.data:
 
-            if result.data.dateClosed is not None or result.data.datePublished is None:
+            if result.data.date_closed is not None or result.data.date_opened is None:
                 return JSONResponse(status_code=status.HTTP_423_LOCKED, content={"message": "Form unavailable."})
 
             return JSONResponse(status_code=status.HTTP_200_OK, content={"message": "Key verified.", "form":jsonable_encoder(result.data)})
@@ -92,17 +94,17 @@ async def use_key(chk_key_req: CheckKeyRequest, request: Request):
 class SubmitFormRequest(BaseModel):
     key:str
     submission:Submission
-    formId:str
+    form_id:str
 
 @router.post("/submit-form", response_class=JSONResponse)
 @limiter.limit("60/minute")
 async def submit_form(submit_form_request:SubmitFormRequest, request: Request):
 
-    validation_response: Key | None = validate_key(submit_form_request.key, submit_form_request.formId)
+    validation_response: Key | None = validate_key(submit_form_request.key, submit_form_request.form_id)
     print(validation_response)
     if validation_response:
 
-        result:DBResult = db_connector.submit_form_answer(validation_response.payload.formId, submit_form_request.submission)
+        result:DBResult = db_connector.submit_form_answer(validation_response.payload.form_id, submit_form_request.submission)
         use_key_result:DBResult = db_connector.use_key(validation_response)
 
         if result.status==use_key_result.status==200:

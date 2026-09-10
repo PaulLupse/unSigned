@@ -10,7 +10,7 @@ import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErr
 
 import {QuestionEditor} from "../QuestionEditor/QuestionEditor";
 import * as style from './FormEditor.module.css'
-
+import {log} from "src/utilities";
 
 interface EditableFormProps {
     register:UseFormRegister<NewForm>
@@ -41,7 +41,7 @@ export function FormEditor({register, errors, formQuestions, addNewQuestion, swa
     }
 
     const setQuestionToBeEdited = (questionIndex:number, set:boolean) => {
-        console.log(set)
+        log(set)
         if (set) markQuestionToBeEdited(questionIndex);
         else unmarkQuestionToBeEdited(questionIndex);
     }

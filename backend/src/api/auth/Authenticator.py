@@ -32,14 +32,9 @@ async def authenticate(token : Annotated[str, Depends(oauth2_scheme)])->User:
             raise validation_error
 
         db_response = db_connector.find_user(user_id = user_id)
-        if db_response.status != 200: raise validation_error
+        if not db_response.ok(): raise validation_error
 
-        return User(
-            id=user_id,
-            username=payload.get("username"),
-            isAdmin=payload.get('isAdmin'),
-            email=payload.get("email"),
-        )
+        return db_response.data
 
     except ExpiredSignatureError:
 

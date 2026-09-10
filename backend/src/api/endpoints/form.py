@@ -11,21 +11,23 @@ from typing import Annotated
 import logging, jwt, os
 from datetime import timedelta
 
+from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
 from src.domain.models import TextQuestionAnswerStatistic, GridQuestionAnswerStatistic
-from src.db.DBConnector import DBResult
+from src.db.DBResult import DBResult
 from src.domain.requests import RegisterRequest, EditFormRequest
 from src.common import limiter
 from src.api.KeyDistributor import distribute_keys
 from src.domain.auth import Key, KeyPayload, User
-from src.domain.models import MinimalFormInfo, NewForm, Form
+from src.domain.models import MinimalForm, NewForm, Form
 from src.db.DBConnector import DBConnector, get_db
 
 from src.common import logger
 
 db_connector:DBConnector = get_db()
 
-router:APIRouter = APIRouter(prefix="/form", tags=["forms"])
+router:APIRouter = APIRouter(prefix="/form",
+                             tags=["forms"])
 
 class TokenData(BaseModel):
     username:str
@@ -45,7 +47,7 @@ def check_form_authorization(
             status_code=get_form_response.status,
             detail=get_form_response.message)
 
-    if not get_form_response.data.ownerId == user_id:
+    if not get_form_response.data.owner_id == user_id:
         raise HTTPException(
             status_code=403,
             detail="You are not allowed to access this resource."
@@ -64,7 +66,7 @@ async def create_form(user:Annotated[User, Depends(authenticate)],
     if not result.ok():
         raise HTTPException(status_code=result.status, detail=result.message)
 
-    return JSONResponse(content={"formId":result.data}, status_code=201)
+    return JSONResponse(content={"form_id":result.data}, status_code=201)
 
 
 @router.post("/{form_id}/open", status_code=200, dependencies=[Depends(check_form_authorization)])
@@ -109,7 +111,7 @@ async def edit_form(form_id: str,
                     form:Annotated[Form, Depends(check_form_authorization)],
                     request:Request):
 
-    if form and form.datePublished is not None:
+    if form and form.date_opened is not None:
         raise HTTPException(
             status_code=409,
             detail="Published forms cannot be edited.")

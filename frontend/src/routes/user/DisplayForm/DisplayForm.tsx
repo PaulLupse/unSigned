@@ -26,7 +26,7 @@ export function DisplayFrom() {
     const navigate = useNavigate();
 
     useEffect(()=>{
-        form.datePublished?
+        form.dateOpened?
             form.dateClosed?
                 setFormStatus("Closed")
                 :

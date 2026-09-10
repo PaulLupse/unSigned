@@ -68,7 +68,7 @@ export function ListTemplates({type}:{type:'public'|'private'|'official'}) {
                                                     style={{width:'100%', boxSizing:'border-box'}}/>
                     }
                     {
-                        (type=='private' || (type=='official' && user?.isAdmin)) &&
+                        (type=='private' || (type=='official' && user?.is_admin)) &&
                         <NavButton to={"/templates/create" + (type==='official'?'/official':'')} style={{height: '3rem', aspectRatio: '1/1'}}>
                             +
                         </NavButton>

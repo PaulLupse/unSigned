@@ -5,3 +5,5 @@ export const REQUEST_WITH_PAYLOAD_HEADERS = new Headers({
         'Content-Type': "application/json"
     });
 
+
+export const BAD_USER_DATA_ERR = Error("Bad user data coming from server")

@@ -14,7 +14,7 @@ async def validation_exception_handler(request:Request, exception : RequestValid
 
 async def http_exception_handler(request:Request, exception : HTTPException):
 
-    message:str = exception.detail
+    message:str|None = exception.detail
 
     print("DEBUG:\t", message)
-    return JSONResponse(content={"message":message}, status_code=exception.status_code)
+    return JSONResponse(content={"message":message if message else "No message returned."}, status_code=exception.status_code)

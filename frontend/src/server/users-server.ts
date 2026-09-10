@@ -1,6 +1,6 @@
 // acest script contine parte din logica de comunicare cu serverul web, precum logare, inregistrare si operati CRUD
 
-import {CredentialError, CustomError, handleGenericErrorResponses} from "src/utilities/Utilities";
+import {CredentialError, CustomError, handleGenericErrorResponses, log} from "src/utilities";
 
 import {
     type FormInfo,
@@ -16,8 +16,8 @@ import {
     minimalTemplateSchema,
     templateSchema, userDataWithStatsSchema, userSchema
 } from "src/domain/schemas";
-import {fetch} from "src/utilities/Utilities";
-import {REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
+import {fetch} from "src/utilities";
+import {BAD_USER_DATA_ERR, REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
 
 
 
@@ -47,7 +47,10 @@ export async function getUserData({userId, username}:{userId?:string, username?:
 
         const parseResult = userSchema.safeParse(data)
         if (parseResult.success) return parseResult.data
-        else throw new Error("Bad user data coming from server")
+        else {
+            log(parseResult.error)
+            throw new Error("Bad user data coming from server")
+        }
     }
 
     if (response.status == 404) throw new Error("User not found")
@@ -74,17 +77,18 @@ export async function getUserDataAndStats({userId, username}:{userId?:string, us
 
     const response = await fetch(request)
 
-    const err = new Error("Bad user data coming from server")
-
     if (response.ok) {
 
         const data = await response.json()
 
-        const statsParse = userDataWithStatsSchema.safeParse(data)
+        const parseResult = userDataWithStatsSchema.safeParse(data)
 
-        if(!statsParse.success) throw err
+        if(!parseResult.success) {
+            log(parseResult.error)
+            throw BAD_USER_DATA_ERR
+        }
 
-        return statsParse.data
+        return parseResult.data
     }
 
     if (response.status == 404) throw new Error("User not found")
@@ -112,7 +116,7 @@ export async function getForm(formId:string):Promise<FormInfo|undefined> {
         if (dataParseResult.success) {
             return dataParseResult.data
         } else {
-            console.log("Wrong json coming from server:" + dataParseResult.error)
+            log("Wrong json coming from server:" + dataParseResult.error)
             throw new CustomError("Bad communication with server.", 500)
         }
     }
@@ -141,11 +145,12 @@ export async function getForms({user_id}:{user_id:string}):Promise<Array<Minimal
 
         const data = await response.json();
 
+
         const parseResult = minimalFormInfoSchema.array().safeParse(data);
         if (parseResult.success) {
             return parseResult.data;
         } else {
-            console.log("Wrong json coming from server:" + parseResult.error);
+            log("Wrong json coming from server:" + parseResult.error);
             throw new CustomError("Bad communication with server.", 500)
         }
     }
@@ -169,7 +174,7 @@ export async function addForm(form:NewForm):Promise<string|undefined> {
     if(response.ok) {
 
         const data = await response.json()
-        console.log("DATA: " + data)
+        log("DATA: " + data)
 
         if (!Object.hasOwn(data, "formId"))
             throw new Error("Could not get the created form.")
@@ -187,7 +192,7 @@ export async function addForm(form:NewForm):Promise<string|undefined> {
 // Actualizeaza un formular cu datele noi (in stil overwrite).
 export async function updateForm({newFormData, formId}:{newFormData: NewForm, formId: string}) {
 
-    console.log(newFormData)
+    log(newFormData)
 
     const updateFormRequest:Request = new Request(`/api/form/${formId}/edit`,
         {

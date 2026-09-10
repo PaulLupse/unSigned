@@ -12,7 +12,7 @@ class OAuth2PasswordBearerWithCookies(OAuth2PasswordBearer):
     # supradefinim 'apelarea' clasei, implementand functionalitatea de verificare a jwt-ului, ce trebuie memorat in cookie-ul 'access_token'
     async def __call__(self, request:Request):
 
-        access_token:str = request.cookies.get("access_token")
+        access_token:str|None = request.cookies.get("access_token")
         if access_token and (access_token != ""):
             access_token = access_token.split(' ')[1] # facem split deoarece se returneaza tokenu cu stringul "Bearer " alipit, ceea ce creeaza eroare la decodare (logic)
 

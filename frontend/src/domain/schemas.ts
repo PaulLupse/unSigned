@@ -41,7 +41,7 @@ export const formInfoSchema = z.object({
     ownerId: z.string(),
     questions: z.array(z.union([textQuestionSchema, gridQuestionSchema])),
     dateCreated: z.coerce.date().nullable(),
-    datePublished: z.coerce.date().nullable(),
+    dateOpened: z.coerce.date().nullable(),
     dateClosed: z.coerce.date().nullable(),
     submissions: z.array(submissionSchema).nullable()
 });
@@ -51,9 +51,9 @@ export const minimalFormInfoSchema = z.object({
     id: z.string(),
     ownerId: z.string(),
     dateCreated: z.coerce.date().nullable(),
-    datePublished: z.coerce.date().nullable(),
+    dateOpened: z.coerce.date().nullable(),
     dateClosed: z.coerce.date().nullable(),
-    submissionsCount: z.number()
+    subCount: z.number()
 });
 
 export const newFormSchema = z.object({

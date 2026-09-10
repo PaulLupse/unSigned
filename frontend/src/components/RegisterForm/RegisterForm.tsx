@@ -11,7 +11,7 @@ import * as style from "./Register.module.css"
 import {useMutation} from "@tanstack/react-query";
 import type {Credentials, RegisterData} from "src/domain/types";
 import toast from "react-hot-toast";
-import {CredentialError, CustomError} from "src/utilities/Utilities";
+import {CredentialError, CustomError} from "src/utilities";
 import {useNavigate} from "react-router-dom";
 import {useLoading} from "src/components/LoadingOverlayProvider";
 import {ButtonWithIcon, ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";

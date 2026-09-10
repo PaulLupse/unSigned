@@ -19,5 +19,5 @@ async def distribute_keys(emails:list[str], form_owner_username:str, form_id:str
         for i in range(0, len(emails)):
             yag.send(to=emails[i],
                      subject=f"Key to access a form created by user {form_owner_username} on unSigned.",
-                     contents=f'''Key:\n <h1> {generate_key(data=Key(payload=KeyPayload(formId=form_id)))} </h1> 
+                     contents=f'''Key:\n <h1> {generate_key(data=Key(payload=KeyPayload(form_id=form_id)))} </h1> 
                      \nComplete the form here: http://localhost:3000/complete-form/{form_id}''')

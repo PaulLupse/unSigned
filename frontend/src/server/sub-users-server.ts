@@ -1,7 +1,7 @@
 import {type FormInfo, type Submission} from "src/domain/types";
 import {z} from 'zod'
 import {formInfoSchema, submissionSchema} from "src/domain/schemas";
-import {fetch} from "src/utilities/Utilities";
+import {fetch} from "src/utilities";
 import {REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
 
 const UseKeyResponseSchema = z.object(

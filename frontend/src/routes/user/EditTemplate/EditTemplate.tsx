@@ -22,6 +22,8 @@ import * as style from './EditTemplate.module.css'
 import {FixedElement} from "src/components/FixedElement/FixedElement"
 import {NavButton} from "src/components/Buttons/Buttons";
 
+import {log} from "src/utilities";
+
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
 export default function EditForm() {
@@ -77,7 +79,7 @@ export default function EditForm() {
 
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
 
-        console.log(data);
+        log(data);
         const newForm:NewForm = newFormSchema.parse({
                                 name:data.name,
                                 questions:data.questions,

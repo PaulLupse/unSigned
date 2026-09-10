@@ -97,12 +97,7 @@ function Index() {
 const queryClient = new QueryClient({
     queryCache: new QueryCache({
         onError:(error)=>{
-            if('status' in error) // daca eroarea este de tip CustomError . . .
-                if(error.status == 401) {
-                    // if (!['/me', '/login', '/register', '/'].includes(window.location.pathname))
-                    //     window.location.pathname='/login'
-                    return;
-                }
+            toast.error(error.message)
         }
     })
 });
