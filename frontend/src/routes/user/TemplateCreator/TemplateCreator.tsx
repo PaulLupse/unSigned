@@ -43,7 +43,7 @@ export default function TemplateCreator() {
         mutationFn:createTemplate,
         onSuccess:(formId:string|undefined)=>{
             toast.success("Template created successfully!");
-            navigate(`/templates/${formId}/view`)
+            navigate(`/template/${formId}/view`)
         },
         onError:(error)=>{
             toast.error("Could not create form. " + error?.message);

@@ -10,7 +10,7 @@ export default function TemplatesMenu() {
                     Templates:
                 </h3>
 
-                <NavButton to={'/templates/private'}>
+                <NavButton to={'/me/templates'}>
                     My templates
                 </NavButton>
                 <NavButton to={'/templates/official'}>

@@ -64,7 +64,7 @@ export function ListTemplates({type}:{type:'public'|'private'|'official'}) {
                             <Table<MinimalTemplate> columns={["Name", "# of questions"]}
                                                     columnNames={['name', "questionCount"]}
                                                     data={getUserTemplates.data?getUserTemplates.data:[]}
-                                                    rowOnClick={(minimalTemplate:MinimalTemplate)=>navigate(`/templates/${minimalTemplate.id}/view`)}
+                                                    rowOnClick={(minimalTemplate:MinimalTemplate)=>navigate(`/template/${minimalTemplate.id}/view`)}
                                                     style={{width:'100%', boxSizing:'border-box'}}/>
                     }
                     {
