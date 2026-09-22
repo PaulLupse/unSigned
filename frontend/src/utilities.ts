@@ -1,6 +1,9 @@
 import type {Credentials} from "src/domain/types";
 import {forEach} from "lodash";
 
+// Wrapper care funcționează ca shorthand pentru log
+export const log = (any:any) => console.log(any)
+
 export interface pair<type1, type2> {
     obj1:type1
     obj2:type2
@@ -58,6 +61,7 @@ export class CredentialError extends Error {
     }
 }
 
+// Folosita la rezolvarea request-urilor eșuate datorită lipsei de autentificare.
 interface Resolute {
     resolve:(val?:any) => void
     reject:() => void

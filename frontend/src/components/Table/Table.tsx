@@ -1,6 +1,6 @@
 import React from "react";
-import {getValue, validateKey} from "../../utilities/Utilities";
-import type {pair} from "../../utilities/Utilities";
+import {getValue, validateKey} from "src/utilities";
+import type {pair} from "src/utilities";
 import './table.css'
 
 // model de data pentru a se folosi impreuna cu TableView

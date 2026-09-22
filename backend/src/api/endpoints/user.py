@@ -8,12 +8,13 @@ import logging
 
 from starlette.responses import Response
 
+from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
-from src.domain.models import MinimalTemplateInfo
-from src.db.DBConnector import DBResult
+from src.domain.models import MinimalTemplate
+from src.db.DBResult import DBResult
 from src.common import limiter
 from src.domain.auth import User, UserStats, UserProfileWithStats
-from src.domain.models import MinimalFormInfo
+from src.domain.models import MinimalForm
 from src.db.DBConnector import DBConnector, get_db
 
 from src.common import logger
@@ -21,7 +22,7 @@ from src.domain.requests import ChangeUsernameRequest
 
 db_connector:DBConnector = get_db()
 
-router:APIRouter = APIRouter(prefix="/user", tags=["users"])
+router:APIRouter = APIRouter(prefix="/user", tags=["users"], route_class=CamelCaseRoute)
 
 # Returneaza datele utilizatorului curent (daca este autentificat)
 @router.get("/me", response_model=User, status_code=200)
@@ -69,7 +70,7 @@ async def get_user_stats(identifier:str,
 
     return UserProfileWithStats(user=user, stats=get_stats_result.data)
 
-@router.get("/{user_id}/forms", response_model=list[MinimalFormInfo], status_code=200)
+@router.get("/{user_id}/forms", response_model=list[MinimalForm], status_code=200)
 @limiter.limit("60/minute")
 async def get_user_forms(user:Annotated[User, Depends(authenticate)],
                          user_id:
@@ -78,10 +79,10 @@ async def get_user_forms(user:Annotated[User, Depends(authenticate)],
     if user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-    result:DBResult[list[MinimalFormInfo]] = db_connector.get_forms(user_id)
+    result:DBResult[list[MinimalForm]] = db_connector.get_forms(user_id)
     return result.data
 
-@router.get("/{user_id}/templates", status_code=200, response_model=list[MinimalTemplateInfo])
+@router.get("/{user_id}/templates", status_code=200, response_model=list[MinimalTemplate])
 @limiter.limit("60/minute")
 async def get_user_templates(user:Annotated[User, Depends(authenticate)],
                              user_id,
@@ -90,7 +91,7 @@ async def get_user_templates(user:Annotated[User, Depends(authenticate)],
     if user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-    get_templates_response:DBResult[list[MinimalTemplateInfo]] = db_connector.get_templates(user_id, status = 'private')
+    get_templates_response:DBResult[list[MinimalTemplate]] = db_connector.get_templates(user_id, status ='private')
 
     if get_templates_response.status != 200:
         raise HTTPException(status_code= get_templates_response.status, detail = get_templates_response.message)
@@ -104,10 +105,10 @@ async def change_username(user:Annotated[User, Depends(authenticate)],
                           user_id,
                           request: Request):
 
-    if user_id != user.id and not user.isAdmin:
+    if user_id != user.id and not user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-    result = db_connector.change_username(user_id, new_username=req.newUsername)
+    result = db_connector.change_username(user_id, new_username=req.new_username)
 
     if not result.ok(): raise HTTPException(result.status, result.message)
     
@@ -119,7 +120,7 @@ async def delete_user(user: Annotated[User, Depends(authenticate)],
                       request: Request,
                       response: Response):
 
-    if not user_id == user.id and not user.isAdmin:
+    if not user_id == user.id and not user.is_admin:
         raise HTTPException(status_code=403, detail="You are unauthorized to perform this action.")
 
     db_connector.end_user_session(user_id=user.id)

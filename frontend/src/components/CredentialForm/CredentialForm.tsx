@@ -6,7 +6,7 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import type {Credentials} from "src/domain/types";
 import {credentialsSchema} from "src/domain/schemas";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
-import {CredentialError, CustomError} from "src/utilities/Utilities";
+import {CredentialError, CustomError} from "src/utilities";
 
 import * as style from "./credential-form.module.css"
 import {ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";

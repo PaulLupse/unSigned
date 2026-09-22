@@ -3,14 +3,17 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
 
+from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
 from src.common import limiter
 from src.domain.auth import User
 from src.domain.requests import EditFormRequest
-from src.db.DBConnector import get_db, DBResult, DBConnector
-from src.domain.models import MinimalTemplateInfo, Template, NewForm
+from src.db.DBConnector import get_db, DBConnector
+from src.db.DBResult import DBResult
+from src.domain.models import MinimalTemplate, Template, NewForm
 
-router:APIRouter = APIRouter(prefix='/template', tags=['template'])
+router:APIRouter = APIRouter(prefix='/template',
+                             tags=['template'])
 
 db_connector:DBConnector = get_db()
 
@@ -34,13 +37,13 @@ def check_template_authorization(
             )
 
         template = get_template_response.data
-        if template.status == "private" and not (template.ownerId == user.id):
+        if template.status == "private" and not (template.owner_id == user.id):
             raise auth_exception
 
-        elif template.status == "official" and (not user.isAdmin and action == "write"):
+        elif template.status == "official" and (not user.is_admin and action == "write"):
             raise auth_exception
 
-        if template.status == "public" and not template.ownerId == user.id and action == "write":
+        if template.status == "public" and not template.owner_id == user.id and action == "write":
             raise auth_exception
 
 
@@ -49,11 +52,11 @@ def check_template_authorization(
     return wrapper
 
 
-@router.get("/official", response_model=list[MinimalTemplateInfo], status_code=200)
+@router.get("/official", response_model=list[MinimalTemplate], status_code=200)
 @limiter.limit("60/minute")
 async def get_official_templates(user:Annotated[User, Depends(authenticate)], request: Request):
 
-    result:DBResult[list[MinimalTemplateInfo]] = db_connector.get_templates(user.id, status = 'official')
+    result:DBResult[list[MinimalTemplate]] = db_connector.get_templates(user.id, status ='official')
 
     if result.status != 200:
         raise HTTPException(status_code=result.status, detail=result.message)
@@ -61,11 +64,11 @@ async def get_official_templates(user:Annotated[User, Depends(authenticate)], re
     return result.data
 
 
-@router.get("/public", response_model=list[MinimalTemplateInfo], status_code=200)
+@router.get("/public", response_model=list[MinimalTemplate], status_code=200)
 @limiter.limit("60/minute")
 async def get_public_templates(user:Annotated[User, Depends(authenticate)], request: Request):
 
-    result:DBResult[list[MinimalTemplateInfo]] = db_connector.get_templates(user.id, status = 'public')
+    result:DBResult[list[MinimalTemplate]] = db_connector.get_templates(user.id, status ='public')
 
     if result.status != 200:
         raise HTTPException(status_code=result.status, detail=result.message)
@@ -100,7 +103,7 @@ async def create_template(create_template_request:NewForm,
         raise HTTPException(status_code= create_template_response.status, detail = create_template_response.message)
 
 
-    return JSONResponse(status_code=201, content={"formId":create_template_response.data})
+    return JSONResponse(status_code=201, content={"form_id":create_template_response.data})
 
 
 @router.put("/{template_id}/edit", status_code=200, dependencies=[Depends(check_template_authorization('write'))])

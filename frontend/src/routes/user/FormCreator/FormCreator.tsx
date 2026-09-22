@@ -24,6 +24,8 @@ import {NavButton} from "src/components/Buttons/Buttons";
 import ButtonWithMenu from "src/components/FloatingMenu/FloatingMenu";
 import Loading from "src/components/Loading";
 
+import {log} from "src/utilities";
+
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
 export default function FormCreator() {
@@ -110,7 +112,7 @@ export default function FormCreator() {
 
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
 
-        console.log(data);
+        log(data);
         const newForm:NewForm = newFormSchema.parse({
                                 name:data.name,
                                 questions:data.questions,

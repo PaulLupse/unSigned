@@ -13,6 +13,8 @@ import {deleteUser, logoutUser} from "src/server/auth";
 import Loading from "src/components/Loading";
 import {useAuth} from "src/components/AuthProvider";
 
+import {log} from "src/utilities";
+
 
 function ProfileEntry ({text, value}:{text:string, value:string}) {
     return (
@@ -42,7 +44,7 @@ function useLogout () {
 
             await queryClient.resetQueries({queryKey:['currentUser']})
 
-            console.log(queryClient.getQueryData(['currentUser']))
+            log(queryClient.getQueryData(['currentUser']))
         },
         onError:(error)=>{
             toast.error(error.message)
@@ -113,7 +115,7 @@ function ProfileDataDisplay({user, stats}:{user:User, stats:UserStats}) {
                     {
                         canEdit &&
                         <button onClick={()=>{
-                            console.log(queryClient.getQueryData(['currentUser']))
+                            log(queryClient.getQueryData(['currentUser']))
                             logout()
                         }}>
                             Log out

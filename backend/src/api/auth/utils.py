@@ -59,6 +59,9 @@ def generate_refresh_token() -> tuple[str, str]:
 def generate_key(data:Key)->str:
 
     data.footer.keyId = str(uuid.uuid4())
+
+    if not data.footer: raise ValueError("No footer")
+
     token:str = pyseto.encode(payload=data.payload.model_dump(), key=paseto_key, footer=data.footer.model_dump()).decode("utf-8")
     return token
 
@@ -68,9 +71,9 @@ def decode_key(token:str)->Key|None:
     try:
         decoded = pyseto.decode(keys=paseto_key, token=token.strip(' '))
         payload = json.loads(decoded.payload.decode("utf-8"))
-        keyId = json.loads(decoded.footer.decode("utf-8"))['keyId']
+        key_id = json.loads(decoded.footer.decode("utf-8"))['keyId']
 
-        return Key(payload=KeyPayload(formId=payload['formId']), footer=KeyFooter(keyId=keyId))
+        return Key(payload=KeyPayload(form_id=payload['form_id']), footer=KeyFooter(key_id=key_id))
 
     except Exception as e:
         print(token)

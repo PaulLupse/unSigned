@@ -14,11 +14,12 @@ from datetime import timedelta, datetime, timezone
 
 from pydantic import BaseModel
 
+from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.VerificationCodeSender import send_verification_email
 from src.api.auth.Authenticator import authenticate
 from src.config import ACCESS_TOKEN_LIFESPAN_MINUTES, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SECURE_JWT_KEY, JWT_ALG, \
     REFRESH_TOKEN_LIFESPAN_DAYS
-from src.db.DBConnector import DBResult
+from src.db.DBResult import DBResult
 from src.domain.requests import RegisterRequest, VerificationCodeRequest, VerifyEmailRequest, HandleGoogleUserRequest
 from src.common import limiter
 from src.domain.auth import User
@@ -26,7 +27,8 @@ from src.db.DBConnector import DBConnector, get_db
 from src.api.auth.utils import generate_access_token, generate_refresh_token
 from src.utilities import validate_email
 
-router:APIRouter = APIRouter(prefix="/auth", tags=["auth"])
+router:APIRouter = APIRouter(prefix="/auth",
+                             tags=["auth"])
 
 from src.common import logger
 
@@ -56,13 +58,13 @@ def generate_tokens(user:User):
         data={
             "sub": user.id,
             "username": user.username,
-            "isAdmin": user.isAdmin,
+            "is_admin": user.is_admin,
             "email": user.email,
         },
         expiration_time=timedelta(minutes=ACCESS_TOKEN_LIFESPAN_MINUTES))
     # generam un nou refresh token, care vine la pachet cu jetonul de acces
-    refresh_token, hashed_refresh_token = generate_refresh_token()
-    return access_token, refresh_token, hashed_refresh_token
+    refresh_token, refresh_token_hash = generate_refresh_token()
+    return access_token, refresh_token, refresh_token_hash
 
 # Verifica detaliile de autentificare ale unui utilizator. Daca sunt valide, returneaza un token de acces si un token de
 # reimprospatare (in acea ordine), care trebuiesc setate manual in api response.
@@ -81,8 +83,8 @@ def create_session(identifier:Annotated[str, Doc("Username or email")], password
     # in caz ca nu au fost returnate date despre utilizator
     if db_response.data is None: raise ValueError("No user data returned!")
 
-    access_token, refresh_token, hashed_refresh_token = generate_tokens(user=db_response.data)
-    db_connector.store_refresh_token(user_id=db_response.data.id, hashed_refresh_token=hashed_refresh_token)
+    access_token, refresh_token, refresh_token_hash = generate_tokens(user=db_response.data)
+    db_connector.store_refresh_token(user_id=db_response.data.id, refresh_token_hash=refresh_token_hash)
 
     # stergem orice sesiune activa pe care o are utilizatorul
     db_connector.end_user_session(user_id=db_response.data.id)
@@ -150,9 +152,9 @@ async def use_refresh_token(request: Request, response: Response):
     if refresh_token is None:
         raise HTTPException(status_code=401, detail="Refresh token not found.")
 
-    hashed_refresh_token:str = hashlib.sha256(refresh_token.encode()).hexdigest()
+    refresh_token_hash:str = hashlib.sha256(refresh_token.encode()).hexdigest()
 
-    check_response = db_connector.check_refresh_token(hashed_ref_token=hashed_refresh_token)
+    check_response = db_connector.check_refresh_token(refresh_token_hash=refresh_token_hash)
 
     logger.warning(check_response)
 
@@ -161,9 +163,9 @@ async def use_refresh_token(request: Request, response: Response):
         user = check_response.data
         new_access_token, new_refresh_token, hashed_new_refresh_token = generate_tokens(user=user)
 
-        db_connector.invalidate_refresh_token(hashed_ref_token=hashlib.sha256(refresh_token.encode()).hexdigest()) # Invalidam refresh token-ul vechi...
+        db_connector.invalidate_refresh_token(refresh_token_hash=hashlib.sha256(refresh_token.encode()).hexdigest()) # Invalidam refresh token-ul vechi...
         db_connector.store_refresh_token(user_id=user.id,
-                                         hashed_refresh_token=hashed_new_refresh_token) # ...si il stocam pe cel nou
+                                         refresh_token_hash=hashed_new_refresh_token) # ...si il stocam pe cel nou
 
         response = set_response_auth_cookies(response=response,
                                         access_token=new_access_token,
@@ -286,7 +288,7 @@ async def handle_google_user(handle_request: HandleGoogleUserRequest, request:Re
                             detail="Already logged in.",
                             headers={"WWW-Authenticate": "Bearer"})
 
-    user_data:GoogleUserData = get_google_user_data(handle_request.googleCode)
+    user_data:GoogleUserData = get_google_user_data(handle_request.google_code)
 
     logger.warning(user_data.email)
 
@@ -295,9 +297,9 @@ async def handle_google_user(handle_request: HandleGoogleUserRequest, request:Re
 
         logger.info(f"Found GOOGLE user with email {user_data.email}")
 
-        access_token, refresh_token, hashed_refresh_token = generate_tokens(user)
+        access_token, refresh_token, refresh_token_hash = generate_tokens(user)
         db_connector.end_user_session(user_id=user.id)
-        db_connector.store_refresh_token(user_id=user.id, hashed_refresh_token=hashed_refresh_token)
+        db_connector.store_refresh_token(user_id=user.id, refresh_token_hash=refresh_token_hash)
 
         response = set_response_auth_cookies(response, access_token, refresh_token)
 
@@ -312,9 +314,9 @@ async def handle_google_user(handle_request: HandleGoogleUserRequest, request:Re
 
         db_connector.link_user_account(user_id=user.id, provider="google", provider_user_id=user_data.user_id)
 
-        access_token, refresh_token, hashed_refresh_token = generate_tokens(user)
+        access_token, refresh_token, refresh_token_hash = generate_tokens(user)
         db_connector.end_user_session(user_id=user.id)
-        db_connector.store_refresh_token(user_id=user.id, hashed_refresh_token=hashed_refresh_token)
+        db_connector.store_refresh_token(user_id=user.id, refresh_token_hash=refresh_token_hash)
 
         response = set_response_auth_cookies(response, access_token, refresh_token)
 
@@ -336,12 +338,12 @@ async def handle_google_user(handle_request: HandleGoogleUserRequest, request:Re
     # Totodata autentificam utilizatorul
     user = User(id=user_id,
                 username=default_username,
-                isAdmin=False, # Initial, utilizatorul nu este administrator, deci este sigur sa setam false
+                is_admin=False, # Initial, utilizatorul nu este administrator, deci este sigur sa setam false
                 email=user_data.email)
 
-    access_token, refresh_token, hashed_refresh_token = generate_tokens(user)
+    access_token, refresh_token, refresh_token_hash = generate_tokens(user)
     db_connector.end_user_session(user_id=user_id)
-    db_connector.store_refresh_token(user_id=user_id, hashed_refresh_token=hashed_refresh_token)
+    db_connector.store_refresh_token(user_id=user_id, refresh_token_hash=refresh_token_hash)
 
     response = set_response_auth_cookies(response, access_token, refresh_token)
 

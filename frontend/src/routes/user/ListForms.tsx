@@ -3,11 +3,12 @@ import {useQuery} from "@tanstack/react-query";
 import {getForms} from "src/server/users-server";
 import {Table} from "src/components/Table/Table";
 import type {MinimalFormInfo, User} from "src/domain/types";
-import {makePair} from "src/utilities/Utilities";
+import {makePair} from "src/utilities";
 import {NavButton} from "src/components/Buttons/Buttons";
 import React from "react";
 import Loading from "src/components/Loading";
 import {useAuth} from "src/components/AuthProvider";
+import {log} from "src/utilities";
 
 export function ListForms() {
 
@@ -55,13 +56,13 @@ export function ListForms() {
                     <Table<MinimalFormInfo> columns={["Name", "Date created", "Date published", "Date closed" , "Submissions"]}
                                      columnNames={['name',
                                          makePair('dateCreated', (date:Date)=>date?date.toISOString().split('T')[0]:'-'),
-                                         makePair('datePublished', (date:Date|null)=>date?date.toISOString().split('T')[0]:'-'),
+                                         makePair('dateOpened', (date:Date|null)=>date?date.toISOString().split('T')[0]:'-'),
                                          makePair('dateClosed', (date:Date|null)=>date?date.toISOString().split('T')[0]:'-'),
-                                         'submissionsCount']}
+                                         'subCount']}
                                      data={getUserForms.data?getUserForms.data:[]}
                                      rowOnClick=
                                         {(form:MinimalFormInfo):void => {
-                                            console.log(form.id)
+                                            log(form.id)
                                             navigate(`/form/${form.id}/view`);
                                         }}
                                     style={{overflowX:'auto', width:'100%'}}

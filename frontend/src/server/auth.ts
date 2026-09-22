@@ -1,4 +1,4 @@
-import {CredentialError, CustomError, handleGenericErrorResponses} from "src/utilities/Utilities";
+import {CredentialError, CustomError, handleGenericErrorResponses, log} from "src/utilities";
 
 import {
     LoginInfo,type User,
@@ -8,9 +8,9 @@ import {
     emailSchema,
     userSchema
 } from "src/domain/schemas";
-import {fetch} from "src/utilities/Utilities";
+import {fetch} from "src/utilities";
 import {z} from "zod";
-import {REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
+import {BAD_USER_DATA_ERR, REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
 
 // Cere un jeton de access (jwt).
 // Returneaza un obiect response cu detaliile de autorizare.
@@ -143,10 +143,14 @@ export async function getCurrentUserData():Promise<User|undefined>{
     if(loginResponse.ok)
     {
         const data:any = await loginResponse.json();
+        log(data)
 
         const parseResult = userSchema.safeParse(data)
         if (parseResult.success) return parseResult.data
-        else throw new Error("Bad user data coming from server")
+        else {
+            log(parseResult.error)
+            throw BAD_USER_DATA_ERR
+        }
     }
 
     handleGenericErrorResponses(loginResponse)

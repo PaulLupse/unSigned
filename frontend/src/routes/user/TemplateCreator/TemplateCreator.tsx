@@ -25,6 +25,8 @@ import {BackButton} from "src/components/Buttons/Buttons";
 import {Checkbox} from "src/components/Checkbox/Checkbox";
 import {useAuth} from "src/components/AuthProvider";
 
+import {log} from "src/utilities";
+
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
 export default function TemplateCreator() {
@@ -103,7 +105,7 @@ export default function TemplateCreator() {
 
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
 
-        console.log(data);
+        log(data);
         const newForm:NewForm = newFormSchema.parse({
                                 name:data.name,
                                 questions:data.questions,
@@ -135,7 +137,7 @@ export default function TemplateCreator() {
                     </BackButton>
 
                     {
-                        user && (user.isAdmin) &&
+                        user && (user.is_admin) &&
                         <Checkbox text={"Official"}
                               checked={isOfficial}
                               setChecked={setIsOfficial}

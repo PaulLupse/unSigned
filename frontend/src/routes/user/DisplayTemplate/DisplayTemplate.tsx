@@ -53,7 +53,7 @@ export default function DisplayTemplate() {
                         Back
                     </NavButton>
                     {
-                        ((template.status=='private' && user?.id === template.ownerId) || (template.status=='official' && user?.isAdmin)) &&
+                        ((template.status=='private' && user?.id === template.ownerId) || (template.status=='official' && user?.is_admin)) &&
                         <>
                             <NavButton to={`/template/${template.id}/edit`}>
                                 Edit

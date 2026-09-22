@@ -1,20 +1,14 @@
 import re
-from typing import Mapping, Any
+from typing import Mapping, Any, Annotated
+from warnings import deprecated
 
-from pydantic import BaseModel
+from pydantic import BaseModel, BeforeValidator, Field
 
 email_pattern = re.compile("\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*")
 
 def validate_email(email:str)->bool:
     return bool(email_pattern.match(email))
 
-def format_mongodb_id_field(obj:Mapping[str, Any])->Mapping[str, Any]:
-
-    if obj.get('_id') is None:
-        raise ValueError("Object does not have _id field.")
-
-    obj['id'] = str(obj.pop('_id'))
-    return obj
 
 # Incapsuleaza tipuri de actiuni (read/write) specifice operatiilor CRUD
 class Action:
@@ -30,3 +24,9 @@ class Action:
         def wrapper(*args, **kwargs):
             return fn(action="write", *args, **kwargs)
         return wrapper
+
+
+# Anotatie de tip custom folosita pentru modele pidantice reprezentand obiecte memorate in baza de date (mongodb),
+# care necesita cast din ObjectId in str.
+PyObjectId = Annotated[str, BeforeValidator(str)]
+PyObjectIdField = Field(validation_alias="_id", serialization_alias="id")

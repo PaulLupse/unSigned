@@ -57,7 +57,7 @@ export interface FormInfo {
     id:string
     questions:Array<TextQuestion|GridQuestion>
     dateCreated:Date|null
-    datePublished:Date|null
+    dateOpened:Date|null
     dateClosed:Date|null
     submissions:Array<Submission>|null
     ownerId:string
@@ -67,9 +67,9 @@ export interface MinimalFormInfo {
     name:string
     id:string
     dateCreated:Date|null
-    datePublished:Date|null
+    dateOpened:Date|null
     dateClosed:Date|null
-    submissionsCount:number
+    subCount:number
     ownerId:string
 }
 
@@ -142,7 +142,7 @@ export interface GridQuestionAnswerStatistic extends AnswerStatistic {
 export interface User {
     username:string
     id:string
-    isAdmin:boolean
+    is_admin:boolean
     email:string
 }
 
