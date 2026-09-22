@@ -147,7 +147,7 @@ export default function FormCreator() {
                                       options={[
                                           {text:'From public templates', action:()=>{navigate('/templates/public')}},
                                           {text:'From official templates', action:()=>{navigate('/templates/official')}},
-                                          {text:'From my templates', action:()=>{navigate('/templates/private')}}
+                                          {text:'From my templates', action:()=>{navigate('/me/templates')}}
                                       ]} />
 
                         {/*La apasarea butonului se creeaza un nou chestionar avand intrebarile adaugate*/}
