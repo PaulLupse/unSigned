@@ -144,3 +144,4 @@ backend/.env
 frontend/.env
 .env
 *.pyc
+*.pyc
