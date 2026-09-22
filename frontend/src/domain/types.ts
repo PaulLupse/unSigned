@@ -1,14 +1,23 @@
 import {z} from "zod";
 import {
-    answerSchema, answerStatisticSchema, credentialsSchema, emailSchema, formInfoSchema, formQuestionSchema,
-    gridAnswerSchema, gridChoiceSchema,
+    formElementUnion,
+    formSchema,
+    formSummarySchema,
+    gridAnswerSchema,
+    gridChoiceSchema,
     gridOptionsSchema,
-    gridQuestionAnswerStatisticSchema, gridQuestionSchema, minimalFormInfoSchema, minimalTemplateSchema, newFormSchema,
+    gridQuestionStatisticSchema,
+    gridQuestionSchema, headingSchema,
+    newFormSchema, newTemplateSchema, paragraphSchema,
     questionOptionsSchema,
-    type registerData,
-    submissionSchema, templateSchema,
-    textAnswerSchema, textOptionsSchema, textQuestionAnswerStatisticSchema, textQuestionSchema,
-    userDataWithStatsSchema, userSchema, userStatsSchema
+    questionUnion,
+    submissionSchema,
+    templateSchema,
+    templateSummarySchema,
+    textAnswerSchema,
+    textOptionsSchema,
+    textQuestionStatisticSchema,
+    textQuestionSchema, questionStatisticSchemaUnion, answerSchemaUnion
 } from "src/domain/schemas";
 
 export class LoginInfo {
@@ -27,29 +36,28 @@ export class LoginInfo {
     public get password() { return this._password; }
 }
 
-
-export type Answer = z.infer<typeof answerSchema>
+export type Paragraph = z.infer<typeof paragraphSchema>
+export type Heading = z.infer<typeof headingSchema>
 export type GridAnswer = z.infer<typeof gridAnswerSchema>
 export type TextAnswer = z.infer<typeof textAnswerSchema>
+export type AnswerUnion = z.infer<typeof answerSchemaUnion>
 export type Submission = z.infer<typeof submissionSchema>
-export type Question = z.infer<typeof formQuestionSchema>
 export type GridQuestion = z.infer<typeof gridQuestionSchema>
 export type TextQuestion = z.infer<typeof textQuestionSchema>
-export type FormInfo = z.infer<typeof formInfoSchema>
-export type MinimalFormInfo = z.infer<typeof minimalFormInfoSchema>
+export type QuestionUnion = z.infer<typeof questionUnion>
+export type FormElementUnion = z.infer<typeof formElementUnion>
+export type FormInfo = z.infer<typeof formSchema>
+export type FormSummary = z.infer<typeof formSummarySchema>
 export type Template = z.infer<typeof templateSchema>
-export type MinimalTemplate = z.infer<typeof minimalTemplateSchema>
-export type Credentials = z.infer<typeof credentialsSchema>
-export type Email = z.infer<typeof emailSchema>
+export type TemplateSummary = z.infer<typeof templateSummarySchema>
 export type NewForm = z.infer<typeof newFormSchema>
+export type NewTemplate = z.infer<typeof newTemplateSchema>
+export type TextQuestionStatistic = z.infer<typeof textQuestionStatisticSchema>
+export type GridQuestionStatistic = z.infer<typeof gridQuestionStatisticSchema>
+export type QuestionStatisticUnion = z.infer<typeof questionStatisticSchemaUnion>
+
+// TODO: Elimină nevoia pentru aceste tipuri de date.
 export type GridChoice = z.infer<typeof gridChoiceSchema>
 export type GridOptions = z.infer<typeof gridOptionsSchema>
 export type TextOptions = z.infer<typeof textOptionsSchema>
 export type QuestionOptions = z.infer<typeof questionOptionsSchema>
-export type AnswerStatistic = z.infer<typeof answerStatisticSchema>
-export type TextQuestionAnswerStatistic = z.infer<typeof textQuestionAnswerStatisticSchema>
-export type GridQuestionAnswerStatistic = z.infer<typeof gridQuestionAnswerStatisticSchema>
-export type User = z.infer<typeof userSchema>
-export type UserStats = z.infer<typeof userStatsSchema>
-export type UserDataWithStats = z.infer<typeof userDataWithStatsSchema>
-export type RegisterData = z.infer<typeof registerData>

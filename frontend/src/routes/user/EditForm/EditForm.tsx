@@ -4,12 +4,12 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {updateForm} from "src/server/users-server";
+import {updateForm} from "src/backend-connection/users";
 import type {NewForm} from "src/domain/types";
 import type {TextQuestion, GridQuestion} from "src/domain/types";
 import {useNavigate, useOutletContext} from "react-router-dom";
 
-import {formInfoSchema, newFormSchema} from "src/domain/schemas";
+import {formSchema, newFormSchema} from "src/domain/schemas";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
@@ -36,7 +36,7 @@ export default function EditForm() {
     const context = useOutletContext()
 
     const parseResult = useMemo(()=>{
-        const result = formInfoSchema.safeParse(context);
+        const result = formSchema.safeParse(context);
         if(!result.success) {
             toast.error("Unexpected error")
             return undefined

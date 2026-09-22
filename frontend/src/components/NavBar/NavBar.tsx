@@ -1,5 +1,5 @@
 import React from 'react'
-import {logoutUser} from "../../server/auth";
+import {logoutUser} from "src/backend-connection/auth";
 import type {QueryClient} from "@tanstack/react-query";
 import {useNavigate} from "react-router-dom";
 

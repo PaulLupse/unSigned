@@ -1,9 +1,9 @@
 import type { FormInfo} from "src/domain/types";
-import {closeForm, deleteForm, openForm} from "src/server/users-server";
+import {closeForm, deleteForm, openForm} from "src/backend-connection/users";
 import React, {useCallback, useEffect} from "react";
 
 import {useNavigate, useOutletContext} from "react-router-dom";
-import {formInfoSchema} from "src/domain/schemas";
+import {formSchema} from "src/domain/schemas";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {BackButton, NavButton} from "src/components/Buttons/Buttons";
 import toast from "react-hot-toast";
@@ -21,7 +21,7 @@ export function DisplayFrom() {
 
     const queryClient = useQueryClient();
 
-    const form: FormInfo = formInfoSchema.parse(useOutletContext());
+    const form: FormInfo = formSchema.parse(useOutletContext());
     const [formStatus, setFormStatus] = React.useState<string>();
     const navigate = useNavigate();
 

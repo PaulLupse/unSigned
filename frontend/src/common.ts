@@ -6,4 +6,4 @@ export const REQUEST_WITH_PAYLOAD_HEADERS = new Headers({
     });
 
 
-export const BAD_USER_DATA_ERR = Error("Bad user data coming from server")
+export const BAD_USER_DATA_ERR = Error("Bad user data coming from backend-connection")

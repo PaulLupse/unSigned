@@ -1,12 +1,12 @@
 import React, {useCallback, useRef} from "react";
 import {type SubmitHandler, useFieldArray, useForm} from "react-hook-form";
-import type {Email, FormInfo} from "src/domain/types";
+import type {FormInfo} from "src/domain/types";
 import {z} from "zod";
-import {emailSchema, formInfoSchema} from "src/domain/schemas";
+import {formSchema} from "src/domain/schemas";
 import {zodResolver} from "@hookform/resolvers/zod";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {useNavigate, useOutletContext} from "react-router-dom";
-import {distributeKeys} from "src/server/users-server";
+import {distributeKeys} from "src/backend-connection/users";
 import {useAlert} from "src/components/AlertProvider";
 import {useMutation} from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -14,6 +14,8 @@ import * as style from './DistributeKeys.module.css'
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {BackButton, NavButton} from "src/components/Buttons/Buttons";
+import {emailSchema} from "src/domain/auth-schemas";
+import type {Email} from "src/domain/auth-types";
 
 
 interface EmailsList {
@@ -32,7 +34,7 @@ function getDefaultValues ():EmailsList {
 
 export function DistributeKeys() {
 
-    const form: FormInfo = formInfoSchema.parse(useOutletContext());
+    const form: FormInfo = formSchema.parse(useOutletContext());
 
     const {register, handleSubmit, formState:{errors}, control, watch} = useForm<EmailsList>({resolver:zodResolver(emailsListSchema), defaultValues:getDefaultValues()});
     const {append, remove, fields} = useFieldArray({control, name: "emails"})

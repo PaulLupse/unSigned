@@ -3,16 +3,16 @@ import {type SubmitHandler, useForm} from "react-hook-form";
 import {useNavigate} from "react-router-dom";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {zodResolver} from "@hookform/resolvers/zod";
-import type {Credentials} from "src/domain/types";
-import {credentialsSchema} from "src/domain/schemas";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {CredentialError, CustomError} from "src/utilities";
 
 import * as style from "./credential-form.module.css"
 import {ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
 import toast from "react-hot-toast";
-import {login} from "src/server/auth";
+import {login} from "src/backend-connection/auth";
 import {GoogleLogin, useGoogleLogin} from "@react-oauth/google";
+import {credentialsSchema} from "src/domain/auth-schemas";
+import type {Credentials} from "src/domain/auth-types";
 
 // Componenta ce expune un formular de autentificare.
 export function LoginForm() {

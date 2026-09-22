@@ -1,14 +1,15 @@
 import {useLocation, useNavigate, useOutletContext} from "react-router-dom";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
-import {getTemplates} from "src/server/users-server";
+import {getTemplates} from "src/backend-connection/users";
 import Loading from "src/components/Loading";
 import {Table} from "src/components/Table/Table";
-import type {MinimalTemplate, User} from "src/domain/types";
+import type {TemplateSummary} from "src/domain/types";
 import {BackButton, NavButton} from "src/components/Buttons/Buttons";
 import React, {useMemo} from "react";
 import {FixedElement} from "src/components/FixedElement/FixedElement";
-import {userSchema} from "src/domain/schemas";
 import {useAuth} from "src/components/AuthProvider";
+import {userSchema} from "src/domain/auth-schemas";
+import type {User} from "src/domain/auth-types";
 
 export function ListTemplates({type}:{type:'public'|'private'|'official'}) {
 
@@ -61,10 +62,10 @@ export function ListTemplates({type}:{type:'public'|'private'|'official'}) {
 
                     {
                         getUserTemplates.isSuccess&&
-                            <Table<MinimalTemplate> columns={["Name", "# of questions"]}
+                            <Table<TemplateSummary> columns={["Name", "# of questions"]}
                                                     columnNames={['name', "questionCount"]}
                                                     data={getUserTemplates.data?getUserTemplates.data:[]}
-                                                    rowOnClick={(minimalTemplate:MinimalTemplate)=>navigate(`/template/${minimalTemplate.id}/view`)}
+                                                    rowOnClick={(minimalTemplate:TemplateSummary)=>navigate(`/template/${minimalTemplate.id}/view`)}
                                                     style={{width:'100%', boxSizing:'border-box'}}/>
                     }
                     {

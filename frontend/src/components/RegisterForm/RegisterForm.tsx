@@ -1,20 +1,20 @@
 import React, {type ReactNode, use, useCallback, useRef, useState} from 'react';
 import {type FieldErrors, type SubmitHandler, useForm, type UseFormRegister} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {emailSchema, registerData} from "src/domain/schemas";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 
-import {login, registerUser, requestVerificationCode, verifyVerifcationCode} from "src/server/auth";
+import {login, registerUser, requestVerificationCode, verifyVerifcationCode} from "src/backend-connection/auth";
 import {z} from "zod";
 
 import * as style from "./Register.module.css"
 import {useMutation} from "@tanstack/react-query";
-import type {Credentials, RegisterData} from "src/domain/types";
 import toast from "react-hot-toast";
 import {CredentialError, CustomError} from "src/utilities";
 import {useNavigate} from "react-router-dom";
 import {useLoading} from "src/components/LoadingOverlayProvider";
 import {ButtonWithIcon, ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
+import {emailSchema, registerData} from "src/domain/auth-schemas";
+import type {Credentials, RegisterData} from "src/domain/auth-types";
 
 
 

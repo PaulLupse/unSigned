@@ -4,8 +4,8 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {updateTemplate} from "src/server/users-server";
-import type {NewForm, Template, User} from "src/domain/types";
+import {updateTemplate} from "src/backend-connection/users";
+import type {NewForm, Template} from "src/domain/types";
 import type {TextQuestion, GridQuestion} from "src/domain/types";
 import {useNavigate, useOutletContext} from "react-router-dom";
 
@@ -23,6 +23,7 @@ import {FixedElement} from "src/components/FixedElement/FixedElement"
 import {NavButton} from "src/components/Buttons/Buttons";
 
 import {log} from "src/utilities";
+import type {User} from "src/domain/auth-types";
 
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.

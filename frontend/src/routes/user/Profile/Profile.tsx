@@ -1,19 +1,19 @@
 import {Link, useNavigate, useOutletContext, useParams} from "react-router-dom";
 import React, {use, useEffect, useMemo, useState} from "react";
-import {getForms, getTemplates, getUserData, getUserDataAndStats} from "src/server/users-server";
+import {getForms, getTemplates, getUserData, getUserDataAndStats} from "src/backend-connection/users";
 
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import type {User, UserStats} from "src/domain/types";
 import toast from "react-hot-toast";
 import {NavButton} from "src/components/Buttons/Buttons";
 import {useAlert} from "src/components/AlertProvider";
 
 import * as style from './Profile.module.css'
-import {deleteUser, logoutUser} from "src/server/auth";
+import {deleteUser, logoutUser} from "src/backend-connection/auth";
 import Loading from "src/components/Loading";
 import {useAuth} from "src/components/AuthProvider";
 
 import {log} from "src/utilities";
+import type {User, UserStats} from "src/domain/auth-types";
 
 
 function ProfileEntry ({text, value}:{text:string, value:string}) {

@@ -1,16 +1,16 @@
 import type {
     FormInfo,
     GridAnswer,
-    GridQuestion, GridQuestionAnswerStatistic,
+    GridQuestion, GridQuestionStatistic,
     Submission,
     TextAnswer,
     TextQuestion,
-    TextQuestionAnswerStatistic
+    TextQuestionStatistic
 } from "src/domain/types";
 import {useNavigate, useOutletContext} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import {useQuery} from "@tanstack/react-query";
-import {getFormSubmissionData} from "src/server/users-server";
+import {getFormSubmissionData} from "src/backend-connection/users";
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import {BackButton, NavButton} from "src/components/Buttons/Buttons";
 import * as style from './SubmissionData.module.css'
@@ -117,7 +117,7 @@ function IndividualDisplay({submissions, questions}:{submissions:Submission[], q
     )
 }
 
-function TextAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic:TextQuestionAnswerStatistic, question:TextQuestion|GridQuestion}) {
+function TextAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic:TextQuestionStatistic, question:TextQuestion|GridQuestion}) {
     return (
         <div className={style.textStatDisp}>
             <div className={style.element}>
@@ -141,7 +141,7 @@ function TextAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic
     )
 }
 
-function GridAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic:GridQuestionAnswerStatistic, question:GridQuestion}) {
+function GridAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic:GridQuestionStatistic, question:GridQuestion}) {
     return (
         <div className={style.choicePercentageGroup}>
             <p>Choice percentages:</p>
@@ -163,7 +163,7 @@ function GridAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic
     )
 }
 
-function AnswerStatisticDisplay({answerStatistic, question, index}:{answerStatistic:TextQuestionAnswerStatistic|GridQuestionAnswerStatistic, question:TextQuestion|GridQuestion, index:number}) {
+function AnswerStatisticDisplay({answerStatistic, question, index}:{answerStatistic:TextQuestionStatistic|GridQuestionStatistic, question:TextQuestion|GridQuestion, index:number}) {
 
     return (
         <li className={questionDisplayerStyle.question}>
@@ -192,7 +192,7 @@ function AnswerStatisticDisplay({answerStatistic, question, index}:{answerStatis
 }
 
 function StatisticDisplay({statisticData, questions}:
-                          {statisticData:Array<TextQuestionAnswerStatistic|GridQuestionAnswerStatistic>,
+                          {statisticData:Array<TextQuestionStatistic|GridQuestionStatistic>,
                               questions:Array<TextQuestion|GridQuestion>}) {
 
     return (

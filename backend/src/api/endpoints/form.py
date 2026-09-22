@@ -1,33 +1,27 @@
-from bson import ObjectId
-from fastapi import APIRouter, status, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.params import Depends
 from fastapi.responses import JSONResponse
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi.encoders import jsonable_encoder
+from fastapi.routing import APIRoute
 
-from jwt import ExpiredSignatureError
-from pydantic import BaseModel
 from typing import Annotated
-import logging, jwt, os
-from datetime import timedelta
 
+from src.api.BaseModel import BaseModel
 from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
-from src.domain.models import TextQuestionAnswerStatistic, GridQuestionAnswerStatistic
+from src.domain.models import TextQuestionStatistic, GridQuestionStatistic
 from src.db.DBResult import DBResult
-from src.domain.requests import RegisterRequest, EditFormRequest
+from src.api.requests import EditFormRequest
 from src.common import limiter
 from src.api.KeyDistributor import distribute_keys
-from src.domain.auth import Key, KeyPayload, User
-from src.domain.models import MinimalForm, NewForm, Form
+from src.domain.auth import User
+from src.domain.models import NewForm, Form
 from src.db.DBConnector import DBConnector, get_db
-
-from src.common import logger
 
 db_connector:DBConnector = get_db()
 
 router:APIRouter = APIRouter(prefix="/form",
-                             tags=["forms"])
+                             tags=["forms"],
+                             route_class=CamelCaseRoute)
 
 class TokenData(BaseModel):
     username:str
@@ -55,18 +49,21 @@ def check_form_authorization(
 
     return get_form_response.data
 
+class CreateFormResponse(BaseModel):
 
-@router.post("/add", status_code=201, response_class=JSONResponse)
+    form_id:str
+
+@router.post("/add", status_code=201, response_model=CreateFormResponse)
 @limiter.limit("60/minute")
 async def create_form(user:Annotated[User, Depends(authenticate)],
                       new_form:NewForm,
                       request: Request):
 
     result:DBResult[str] = db_connector.add_form(new_form, user.id)
-    if not result.ok():
+    if not result.ok() or not result.data:
         raise HTTPException(status_code=result.status, detail=result.message)
 
-    return JSONResponse(content={"form_id":result.data}, status_code=201)
+    return CreateFormResponse(form_id=result.data)
 
 
 @router.post("/{form_id}/open", status_code=200, dependencies=[Depends(check_form_authorization)])
@@ -142,13 +139,13 @@ async def delete_form(form_id:str,
             detail=result.message)
 
 
-@router.get("/{form_id}/submission-data", response_model=list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic])
+@router.get("/{form_id}/submission-data", response_model=list[TextQuestionStatistic | GridQuestionStatistic])
 async def get_form_submission_data(form_id:str,
                                    user:Annotated[User, Depends(authenticate)],
                                    form:Annotated[Form, Depends(check_form_authorization)],
                                    request: Request):
 
-    sub_data_res:DBResult[list[TextQuestionAnswerStatistic|GridQuestionAnswerStatistic]] = (
+    sub_data_res:DBResult[list[TextQuestionStatistic | GridQuestionStatistic]] = (
         db_connector.get_submission_data(
             form_id=form_id,
             owner_id=user.id,

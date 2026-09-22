@@ -1,16 +1,18 @@
 import React, {useCallback} from "react";
-import {templateSchema, userSchema} from "src/domain/schemas";
+import {templateSchema} from "src/domain/schemas";
 import {useNavigate, useOutletContext} from "react-router-dom";
-import type {Template, User} from "src/domain/types";
+import type {Template} from "src/domain/types";
 import * as style from "./DisplayTemplate.module.css"
 import {FormDisplayer} from "src/components/Form/FormDisplayer";
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {NavButton} from "src/components/Buttons/Buttons";
-import {deleteTemplate} from "src/server/users-server";
+import {deleteTemplate} from "src/backend-connection/users";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {useAuth} from "src/components/AuthProvider";
+import {userSchema} from "src/domain/auth-schemas";
+import type {User} from "src/domain/auth-types";
 
 export default function DisplayTemplate() {
 

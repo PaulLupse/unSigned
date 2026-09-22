@@ -13,11 +13,12 @@ from pymongo.results import DeleteResult, InsertOneResult
 from src.common import logger, mongo_client
 from src.config import REFRESH_TOKEN_LIFESPAN_DAYS
 from src.db.DBResult import DBResult
-from src.domain.models import TextAnswer, TextQuestionAnswerStatistic, GridQuestionAnswerStatistic, GridAnswer, Question
-from src.domain.models import MinimalTemplate, Template
+from src.domain.models import TextAnswer, TextQuestionStatistic, GridQuestionStatistic, GridAnswer, \
+    Question, NewTemplate, QuestionType, Answer, ElemType, QuestionUnion, FormElementUnion, QuestionStatisticUnion
+from src.domain.models import TemplateSummary, Template
 from src.domain.models import TextQuestion, GridQuestion
 from src.api.auth.utils import hash_password, verify_password
-from src.domain.models import Form, Submission, MinimalForm, NewForm
+from src.domain.models import Form, Submission, FormSummary, NewForm
 from src.domain.auth import Key, User, UserStats, RefreshToken
 
 from datetime import date, datetime, timezone, timedelta
@@ -39,7 +40,7 @@ class DBConnector:
             self.verification_codes_table = database.get_collection("verification_codes", codec_options=opt)
 
         except ServerSelectionTimeoutError as e:
-            print("ERROR: Server Selection Timeout. Check server connection.")
+            print("ERROR: Server Selection Timeout. Check backend-connection connection.")
             raise e
 
     # Valideaza detaliile de logare si returneaza detaliile despre utilizator
@@ -344,15 +345,15 @@ class DBConnector:
         return DBResult(200, "Closed.")
 
     # returneaza o lista de date minimale ale formularelor
-    def get_forms(self, owner_id: str) -> DBResult[list[MinimalForm]]:
+    def get_forms(self, owner_id: str) -> DBResult[list[FormSummary]]:
 
         # validam lista de formulare returnata de baza de date
         forms_from_db = list(self.forms_table.find({"owner_id": owner_id}))
 
         forms = TypeAdapter(list[Form]).validate_python(forms_from_db)
 
-        minimal_forms: list[MinimalForm] = TypeAdapter(list[MinimalForm]).validate_python(
-            [form.to_minimal() for form in forms])
+        minimal_forms: list[FormSummary] = TypeAdapter(list[FormSummary]).validate_python(
+            [form.summarize() for form in forms])
 
         return DBResult(200, "Queried successfully.", minimal_forms)
 
@@ -430,14 +431,15 @@ class DBConnector:
                   form_id: str,
                   owner_id: str,
                   new_title: str | None = None,
-                  new_questions: list[Question] | None = None):
+                  new_elements: list[FormElementUnion] | None = None):
 
         try:
 
-            new_data = {"questions": jsonable_encoder(new_questions)}
+            new_data:dict = {}
+
+            if new_elements: new_data["elements"] = jsonable_encoder(new_elements)
             if new_title: new_data["name"] = new_title
 
-            print(new_data)
 
             result = self.forms_table.update_one(
                 {"_id": ObjectId(form_id), "owner_id": owner_id},
@@ -458,7 +460,7 @@ class DBConnector:
     def get_templates(self,
                       owner_id: str,
                       status: Literal['public', 'private', 'official']) -> DBResult[
-        list[MinimalTemplate]]:
+        list[TemplateSummary]]:
 
         try:
 
@@ -469,17 +471,10 @@ class DBConnector:
             else:
                 templates_from_db = self.templates_table.find({'status': 'public'})
 
-            # Creeaza o lista de Modele MinimalTemplateInfo, luandu-si datele din templates_from_db
-            template_list: list[MinimalTemplate] = \
-                [MinimalTemplate(
-                    id=template['_id'],
-                    name=template['name'],
-                    question_count=len(template['questions']),
-                    owner_id=template['owner_id'])
+            template_list: list[TemplateSummary] =  [Template.model_validate(template).summarize()
+                                                    for template in templates_from_db]
 
-                    for template in templates_from_db]
-
-            return DBResult[list[MinimalTemplate]](status=200, message="Queried successfully.", data=template_list)
+            return DBResult[list[TemplateSummary]](status=200, message="Queried successfully.", data=template_list)
 
         except Exception as e:
             return DBResult(500, "Unexpected error: " + str(e))
@@ -538,18 +533,22 @@ class DBConnector:
             return True
         return False
 
-    # memoreaza template-ul in baza de date
+
     def create_template(self,
-                        name: str,
-                        questions: list[Question],
+                        template: NewTemplate,
                         owner_id: str,
                         status: Literal['public', 'private', 'official']) -> DBResult[str]:
+
+        """
+        Memoreaza template-ul in db.
+        :return: Id-ul asignat template-ului.
+        """
 
         try:
 
             template_in_db = {
-                "name": name,
-                "questions": jsonable_encoder(questions),
+                "name": template.name,
+                "elements": jsonable_encoder(template.elements),
                 "owner_id": owner_id,
                 "status": status
             }
@@ -563,7 +562,7 @@ class DBConnector:
 
     # modifica template-ul, inlocuind numele si intrebarile cu cele pasate
     def edit_template(self, template_id: str, user: User, new_name: str | None,
-                      new_questions: list[Question] | None) -> DBResult:
+                      new_elements: list[FormElementUnion] | None) -> DBResult:
 
         chk_auth: DBResult[Template] = self.check_authorization(template_id, user.id, user.is_admin, req='write')
 
@@ -573,7 +572,7 @@ class DBConnector:
         new_template_in_db: dict = {}
 
         if new_name: new_template_in_db['name'] = new_name
-        new_template_in_db['questions'] = jsonable_encoder(new_questions)
+        if new_elements: new_template_in_db['elements'] = new_elements
 
         result = self.templates_table.update_one(
             {"_id": ObjectId(template_id)},
@@ -598,7 +597,7 @@ class DBConnector:
         return DBResult(200, "Deleted.")
 
     @staticmethod
-    def calculate_text_submission_data(answers: list[TextAnswer]) -> TextQuestionAnswerStatistic:
+    def calculate_text_submission_data(answers: list[TextAnswer]) -> TextQuestionStatistic:
 
         word_count: int = 0
         words_counter: Counter = Counter()
@@ -612,14 +611,14 @@ class DBConnector:
 
         top_5_words = [item[0] for item in words_counter.most_common(5)]
 
-        return TextQuestionAnswerStatistic(type='text',
-                                           engagement=nr_answered / len(answers) * 100,
-                                           avg_word_count=word_count / nr_answered,
-                                           frequent_words=top_5_words)
+        return TextQuestionStatistic(type=QuestionType.TEXT,
+                                     engagement=nr_answered / len(answers) * 100,
+                                     avg_word_count=word_count / nr_answered,
+                                     frequent_words=top_5_words)
 
     @staticmethod
     def calculate_grid_submission_data(answers: list[GridAnswer],
-                                       question: GridQuestion) -> GridQuestionAnswerStatistic:
+                                       question: GridQuestion) -> GridQuestionStatistic:
 
         choices_counter: list[int] = [0 for _ in question.choices]
         nr_answered: int = 0
@@ -630,15 +629,15 @@ class DBConnector:
             if answer.choices: nr_answered += 1
 
         answers_len = len(answers)
-        return GridQuestionAnswerStatistic(type='grid',
-                                           engagement=nr_answered / answers_len * 100,
-                                           answer_rate=[cnt / nr_answered * 100 for cnt in choices_counter])
+        return GridQuestionStatistic(type=QuestionType.GRID,
+                                     engagement=nr_answered / answers_len * 100,
+                                     answer_rate=[cnt / nr_answered * 100 for cnt in choices_counter])
 
     @staticmethod
-    def get_questions_answers(subs: list[Submission]) -> list[list[TextAnswer] | list[GridAnswer]]:
+    def get_questions_answers(subs: list[Submission]) -> list[list[Answer]]:
 
         # initializam matricea de raspunsuri (ineficient dar pt moment merge)
-        questions_answers: list[list[TextAnswer] | list[GridAnswer]] = []
+        questions_answers: list[list[Answer]] = []
         for i in range(0, len(subs[0].answers)):
             answer_list = []
             questions_answers.append(answer_list)
@@ -653,7 +652,7 @@ class DBConnector:
                             form_id,
                             owner_id: str,
                             form: Form | None = None) -> DBResult[
-        list[TextQuestionAnswerStatistic | GridQuestionAnswerStatistic]]:
+        list[QuestionStatisticUnion]]:
 
         try:
 
@@ -665,32 +664,32 @@ class DBConnector:
 
                 form = Form.model_validate(form_from_db)
 
-            questions: list[Question] = form.questions
+            questions: list[QuestionUnion] = [e for e in form.elements if e.elem_type is ElemType.QUESTION]
             submissions: list[Submission] | None = form.submissions
 
             if not submissions: return DBResult(200, "No submissions found.", [])
 
-            questions_answers: list[list[TextAnswer] | list[GridAnswer]] = self.get_questions_answers(submissions)
+            questions_answers: list[list[Answer]] = self.get_questions_answers(submissions)
 
-            statistics: list[TextQuestionAnswerStatistic | GridQuestionAnswerStatistic] = []
+            statistics: list[TextQuestionStatistic | GridQuestionStatistic] = []
 
             for question_index, question in enumerate(questions):
 
-                if type(question) == TextQuestion:
-                    statistics.append(self.calculate_text_submission_data(questions_answers[question_index]))
+                if isinstance(question, TextQuestion):
 
-                elif type(question) == GridQuestion:
+                    current_question_answers:list[TextAnswer] = [ans for ans in questions_answers[question_index] if
+                                                                 isinstance(ans, TextAnswer)]
+                    statistics.append(self.calculate_text_submission_data(current_question_answers))
 
-                    if question.question_type == 'grid':
-                        statistics.append(
-                            self.calculate_grid_submission_data(questions_answers[question_index], question))
+                elif isinstance(question, GridQuestion):
 
-                    else:
-                        raise ValueError("Question type not matching: " + question)
+                    current_question_answers: list[GridAnswer] = [ans for ans in questions_answers[question_index] if
+                                                                  isinstance(ans, GridAnswer)]
+                    statistics.append(self.calculate_grid_submission_data(current_question_answers, question))
 
-            return DBResult[list[TextQuestionAnswerStatistic | GridQuestionAnswerStatistic]](status=200,
-                                                                                             data=statistics,
-                                                                                             message="Ok.")
+
+            return DBResult[list[TextQuestionStatistic | GridQuestionStatistic]](status=200,
+                                                                                 data=statistics)
 
         except Exception as e:
             return DBResult(500, "Unexpected error: " + str(e))

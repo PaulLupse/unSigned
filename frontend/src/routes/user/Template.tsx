@@ -1,6 +1,6 @@
 import React from "react";
 import {useQuery} from "@tanstack/react-query";
-import {getTemplate} from "src/server/users-server";
+import {getTemplate} from "src/backend-connection/users";
 import {Outlet, useParams} from "react-router-dom";
 import type {Template} from "src/domain/types";
 import Loading from "src/components/Loading";

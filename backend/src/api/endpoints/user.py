@@ -1,24 +1,20 @@
 from fastapi import APIRouter, status, HTTPException, Request
 from fastapi.params import Depends
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
 
 from typing import Annotated
-import logging
 
 from starlette.responses import Response
 
 from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
-from src.domain.models import MinimalTemplate
+from src.domain.models import TemplateSummary
 from src.db.DBResult import DBResult
 from src.common import limiter
-from src.domain.auth import User, UserStats, UserProfileWithStats
-from src.domain.models import MinimalForm
+from src.domain.auth import User, UserProfileWithStats
+from src.domain.models import FormSummary
 from src.db.DBConnector import DBConnector, get_db
 
-from src.common import logger
-from src.domain.requests import ChangeUsernameRequest
+from src.api.requests import ChangeUsernameRequest
 
 db_connector:DBConnector = get_db()
 
@@ -70,7 +66,7 @@ async def get_user_stats(identifier:str,
 
     return UserProfileWithStats(user=user, stats=get_stats_result.data)
 
-@router.get("/{user_id}/forms", response_model=list[MinimalForm], status_code=200)
+@router.get("/{user_id}/forms", response_model=list[FormSummary], status_code=200)
 @limiter.limit("60/minute")
 async def get_user_forms(user:Annotated[User, Depends(authenticate)],
                          user_id:
@@ -79,10 +75,10 @@ async def get_user_forms(user:Annotated[User, Depends(authenticate)],
     if user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-    result:DBResult[list[MinimalForm]] = db_connector.get_forms(user_id)
+    result:DBResult[list[FormSummary]] = db_connector.get_forms(user_id)
     return result.data
 
-@router.get("/{user_id}/templates", status_code=200, response_model=list[MinimalTemplate])
+@router.get("/{user_id}/templates", status_code=200, response_model=list[TemplateSummary])
 @limiter.limit("60/minute")
 async def get_user_templates(user:Annotated[User, Depends(authenticate)],
                              user_id,
@@ -91,7 +87,7 @@ async def get_user_templates(user:Annotated[User, Depends(authenticate)],
     if user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-    get_templates_response:DBResult[list[MinimalTemplate]] = db_connector.get_templates(user_id, status ='private')
+    get_templates_response:DBResult[list[TemplateSummary]] = db_connector.get_templates(user_id, status ='private')
 
     if get_templates_response.status != 200:
         raise HTTPException(status_code= get_templates_response.status, detail = get_templates_response.message)

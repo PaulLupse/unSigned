@@ -3,13 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, HTTPException, Depends
 from starlette.responses import JSONResponse
 
-from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
 from src.domain.auth import User
 from src.db.DBConnector import DBConnector, get_db
 from src.db.DBResult import DBResult
-from src.domain.models import NewForm
-from src.domain.requests import EditFormRequest
+from src.domain.models import NewForm, NewTemplate
+from src.api.requests import EditFormRequest
 
 router:APIRouter = APIRouter(prefix="/admin",
                              tags=['admin'])
@@ -18,14 +17,13 @@ db_connector:DBConnector = get_db()
 
 
 @router.post("/official-templates/create", status_code=201, response_class=JSONResponse)
-async def create_official_template(new_template:NewForm, user:Annotated[User, Depends(authenticate)]):
+async def create_official_template(new_template:NewTemplate, user:Annotated[User, Depends(authenticate)]):
 
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Unauthorized.")
 
     result: DBResult[str] = db_connector.create_template(
-        name=new_template.name,
-        questions=new_template.questions,
+        template=new_template,
         owner_id = "official", status='official')
 
     if result.status != 201:

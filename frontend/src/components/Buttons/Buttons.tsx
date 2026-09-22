@@ -3,7 +3,7 @@ import {useNavigate} from "react-router-dom";
 import {useGoogleLogin} from "@react-oauth/google";
 
 import * as style from './Buttons.module.css'
-import {handleGoogleUser} from "src/server/auth";
+import {handleGoogleUser} from "src/backend-connection/auth";
 import toast from "react-hot-toast";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 

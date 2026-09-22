@@ -23,7 +23,12 @@ function QuestionList({questions, register, errors, resetField}:QuestionListProp
                         (question: TextQuestion | GridQuestion, index: number) => {
                             return (
                                 <>
-                                    <QuestionDisplayer key={index} question={question} index={index} register={register} errors={errors} resetField={resetField}/>
+                                    <QuestionDisplayer key={index}
+                                                       question={question}
+                                                       index={index}
+                                                       register={register}
+                                                       errors={errors}
+                                                       resetField={resetField}/>
                                 </>
                             )
                         }
@@ -57,7 +62,10 @@ export function FormDisplayer({name, questions, register, errors, resetField}:Fo
                 </h2>
             </div>
 
-            <QuestionList questions={questions} register={register} errors={errors} resetField={resetField} />
+            <QuestionList questions={questions}
+                          register={register}
+                          errors={errors}
+                          resetField={resetField} />
 
         </div>
     )

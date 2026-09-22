@@ -1,5 +1,5 @@
-import type {Credentials} from "src/domain/types";
 import {forEach} from "lodash";
+import type {Credentials} from "src/domain/auth-types";
 
 // Wrapper care funcționează ca shorthand pentru log
 export const log = (any:any) => console.log(any)
@@ -142,7 +142,7 @@ export function handleGenericErrorResponses(response:Response) {
         throw new CustomError("You are not authorized to perform that action.", 403)
 
     if(response.status == 500)
-        throw new CustomError("Internal server error.", 500)
+        throw new CustomError("Internal backend-connection error.", 500)
 
 
     throw new CustomError("Something went wrong . . .", 500)

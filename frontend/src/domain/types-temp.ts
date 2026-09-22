@@ -1,5 +1,5 @@
-import type {registerData} from "src/domain/schemas";
 import {z} from "zod";
+import {registerData} from "src/domain/auth-schemas";
 
 export class LoginInfo {
     private _username;

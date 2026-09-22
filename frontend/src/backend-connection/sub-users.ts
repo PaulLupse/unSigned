@@ -1,13 +1,13 @@
 import {type FormInfo, type Submission} from "src/domain/types";
 import {z} from 'zod'
-import {formInfoSchema, submissionSchema} from "src/domain/schemas";
+import {formSchema, submissionSchema} from "src/domain/schemas";
 import {fetch} from "src/utilities";
 import {REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
 
 const UseKeyResponseSchema = z.object(
     {
         message:z.string(),
-        form:formInfoSchema
+        form:formSchema
     }
 );
 type UseKeyResponseType = z.TypeOf<typeof UseKeyResponseSchema>;
@@ -18,7 +18,7 @@ function handleGenericErrorResponses(response:Response) {
     if(response.status == 410) throw new Error("Form deleted.")
     if(response.status == 423) throw new Error("Form unavailable.")
     
-    throw new Error("Internal server error.")
+    throw new Error("Internal backend-connection error.")
 }
 
 // Verifica existenta formularului

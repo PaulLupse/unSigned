@@ -3,9 +3,8 @@ from fastapi.encoders import jsonable_encoder
 from starlette.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
-from src.api.CamelCaseRoute import CamelCaseRoute
 from src.db.DBResult import DBResult
-from src.domain.requests import CheckKeyRequest
+from src.api.requests import CheckKeyRequest
 from src.common import limiter
 from src.api.auth.utils import decode_key
 from src.domain.models import Submission, Form

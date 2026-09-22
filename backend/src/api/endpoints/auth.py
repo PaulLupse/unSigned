@@ -14,13 +14,12 @@ from datetime import timedelta, datetime, timezone
 
 from pydantic import BaseModel
 
-from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.VerificationCodeSender import send_verification_email
 from src.api.auth.Authenticator import authenticate
 from src.config import ACCESS_TOKEN_LIFESPAN_MINUTES, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SECURE_JWT_KEY, JWT_ALG, \
     REFRESH_TOKEN_LIFESPAN_DAYS
 from src.db.DBResult import DBResult
-from src.domain.requests import RegisterRequest, VerificationCodeRequest, VerifyEmailRequest, HandleGoogleUserRequest
+from src.api.requests import RegisterRequest, VerificationCodeRequest, VerifyEmailRequest, HandleGoogleUserRequest
 from src.common import limiter
 from src.domain.auth import User
 from src.db.DBConnector import DBConnector, get_db

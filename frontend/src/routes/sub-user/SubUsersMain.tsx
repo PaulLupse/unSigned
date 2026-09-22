@@ -7,10 +7,10 @@ import {useOutletContext} from "react-router-dom";
 import {useForm} from "react-hook-form";
 import type {SubmitHandler} from "react-hook-form";
 import React, {use, useEffect} from "react";
-import {gridAnswerSchema, textAnswerSchema} from '../../domain/schemas'
+import {gridAnswerSchema, textAnswerSchema} from 'src/domain/schemas'
 
-import {useKey, submitForm, checkFormId, checkKey} from "../../server/sub-users-server";
-import type {FormInfo, GridQuestion, Submission, TextQuestion} from "../../domain/types";
+import {useKey, submitForm, checkFormId, checkKey} from "src/backend-connection/sub-users";
+import type {FormInfo, GridQuestion, Submission, TextQuestion} from "src/domain/types";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import toast, {Toaster} from "react-hot-toast";
@@ -137,7 +137,7 @@ export function KeyInputComponent() {
         }
     })
 
-    // functia ia ca parametru o cheie si realizaeaza un apel la server
+    // functia ia ca parametru o cheie si realizaeaza un apel la backend-connection
     // in caz fericit, returneaza datele unui chestionar
     const onSubmit:SubmitHandler<KeyFormInput> = async ({key}:KeyFormInput):Promise<void>=>{
         mutate({key, formId})

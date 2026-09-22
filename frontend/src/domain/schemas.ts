@@ -1,113 +1,122 @@
-import {number, z} from "zod";
+import {z} from "zod";
+
+enum QuestionType {
+    GRID = "grid",
+    TEXT = "text"
+}
+
+enum ElemType {
+    QUESTION = "question",
+    PARAGRAPH = "paragraph",
+    HEADING = "heading"
+}
+
+enum TemplateType {
+    PRIVATE = 'private',
+    PUBLIC = 'paragraph',
+    OFFICIAL = 'public'
+}
 
 export const answerSchema = z.object({
-    type: z.union([z.literal("grid"), z.literal("text")])
+    type: z.enum(QuestionType)
 });
 
 export const gridAnswerSchema = answerSchema.extend({
-    type: z.literal("grid"),
+    type: z.literal(QuestionType.GRID),
     choices: z.array(z.number())
 });
 
 export const textAnswerSchema = answerSchema.extend({
-    type: z.literal("text"),
+    type: z.literal(QuestionType.TEXT),
     text: z.string()
 });
+
+export const answerSchemaUnion = z.discriminatedUnion("type",
+    [gridAnswerSchema, textAnswerSchema])
 
 export const submissionSchema = z.object({
     answers: z.array(z.union([gridAnswerSchema, textAnswerSchema]))
 });
 
-export const formQuestionSchema = z.object({
+export const formElementSchema = z.object({
+    elemType:z.enum(ElemType)
+})
+
+export const paragraphSchema = formElementSchema.extend({
+    elemType:z.literal(ElemType.PARAGRAPH),
+    text:z.string()
+})
+
+export const headingSchema = formElementSchema.extend({
+    elemType:z.literal(ElemType.PARAGRAPH),
+    text:z.string(),
+    number:z.int()
+})
+
+export const questionSchema = z.object({
     text: z.string(),
-    type: z.union([z.literal("text"), z.literal("grid")]),
+    questionType: z.enum(QuestionType),
     isOptional: z.boolean()
 });
 
-export const gridQuestionSchema = formQuestionSchema.extend({
+export const gridQuestionSchema = questionSchema.extend({
     isMultipleChoice: z.boolean(),
-    type: z.literal("grid"),
+    questionType: z.literal(QuestionType.GRID),
     choices: z.array(z.string())
 });
 
-export const textQuestionSchema = formQuestionSchema.extend({
+export const textQuestionSchema = questionSchema.extend({
     maxChars: z.coerce.number(),
-    type: z.literal("text")
+    questionType: z.literal(QuestionType.TEXT)
 });
 
-export const formInfoSchema = z.object({
+export const questionUnion = z.discriminatedUnion(
+    "questionType", [gridQuestionSchema, textQuestionSchema])
+
+export const formElementUnion = z.discriminatedUnion(
+    "elemType", [questionUnion, paragraphSchema, headingSchema])
+
+const baseFormSchema = z.object({
     name: z.string(),
     id: z.string(),
     ownerId: z.string(),
-    questions: z.array(z.union([textQuestionSchema, gridQuestionSchema])),
     dateCreated: z.coerce.date().nullable(),
     dateOpened: z.coerce.date().nullable(),
-    dateClosed: z.coerce.date().nullable(),
+    dateClosed: z.coerce.date().nullable()
+})
+
+export const formSchema = baseFormSchema.extend({
+    questions: z.array(formElementUnion),
     submissions: z.array(submissionSchema).nullable()
 });
 
-export const minimalFormInfoSchema = z.object({
-    name: z.string(),
-    id: z.string(),
-    ownerId: z.string(),
-    dateCreated: z.coerce.date().nullable(),
-    dateOpened: z.coerce.date().nullable(),
-    dateClosed: z.coerce.date().nullable(),
+export const formSummarySchema = baseFormSchema.extend({
     subCount: z.number()
 });
 
 export const newFormSchema = z.object({
     name: z.string(),
-    questions: z.array(z.union([textQuestionSchema, gridQuestionSchema]))
+    questions: z.array(questionUnion)
 });
 
-export const credentialsSchema = z.object({
-    identifier:z.string().min(1, "This field is required!"),
-    password:z.string().min(1, "This field is required!")
-});
-
-export const emailSchema = z.object({
-    email:z.string().min(1, "Field required!").regex(/\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/, "Invalid email!")
+export const newTemplateSchema = z.object({
+    name: z.string(),
+    questions: z.array(questionUnion)
 })
 
-export const templateSchema = z.object({
+export const baseTemplateSchema = z.object({
     id:z.string(),
     name:z.string(),
-    questions:z.array(z.union([textQuestionSchema, gridQuestionSchema])),
     ownerId:z.string(),
-    status:z.union([z.literal('official'), z.literal('public'), z.literal('private')])
+    status:z.enum(TemplateType)
 })
 
-export const minimalTemplateSchema = z.object({
-    id:z.string(),
-    name:z.string(),
+export const templateSchema = baseTemplateSchema.extend({
+    questions:z.array(z.union([textQuestionSchema, gridQuestionSchema])),
+})
+
+export const templateSummarySchema = baseTemplateSchema.extend({
     questionCount:z.number(),
-    ownerId:z.string()
-})
-
-export const userSchema = z.object({
-    username:z.string(),
-    id:z.string(),
-    isAdmin:z.boolean(),
-    email:z.string()
-})
-
-export const userStatsSchema = z.object({
-    formCount:z.int(),
-    templateCount:z.int()
-})
-
-export const userDataWithStatsSchema = z.object({
-    stats:userStatsSchema,
-    user:userSchema
-})
-
-export const registerData = z.object({
-    username:z.string().min(1, "Field required!"),
-    password:z.string().min(1, "Field required!"),
-    email:z.string()
-        .min(1, "Field required!")
-        .regex(/\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/, "Invalid email!")
 })
 
 export const gridChoiceSchema = z.object({
@@ -131,18 +140,21 @@ export const questionOptionsSchema = z.object({
     specificOptions:z.discriminatedUnion("type",[gridOptionsSchema, textOptionsSchema])
 })
 
-export const answerStatisticSchema = z.object({
+export const questionStatisticSchema = z.object({
     engagement:z.number(),
     type:z.union([z.literal('grid'), z.literal('text')])
 })
 
-export const textQuestionAnswerStatisticSchema = answerStatisticSchema.extend({
+export const textQuestionStatisticSchema = questionStatisticSchema.extend({
     type:z.literal('text'),
     avgWordCount:z.number(),
     frequentWords:z.array(z.string())
 })
 
-export const gridQuestionAnswerStatisticSchema = answerStatisticSchema.extend({
+export const gridQuestionStatisticSchema = questionStatisticSchema.extend({
     type:z.literal('grid'),
     answerRate:z.array(z.number())
 })
+
+export const questionStatisticSchemaUnion = z.discriminatedUnion(
+    "type", [textQuestionSchema, gridQuestionSchema])

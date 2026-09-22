@@ -5,7 +5,7 @@ import {
 } from "react-hook-form";
 
 import type {GridQuestion, NewForm, TextQuestion} from "src/domain/types";
-import {QuestionDisplayer} from "../QuestionDisplayer/QuestionDisplayer";
+import {QuestionDisplayer} from "src/components/Form/QuestionDisplayer/QuestionDisplayer";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 
 import {QuestionEditor} from "../QuestionEditor/QuestionEditor";

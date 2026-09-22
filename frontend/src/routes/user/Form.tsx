@@ -1,5 +1,5 @@
-import type { FormInfo} from "../../domain/types";
-import {getForm} from "../../server/users-server";
+import type { FormInfo} from "src/domain/types";
+import {getForm} from "src/backend-connection/users";
 import React, {useEffect} from "react";
 
 

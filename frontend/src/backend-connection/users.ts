@@ -5,19 +5,19 @@ import {CredentialError, CustomError, handleGenericErrorResponses, log} from "sr
 import {
     type FormInfo,
     type NewForm,
-    type MinimalFormInfo,
-    type Email,
-    type MinimalTemplate, type Template, type TextQuestionAnswerStatistic, type GridQuestionAnswerStatistic, type User,
-    type UserStats, type UserDataWithStats
+    type FormSummary,
+    type TemplateSummary, type Template, type TextQuestionStatistic, type GridQuestionStatistic
 } from "src/domain/types";
 import {
-    formInfoSchema,
-    minimalFormInfoSchema,
-    minimalTemplateSchema,
-    templateSchema, userDataWithStatsSchema, userSchema
+    formSchema,
+    formSummarySchema,
+    templateSummarySchema,
+    templateSchema
 } from "src/domain/schemas";
 import {fetch} from "src/utilities";
 import {BAD_USER_DATA_ERR, REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
+import {userDataWithStatsSchema, userSchema} from "src/domain/auth-schemas";
+import type {Email, User, UserDataWithStats, UserStats} from "src/domain/auth-types";
 
 
 
@@ -49,7 +49,7 @@ export async function getUserData({userId, username}:{userId?:string, username?:
         if (parseResult.success) return parseResult.data
         else {
             log(parseResult.error)
-            throw new Error("Bad user data coming from server")
+            throw new Error("Bad user data coming from backend-connection")
         }
     }
 
@@ -111,13 +111,13 @@ export async function getForm(formId:string):Promise<FormInfo|undefined> {
 
         const data = await response.json();
 
-        const dataParseResult = formInfoSchema.safeParse(data);
+        const dataParseResult = formSchema.safeParse(data);
 
         if (dataParseResult.success) {
             return dataParseResult.data
         } else {
-            log("Wrong json coming from server:" + dataParseResult.error)
-            throw new CustomError("Bad communication with server.", 500)
+            log("Wrong json coming from backend-connection:" + dataParseResult.error)
+            throw new CustomError("Bad communication with backend-connection.", 500)
         }
     }
     if (response.status == 404)
@@ -130,7 +130,7 @@ export async function getForm(formId:string):Promise<FormInfo|undefined> {
 }
 
 // Returneaza toate formularele utilizatorului, sub forma minimala.
-export async function getForms({user_id}:{user_id:string}):Promise<Array<MinimalFormInfo>|undefined> {
+export async function getForms({user_id}:{user_id:string}):Promise<Array<FormSummary>|undefined> {
 
     const getItemsRequest = new Request(
         `/api/user/${user_id}/forms`,
@@ -146,12 +146,12 @@ export async function getForms({user_id}:{user_id:string}):Promise<Array<Minimal
         const data = await response.json();
 
 
-        const parseResult = minimalFormInfoSchema.array().safeParse(data);
+        const parseResult = formSummarySchema.array().safeParse(data);
         if (parseResult.success) {
             return parseResult.data;
         } else {
-            log("Wrong json coming from server:" + parseResult.error);
-            throw new CustomError("Bad communication with server.", 500)
+            log("Wrong json coming from backend-connection:" + parseResult.error);
+            throw new CustomError("Bad communication with backend-connection.", 500)
         }
     }
 
@@ -236,7 +236,7 @@ export async function deleteForm(formId:string):Promise<boolean|undefined> {
 // Returneaza datele despre raspunsurile la un formular (cautat dupa id).
 // TODO adauga validare a datelor returnate de api folosind scheme zod
 export async function getFormSubmissionData(formId:string):
-    Promise<Array<TextQuestionAnswerStatistic|GridQuestionAnswerStatistic>|undefined> {
+    Promise<Array<TextQuestionStatistic|GridQuestionStatistic>|undefined> {
 
     const request = new Request(`/api/form/${formId}/submission-data`,
         {
@@ -325,7 +325,7 @@ export async function createTemplate({templateData, type}:{templateData:NewForm,
 }
 
 // Returneaza toate template-urile utilizatorului, sub format minimal.
-export async function getTemplates({type, userId}:{type:'public'|'private'|'official', userId?:string}):Promise<Array<MinimalTemplate>|undefined> {
+export async function getTemplates({type, userId}:{type:'public'|'private'|'official', userId?:string}):Promise<Array<TemplateSummary>|undefined> {
 
     let uri:string
 
@@ -344,11 +344,11 @@ export async function getTemplates({type, userId}:{type:'public'|'private'|'offi
 
     if(getTemplatesResponse.ok) {
         
-        const parseResult = minimalTemplateSchema.array().safeParse(await getTemplatesResponse.json())
+        const parseResult = templateSummarySchema.array().safeParse(await getTemplatesResponse.json())
         if (parseResult.success) {
             return parseResult.data
         } else {
-            throw new Error("Bad data coming from server . . .")
+            throw new Error("Bad data coming from backend-connection . . .")
         }
     }
 
@@ -371,7 +371,7 @@ export async function getTemplate({templateId}:{templateId:string}):Promise<Temp
         if (parseResult.success) {
             return parseResult.data
         } else {
-            throw new Error("Bad data coming from server . . . ")
+            throw new Error("Bad data coming from backend-connection . . . ")
         }
     }
 

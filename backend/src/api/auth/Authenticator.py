@@ -32,7 +32,7 @@ async def authenticate(token : Annotated[str, Depends(oauth2_scheme)])->User:
             raise validation_error
 
         db_response = db_connector.find_user(user_id = user_id)
-        if not db_response.ok(): raise validation_error
+        if not db_response.ok() or not db_response.data: raise validation_error
 
         return db_response.data
 

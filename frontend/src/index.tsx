@@ -43,7 +43,7 @@ import Loading from "src/components/Loading";
 import {LoadingOverlayProvider} from "src/components/LoadingOverlayProvider";
 import {GoogleOAuthProvider} from "@react-oauth/google";
 import {AuthProvider, useAuth} from "src/components/AuthProvider";
-import {getCurrentUserData} from "src/server/auth";
+import {getCurrentUserData} from "src/backend-connection/auth";
 import {MeRedirect} from "src/components/MeRedirect";
 
 
