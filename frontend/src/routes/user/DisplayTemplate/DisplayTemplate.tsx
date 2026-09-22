@@ -27,7 +27,7 @@ export default function DisplayTemplate() {
             mutationFn:deleteTemplate,
             onSuccess:()=>{
                 toast.success("Template deleted successfully!")
-                navigate('/templates/private')
+                navigate('/me/templates')
             },
             onError:(error)=>{
                 toast.error("Could not delete template: " + error.message)
@@ -49,13 +49,13 @@ export default function DisplayTemplate() {
             <FixedElement>
                 <ButtonBar>
 
-                    <NavButton to={`/templates/${template.status}`} onClick={async ()=>{queryClient.removeQueries({queryKey:['template']})}}>
+                    <NavButton to={template.status!=="private"?`/templates/${template.status}`:"/me/templates"} onClick={async ()=>{queryClient.removeQueries({queryKey:['template']})}}>
                         Back
                     </NavButton>
                     {
                         ((template.status=='private' && user?.id === template.ownerId) || (template.status=='official' && user?.is_admin)) &&
                         <>
-                            <NavButton to={`/templates/${template.id}/edit`}>
+                            <NavButton to={`/template/${template.id}/edit`}>
                                 Edit
                             </NavButton>
                             <button onClick={deleteButtonHandler}>

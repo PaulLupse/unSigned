@@ -50,7 +50,7 @@ export default function EditForm() {
         onSuccess:async ()=>{
             toast.success("Template updated successfully!");
             await queryClient.invalidateQueries({queryKey:['template']})
-            navigate(`/templates/${parseResult.data?.id}/view`)
+            navigate(`/template/${parseResult.data?.id}/view`)
         },
         onError:(error)=>{
             toast.error("Could not update template. " + error?.message);
@@ -101,7 +101,7 @@ export default function EditForm() {
 
             <FixedElement>
                   <ButtonBar>
-                      <NavButton to={`/templates/${parseResult.data?.id}/view`} >Cancel</NavButton>
+                      <NavButton to={`/template/${parseResult.data?.id}/view`} >Cancel</NavButton>
                       <button form={"barosan"} type='submit' className='plain-button'>Done</button>
                   </ButtonBar>
             </FixedElement>
