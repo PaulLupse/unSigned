@@ -4,26 +4,27 @@ import {
     type FieldErrors,
 } from "react-hook-form";
 
-import type {GridQuestion, NewForm, TextQuestion} from "src/domain/types";
+import type {FormElementUnion, NewForm, QuestionUnion} from "src/domain/types";
 import {QuestionDisplayer} from "src/components/Form/QuestionDisplayer/QuestionDisplayer";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 
 import {QuestionEditor} from "../QuestionEditor/QuestionEditor";
 import * as style from './FormEditor.module.css'
 import {log} from "src/utilities";
+import {ElemType} from "src/domain/schemas";
 
 interface EditableFormProps {
     register:UseFormRegister<NewForm>
     errors:FieldErrors<NewForm>
-    formQuestions:Array<GridQuestion|TextQuestion>
+    formElements:Array<FormElementUnion>
     addNewQuestion:()=>number
     swapQuestions:(q1Index:number, q2Index:number)=>void
-    saveQuestion:(questionIndex:number, questionOptions:TextQuestion|GridQuestion) => void
+    saveQuestion:(questionIndex:number, questionOptions:QuestionUnion) => void
     deleteQuestion:(questionIndex:number)=>void
 }
 
 // componenta utilizata doar pentru a afisa intrebarile chestionarului, care pot fii alterate
-export function FormEditor({register, errors, formQuestions, addNewQuestion, swapQuestions, saveQuestion, deleteQuestion}:EditableFormProps) {
+export function FormEditor({register, errors, formElements, addNewQuestion, swapQuestions, saveQuestion, deleteQuestion}:EditableFormProps) {
 
     const [editingQuestions, setEditingQuestions] = React.useState<Set<number>>(new Set<number>());
     const [newQuestions, setNewQuestions] = React.useState<Set<number>>(new Set<number>());
@@ -82,7 +83,8 @@ export function FormEditor({register, errors, formQuestions, addNewQuestion, swa
             </div>
             <ol className={'question-list'}>
             {
-                formQuestions.map((question, index)=>{
+                formElements.filter(e=>e.elemType===ElemType.QUESTION).map((element, index)=>{
+
                     return(
                         <>
                             {
@@ -90,15 +92,14 @@ export function FormEditor({register, errors, formQuestions, addNewQuestion, swa
                                 <QuestionEditor action={saveQuestion}
                                                 questionIndex={index}
                                                 setQuestionToBeEdited={setQuestionToBeEdited}
-                                                questionData = {question}
+                                                questionData = {element}
                                                 deleteQuestion={deleteQuestion}
                                                 setQuestionNew={setQuestionNew}
                                                 questionIsNew={questionIsNew}
                                                 />
                                     :
                                 <div className={style.questionGroup}>
-                                    <QuestionDisplayer question={question} index={index} />
-
+                                    <QuestionDisplayer question={element} index={index} />
                                     <div className={style.questionButtonsFrame}>
 
                                         <button  type={"button"} onClick={()=>{deleteQuestion(index)}}>
@@ -119,11 +120,9 @@ export function FormEditor({register, errors, formQuestions, addNewQuestion, swa
                                         <button
                                             type={'button'}
                                             className={style.downButton}
-                                            disabled={index == formQuestions.length - 1  || editingQuestions.has(index+1)}
+                                            disabled={index == formElements.length - 1  || editingQuestions.has(index+1)}
                                             onClick={()=>swapQuestions(index, index+1)}/>
                                     </div>
-
-
                                 </div>
 
                             }

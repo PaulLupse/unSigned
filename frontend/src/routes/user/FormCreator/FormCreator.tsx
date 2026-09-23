@@ -5,11 +5,11 @@ import {
     useFieldArray,
 } from "react-hook-form";
 import {addForm, getTemplate} from "src/backend-connection/users";
-import type {FormInfo, NewForm} from "src/domain/types";
-import type {TextQuestion, GridQuestion} from "src/domain/types";
-import {useNavigate, useParams, useSearchParams} from "react-router-dom";
+import type {NewForm, QuestionUnion} from "src/domain/types";
+import type {TextQuestion} from "src/domain/types";
+import {useNavigate, useSearchParams} from "react-router-dom";
 
-import {formSchema, newFormSchema} from "src/domain/schemas";
+import {ElemType, newFormSchema, QuestionType} from "src/domain/schemas";
 import {useMutation, useQuery} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
@@ -23,8 +23,6 @@ import {FixedElement} from "src/components/FixedElement/FixedElement"
 import {NavButton} from "src/components/Buttons/Buttons";
 import ButtonWithMenu from "src/components/FloatingMenu/FloatingMenu";
 import Loading from "src/components/Loading";
-
-import {log} from "src/utilities";
 
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
@@ -44,9 +42,9 @@ export default function FormCreator() {
         retry:0
     })
 
-    const {register, formState:{errors}, handleSubmit, control, watch, setValue, getValues} = useForm<NewForm>({values:{questions:usedTemplate.data?usedTemplate.data.questions:[], name:'New form'}});
-    const {append, update, remove, swap} = useFieldArray({control, name:'questions'});
-    const formQuestions = watch("questions");
+    const {register, formState:{errors}, handleSubmit, control, watch, setValue, getValues} = useForm<NewForm>({values:{elements:usedTemplate.data?usedTemplate.data.elements:[], name:'New form'}});
+    const {append, update, remove, swap} = useFieldArray({control, name:'elements'});
+    const elements = watch("elements");
 
     // efect ce incarca progresul salvat in session storage
     useEffect(()=>{
@@ -55,7 +53,7 @@ export default function FormCreator() {
         if(progress) {
             const parseResult = newFormSchema.safeParse(JSON.parse(progress))
             if (parseResult.success) {
-                setValue("questions", parseResult.data.questions);
+                setValue("elements", parseResult.data.elements);
                 setValue("name", parseResult.data.name);
             }
         }
@@ -92,17 +90,23 @@ export default function FormCreator() {
     })
 
     const addQuestion = ():number => {
-        const newQuestion:TextQuestion = {text:`Question #${formQuestions.length+1} text`, type:"text", maxChars:30, isOptional:false}
+        const newQuestion:TextQuestion = {
+            elemType: ElemType.QUESTION,
+            questionType:QuestionType.TEXT,
+            text:`Question #${elements.length+1} text`,
+            maxChars:30,
+            isOptional:false
+        }
         append(newQuestion);
-        return formQuestions.length;
+        return elements.length;
     }
 
     const swapQuestions = (q1Index:number, q2Index:number)=>{
-        if (q1Index >= 0  &&  q2Index >= 0 && q1Index < formQuestions.length && q2Index < formQuestions.length)
+        if (q1Index >= 0  &&  q2Index >= 0 && q1Index < elements.length && q2Index < elements.length)
             swap(q1Index, q2Index)
     }
 
-    const saveQuestionChanges = (questionIndex:number, questionOptions:TextQuestion|GridQuestion) => {
+    const saveQuestionChanges = (questionIndex:number, questionOptions:QuestionUnion) => {
         update(questionIndex, questionOptions);
     }
 
@@ -112,10 +116,9 @@ export default function FormCreator() {
 
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
 
-        log(data);
         const newForm:NewForm = newFormSchema.parse({
                                 name:data.name,
-                                questions:data.questions,
+                                elements:data.elements,
                             })
         mutate(newForm);
     }
@@ -128,7 +131,7 @@ export default function FormCreator() {
                 <form id={"barosan"} className={style.formFrame} onSubmit={handleSubmit(createNewForm)}>
                     <FormEditor register={register}
                                 errors={errors}
-                                formQuestions={formQuestions}
+                                formElements={elements}
                                 addNewQuestion={addQuestion}
                                 saveQuestion={saveQuestionChanges}
                                 deleteQuestion={deleteQuestion}

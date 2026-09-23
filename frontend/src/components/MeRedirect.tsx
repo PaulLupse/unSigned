@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams, Navigate } from 'react-router-dom';
 
-import type {User} from "src/domain/auth-types";
+import type {User} from "src/domain/auth/types";
 
 export function MeRedirect({ user }:{user:User|undefined}) {
   // The wildcard match is stored under the '*' key in useParams()

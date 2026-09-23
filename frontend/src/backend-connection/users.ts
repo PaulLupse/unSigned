@@ -1,23 +1,23 @@
 // acest script contine parte din logica de comunicare cu serverul web, precum logare, inregistrare si operati CRUD
 
-import {CredentialError, CustomError, handleGenericErrorResponses, log} from "src/utilities";
+import {CustomError, handleGenericErrorResponses, log} from "src/utilities";
 
 import {
     type FormInfo,
     type NewForm,
     type FormSummary,
-    type TemplateSummary, type Template, type TextQuestionStatistic, type GridQuestionStatistic
+    type TemplateSummary, type Template, type QuestionStatisticUnion
 } from "src/domain/types";
 import {
     formSchema,
     formSummarySchema,
     templateSummarySchema,
-    templateSchema
+    templateSchema, TemplateType
 } from "src/domain/schemas";
 import {fetch} from "src/utilities";
 import {BAD_USER_DATA_ERR, REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
-import {userDataWithStatsSchema, userSchema} from "src/domain/auth-schemas";
-import type {Email, User, UserDataWithStats, UserStats} from "src/domain/auth-types";
+import {userDataWithStatsSchema, userSchema} from "src/domain/auth/schemas";
+import type {Email, User, UserDataWithStats} from "src/domain/auth/types";
 
 
 
@@ -192,16 +192,11 @@ export async function addForm(form:NewForm):Promise<string|undefined> {
 // Actualizeaza un formular cu datele noi (in stil overwrite).
 export async function updateForm({newFormData, formId}:{newFormData: NewForm, formId: string}) {
 
-    log(newFormData)
-
     const updateFormRequest:Request = new Request(`/api/form/${formId}/edit`,
         {
             method:"PUT",
             headers:REQUEST_WITH_PAYLOAD_HEADERS,
-            body:JSON.stringify({
-                name:newFormData.name,
-                questions:newFormData.questions
-            })
+            body:JSON.stringify(newFormData)
         });
 
     const response = await fetch(updateFormRequest);
@@ -236,7 +231,7 @@ export async function deleteForm(formId:string):Promise<boolean|undefined> {
 // Returneaza datele despre raspunsurile la un formular (cautat dupa id).
 // TODO adauga validare a datelor returnate de api folosind scheme zod
 export async function getFormSubmissionData(formId:string):
-    Promise<Array<TextQuestionStatistic|GridQuestionStatistic>|undefined> {
+    Promise<Array<QuestionStatisticUnion>|undefined> {
 
     const request = new Request(`/api/form/${formId}/submission-data`,
         {
@@ -254,7 +249,7 @@ export async function getFormSubmissionData(formId:string):
     handleGenericErrorResponses(response)
 }
 
-// Publica un formular.
+// Publică un formular.
 export async function openForm(formId:string):Promise<boolean|undefined> {
 
     const publishRequest = new Request(`/api/form/${formId}/open`, {
@@ -325,7 +320,7 @@ export async function createTemplate({templateData, type}:{templateData:NewForm,
 }
 
 // Returneaza toate template-urile utilizatorului, sub format minimal.
-export async function getTemplates({type, userId}:{type:'public'|'private'|'official', userId?:string}):Promise<Array<TemplateSummary>|undefined> {
+export async function getTemplates({type, userId}:{type:TemplateType, userId?:string}):Promise<Array<TemplateSummary>|undefined> {
 
     let uri:string
 

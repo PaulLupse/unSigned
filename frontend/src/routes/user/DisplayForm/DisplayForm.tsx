@@ -5,7 +5,7 @@ import React, {useCallback, useEffect} from "react";
 import {useNavigate, useOutletContext} from "react-router-dom";
 import {formSchema} from "src/domain/schemas";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
-import {BackButton, NavButton} from "src/components/Buttons/Buttons";
+import {NavButton} from "src/components/Buttons/Buttons";
 import toast from "react-hot-toast";
 import {FormDisplayer} from "src/components/Form/FormDisplayer";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
@@ -98,7 +98,7 @@ export function DisplayFrom() {
         form &&
         <div className={styles.formFrame}>
 
-            <FormDisplayer name={form.name} questions={form.questions} />
+            <FormDisplayer name={form.name} elements={form.elements} />
 
             <FixedElement>
 

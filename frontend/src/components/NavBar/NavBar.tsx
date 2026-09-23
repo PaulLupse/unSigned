@@ -1,9 +1,6 @@
 import React from 'react'
-import {logoutUser} from "src/backend-connection/auth";
 import type {QueryClient} from "@tanstack/react-query";
 import {useNavigate} from "react-router-dom";
-
-import CollapsingDiv from "../CollapsingDiv/CollapsingDiv";
 
 import "./nav-bar.css"
 

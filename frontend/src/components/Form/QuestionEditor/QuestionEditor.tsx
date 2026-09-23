@@ -1,5 +1,4 @@
-import React, {type SetStateAction} from "react";
-import type {Dispatch} from "react";
+import React from "react";
 import {
     useForm,
     type UseFormRegister,
@@ -12,15 +11,13 @@ import {
 
 
 import type {
-    TextQuestion,
-    GridQuestion,
     QuestionOptions,
     GridChoice,
-    GridOptions, TextOptions
+    GridOptions, TextOptions, QuestionUnion
 } from "src/domain/types";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 
-import {gridQuestionSchema, textQuestionSchema} from "src/domain/schemas";
+import {gridQuestionSchema, QuestionType, textQuestionSchema} from "src/domain/schemas";
 
 interface QuestionOptionsComponentProps {
     register:UseFormRegister<QuestionOptions>
@@ -34,9 +31,9 @@ interface QuestionEditorProps {
     setQuestionNew:(questionIndex:number, set:boolean)=>void
     questionIsNew:(questionIndex:number)=>boolean
     deleteQuestion:(questionIndex:number)=>void
-    action:(questionIndex:number, question:GridQuestion|TextQuestion)=>void;
+    action:(questionIndex:number, question:QuestionUnion)=>void;
     questionIndex:number
-    questionData?:TextQuestion|GridQuestion
+    questionData?:QuestionUnion
 }
 
 interface GridQuestionChoiceComponentProps {
@@ -147,13 +144,13 @@ function GridQuestionOptions(props:QuestionOptionsComponentProps) {
 }
 
 
-function getDefaultQuestionOptions(questionData:TextQuestion|GridQuestion|undefined, questionIndex:number):QuestionOptions {
+function getDefaultQuestionOptions(questionData:QuestionUnion|undefined, questionIndex:number):QuestionOptions {
 
     if(questionData) {
          let specificOptions:GridOptions|TextOptions
-        if (questionData.type === 'grid') {
+        if (questionData.questionType === QuestionType.GRID) {
              specificOptions = {
-                 type:"grid",
+                 questionType:QuestionType.GRID,
                  choices:questionData.choices.map(
                      (choice:string):GridChoice=> {
                          return {text:choice}
@@ -162,7 +159,7 @@ function getDefaultQuestionOptions(questionData:TextQuestion|GridQuestion|undefi
              }
         } else {
             specificOptions = {
-                type:"text",
+                questionType:QuestionType.TEXT,
                 maxChars:questionData.maxChars
             }
         }
@@ -175,7 +172,7 @@ function getDefaultQuestionOptions(questionData:TextQuestion|GridQuestion|undefi
     } return {
         text:`Question #${questionIndex+1} text`,
         isOptional:false,
-        specificOptions:{type:'text', maxChars:30}
+        specificOptions:{questionType:QuestionType.TEXT, maxChars:30}
     }
 
 }
@@ -192,13 +189,13 @@ export function QuestionEditor(props:QuestionEditorProps) {
         }
     );
 
-    const type = watch('specificOptions.type');
+    const type = watch('specificOptions.questionType');
 
     // handler pentru adaugarea unei noi intrebari
     const submit = async (data:QuestionOptions)=>{
 
-        let constructedQuestion:any = {text:data.text, isOptional:data.isOptional, type:data.specificOptions.type}, question;
-        if(data.specificOptions.type==='grid') {
+        let constructedQuestion:any = {text:data.text, isOptional:data.isOptional, type:data.specificOptions.questionType}, question;
+        if(data.specificOptions.questionType==='grid') {
 
             constructedQuestion.choices=data.specificOptions.choices.map((choice:GridChoice) => choice.text);
             constructedQuestion.isMultipleChoice=data.specificOptions.isMultipleChoice;
@@ -227,7 +224,7 @@ export function QuestionEditor(props:QuestionEditorProps) {
                 <FormInputErrorPopup id={`text${props.questionIndex}`} name={`text`} errors={errors} place={"bottom"}/>
 
                 {/* selector al tipului de intrebare */}
-                <select {...register("specificOptions.type")}>
+                <select {...register("specificOptions.questionType")}>
                     <option value='text'>Text Question</option>
                     <option value='grid'>Grid Question</option>
                 </select>

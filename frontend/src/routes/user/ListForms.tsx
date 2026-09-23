@@ -1,4 +1,4 @@
-import {useNavigate, useOutletContext} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import {useQuery} from "@tanstack/react-query";
 import {getForms} from "src/backend-connection/users";
 import {Table} from "src/components/Table/Table";
@@ -9,7 +9,6 @@ import React from "react";
 import Loading from "src/components/Loading";
 import {useAuth} from "src/components/AuthProvider";
 import {log} from "src/utilities";
-import type {User} from "src/domain/auth-types";
 
 export function ListForms() {
 

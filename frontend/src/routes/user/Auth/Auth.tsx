@@ -1,9 +1,7 @@
 import React from 'react';
 import {LoginForm} from "src/components/CredentialForm/CredentialForm";
 
-import {registerUser} from "src/backend-connection/auth";
 import {Link} from "react-router-dom";
-import toast from "react-hot-toast";
 
 import * as style from "./auth.module.css"
 import {RegisterForm} from "src/components/RegisterForm/RegisterForm";

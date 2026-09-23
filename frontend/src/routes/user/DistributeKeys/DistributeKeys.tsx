@@ -13,9 +13,9 @@ import toast from "react-hot-toast";
 import * as style from './DistributeKeys.module.css'
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
-import {BackButton, NavButton} from "src/components/Buttons/Buttons";
-import {emailSchema} from "src/domain/auth-schemas";
-import type {Email} from "src/domain/auth-types";
+import {NavButton} from "src/components/Buttons/Buttons";
+import {emailSchema} from "src/domain/auth/schemas";
+import type {Email} from "src/domain/auth/types";
 
 
 interface EmailsList {

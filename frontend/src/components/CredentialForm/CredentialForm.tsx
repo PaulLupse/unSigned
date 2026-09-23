@@ -10,9 +10,8 @@ import * as style from "./credential-form.module.css"
 import {ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
 import toast from "react-hot-toast";
 import {login} from "src/backend-connection/auth";
-import {GoogleLogin, useGoogleLogin} from "@react-oauth/google";
-import {credentialsSchema} from "src/domain/auth-schemas";
-import type {Credentials} from "src/domain/auth-types";
+import {credentialsSchema} from "src/domain/auth/schemas";
+import type {Credentials} from "src/domain/auth/types";
 
 // Componenta ce expune un formular de autentificare.
 export function LoginForm() {

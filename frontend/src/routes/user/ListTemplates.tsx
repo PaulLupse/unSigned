@@ -1,24 +1,23 @@
-import {useLocation, useNavigate, useOutletContext} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {getTemplates} from "src/backend-connection/users";
 import Loading from "src/components/Loading";
 import {Table} from "src/components/Table/Table";
 import type {TemplateSummary} from "src/domain/types";
-import {BackButton, NavButton} from "src/components/Buttons/Buttons";
-import React, {useMemo} from "react";
+import {NavButton} from "src/components/Buttons/Buttons";
+import React from "react";
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import {useAuth} from "src/components/AuthProvider";
-import {userSchema} from "src/domain/auth-schemas";
-import type {User} from "src/domain/auth-types";
+import {TemplateType} from "src/domain/schemas";
 
-export function ListTemplates({type}:{type:'public'|'private'|'official'}) {
+export function ListTemplates({type}:{type:TemplateType}) {
 
     const navigate = useNavigate();
     const qC = useQueryClient();
 
     const {user} = useAuth()
 
-    let dispayText :string = ''
+    let dispayText :string
 
     switch (type){
         case "public":
@@ -69,8 +68,8 @@ export function ListTemplates({type}:{type:'public'|'private'|'official'}) {
                                                     style={{width:'100%', boxSizing:'border-box'}}/>
                     }
                     {
-                        (type=='private' || (type=='official' && user?.is_admin)) &&
-                        <NavButton to={"/templates/create" + (type==='official'?'/official':'')} style={{height: '3rem', aspectRatio: '1/1'}}>
+                        (type=='private' || (type===TemplateType.OFFICIAL && user?.isAdmin)) &&
+                        <NavButton to={"/templates/create" + (type===TemplateType.OFFICIAL?'/official':'')} style={{height: '3rem', aspectRatio: '1/1'}}>
                             +
                         </NavButton>
                     }

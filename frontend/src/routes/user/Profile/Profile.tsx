@@ -1,6 +1,6 @@
-import {Link, useNavigate, useOutletContext, useParams} from "react-router-dom";
-import React, {use, useEffect, useMemo, useState} from "react";
-import {getForms, getTemplates, getUserData, getUserDataAndStats} from "src/backend-connection/users";
+import {useNavigate, useParams} from "react-router-dom";
+import React from "react";
+import {getUserDataAndStats} from "src/backend-connection/users";
 
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -13,7 +13,7 @@ import Loading from "src/components/Loading";
 import {useAuth} from "src/components/AuthProvider";
 
 import {log} from "src/utilities";
-import type {User, UserStats} from "src/domain/auth-types";
+import type {User, UserStats} from "src/domain/auth/types";
 
 
 function ProfileEntry ({text, value}:{text:string, value:string}) {

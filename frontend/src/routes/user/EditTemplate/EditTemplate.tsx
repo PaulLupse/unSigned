@@ -5,11 +5,11 @@ import {
     useFieldArray,
 } from "react-hook-form";
 import {updateTemplate} from "src/backend-connection/users";
-import type {NewForm, Template} from "src/domain/types";
-import type {TextQuestion, GridQuestion} from "src/domain/types";
+import type {NewForm, QuestionUnion, Template} from "src/domain/types";
+import type {TextQuestion} from "src/domain/types";
 import {useNavigate, useOutletContext} from "react-router-dom";
 
-import {newFormSchema, templateSchema} from "src/domain/schemas";
+import {newFormSchema, QuestionType, templateSchema} from "src/domain/schemas";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
@@ -21,9 +21,6 @@ import 'src/components/Form/QuestionDisplayer/QuestionDisplayer.module.css'
 import * as style from './EditTemplate.module.css'
 import {FixedElement} from "src/components/FixedElement/FixedElement"
 import {NavButton} from "src/components/Buttons/Buttons";
-
-import {log} from "src/utilities";
-import type {User} from "src/domain/auth-types";
 
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
@@ -41,10 +38,10 @@ export default function EditForm() {
     }
 
     const {register, formState:{errors}, handleSubmit, control, watch} =
-        useForm<NewForm>({defaultValues:{questions:parseResult.data?.questions, name:parseResult.data?.name}});
+        useForm<NewForm>({defaultValues:{elements:parseResult.data?.elements, name:parseResult.data?.name}});
 
-    const {append, update, remove, swap} = useFieldArray({control, name:'questions'});
-    const formQuestions = watch("questions");
+    const {append, update, remove, swap} = useFieldArray({control, name:'elements'});
+    const formQuestions = watch("elements");
 
     const {mutate} = useMutation({
         mutationFn:updateTemplate,
@@ -60,7 +57,7 @@ export default function EditForm() {
 
 
     const addQuestion = ():number => {
-        const newQuestion:TextQuestion = {text:"", type:"text", maxChars:30, isOptional:false}
+        const newQuestion:TextQuestion = {text:"", questionType:QuestionType.TEXT, maxChars:30, isOptional:false}
         append(newQuestion);
         return formQuestions.length;
     }
@@ -70,7 +67,7 @@ export default function EditForm() {
             swap(q1Index, q2Index)
     }
 
-    const saveQuestionChanges = (questionIndex:number, questionOptions:TextQuestion|GridQuestion) => {
+    const saveQuestionChanges = (questionIndex:number, questionOptions:QuestionUnion) => {
         update(questionIndex, questionOptions);
     }
 
@@ -80,10 +77,9 @@ export default function EditForm() {
 
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
 
-        log(data);
         const newForm:NewForm = newFormSchema.parse({
                                 name:data.name,
-                                questions:data.questions,
+                                questions:data.elements,
                             })
         mutate({newTemplateData:newForm, templateId:parseResult.data?parseResult.data.id:''});
     }
@@ -93,7 +89,7 @@ export default function EditForm() {
             <form id={"barosan"} className={style.formFrame} onSubmit={handleSubmit(createNewForm)} style={{width:'100%'}}>
                 <FormEditor register={register}
                             errors={errors}
-                            formQuestions={formQuestions}
+                            formElements={formQuestions}
                             addNewQuestion={addQuestion}
                             saveQuestion={saveQuestionChanges}
                             deleteQuestion={deleteQuestion}

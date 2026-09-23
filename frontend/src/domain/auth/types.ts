@@ -5,7 +5,7 @@ import {
     userDataWithStatsSchema,
     userSchema,
     userStatsSchema
-} from "src/domain/auth-schemas";
+} from "src/domain/auth/schemas";
 import {z} from "zod";
 
 export type Credentials = z.infer<typeof credentialsSchema>

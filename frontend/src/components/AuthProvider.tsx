@@ -1,9 +1,8 @@
-import React, {type Context, createContext, useContext, useEffect, useState} from "react";
+import React, {createContext, useContext} from "react";
 
 import {useQuery} from "@tanstack/react-query";
 import {getCurrentUserData} from "src/backend-connection/auth";
-import toast from "react-hot-toast";
-import type {User} from "src/domain/auth-types";
+import type {User} from "src/domain/auth/types";
 
 type AuthDetails = {
     user?:User

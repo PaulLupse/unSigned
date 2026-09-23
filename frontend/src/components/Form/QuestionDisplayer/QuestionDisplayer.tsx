@@ -1,16 +1,17 @@
 // acest script contine componente folosite pentru afisarea intrebarilor
 
-import type {GridQuestion, TextQuestion} from "src/domain/types";
+import type {GridQuestion, QuestionUnion, TextQuestion} from "src/domain/types";
 import React, {useMemo} from "react";
 
 import * as style from './QuestionDisplayer.module.css'
-import type {FieldErrors, UseFormRegister, UseFormReset, UseFormResetField} from "react-hook-form";
+import type {FieldErrors, UseFormRegister, UseFormResetField} from "react-hook-form";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
+import {log} from "src/utilities";
 
 
 interface QuestionProps {
     index:number
-    question:TextQuestion|GridQuestion
+    question:QuestionUnion
     register?:UseFormRegister<any>
 }
 
@@ -75,7 +76,7 @@ export function QuestionComponent({question, index, register}:QuestionProps) {
             </p>
 
             {
-               question.type=='text'?
+               question.questionType=='text'?
                    <TextQuestionComponent question={question} index={index} register={register}/>
                    :
                    <GridQuestionComponent question={question} index={index} register={register}/>
@@ -92,7 +93,7 @@ export function QuestionComponent({question, index, register}:QuestionProps) {
 }
 
 export interface DisplayQuestionProps {
-    question:TextQuestion|GridQuestion
+    question:QuestionUnion
     index:number
     register?:UseFormRegister<any>
     errors?:FieldErrors<any>

@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react'
+import React from 'react'
 import {Menu, MenuItem} from "@mui/material";
 import * as style from './FloatinMenu.module.css'
 

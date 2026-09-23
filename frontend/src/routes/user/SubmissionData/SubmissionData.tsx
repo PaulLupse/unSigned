@@ -1,7 +1,8 @@
 import type {
+    AnswerUnion,
     FormInfo,
     GridAnswer,
-    GridQuestion, GridQuestionStatistic,
+    GridQuestion, GridQuestionStatistic, QuestionStatisticUnion, QuestionUnion,
     Submission,
     TextAnswer,
     TextQuestion,
@@ -12,13 +13,14 @@ import React, {useEffect, useState} from "react";
 import {useQuery} from "@tanstack/react-query";
 import {getFormSubmissionData} from "src/backend-connection/users";
 import {FixedElement} from "src/components/FixedElement/FixedElement";
-import {BackButton, NavButton} from "src/components/Buttons/Buttons";
+import {NavButton} from "src/components/Buttons/Buttons";
 import * as style from './SubmissionData.module.css'
 import * as questionDisplayerStyle from 'src/components/Form/QuestionDisplayer/QuestionDisplayer.module.css'
 
 import 'src/components/Form/CommonFormStyle.css'
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import Loading from "src/components/Loading";
+import {ElemType, QuestionType} from "src/domain/schemas";
 
 function TextAnswerDisplayComponent({answer}:{answer:TextAnswer}) {
     return (
@@ -47,16 +49,19 @@ function GridAnswerDisplayComponent({answer, question}:{answer:GridAnswer, quest
     )
 }
 
-function AnswerList({submission, questions}:{submission:Submission, questions:Array<TextQuestion|GridQuestion>}) {
+function AnswerList({submission, questions}:{submission:Submission, questions:Array<QuestionUnion>}) {
 
     return (
         submission.answers.map(
-            (answer:TextAnswer|GridAnswer, answerIndex) => {
+            (answer:AnswerUnion, answerIndex) => {
 
                 if(!questions[answerIndex]) {
                     throw new Error("Too many answers!");
                 }
                 const question = questions[answerIndex];
+
+                if (question.questionType !== answer.type)
+                    throw new Error("Question and answer types not matching.")
 
                 return (
                     <li className={style.answer}>
@@ -64,11 +69,11 @@ function AnswerList({submission, questions}:{submission:Submission, questions:Ar
                             {questions[answerIndex]?.text}
                         </p>
                         {
-                            answer.type=='text' &&
+                            answer.type==QuestionType.TEXT &&
                                 <TextAnswerDisplayComponent answer={answer}/>
                         }
                         {
-                            answer.type=='grid'  &&  question.type == 'grid' &&
+                            answer.type===QuestionType.GRID  && question.questionType===QuestionType.GRID &&
                                 <GridAnswerDisplayComponent answer={answer} question={question}/>
                         }
 
@@ -117,7 +122,7 @@ function IndividualDisplay({submissions, questions}:{submissions:Submission[], q
     )
 }
 
-function TextAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic:TextQuestionStatistic, question:TextQuestion|GridQuestion}) {
+function TextAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic:TextQuestionStatistic, question:QuestionUnion}) {
     return (
         <div className={style.textStatDisp}>
             <div className={style.element}>
@@ -163,7 +168,7 @@ function GridAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic
     )
 }
 
-function AnswerStatisticDisplay({answerStatistic, question, index}:{answerStatistic:TextQuestionStatistic|GridQuestionStatistic, question:TextQuestion|GridQuestion, index:number}) {
+function AnswerStatisticDisplay({answerStatistic, question, index}:{answerStatistic:QuestionStatisticUnion, question:QuestionUnion, index:number}) {
 
     return (
         <li className={questionDisplayerStyle.question}>
@@ -180,11 +185,11 @@ function AnswerStatisticDisplay({answerStatistic, question, index}:{answerStatis
             </div>
             <hr color={'gray'}/>
             {
-                answerStatistic.type == 'text' && question.type == 'text' &&
+                answerStatistic.type == 'text' && question.questionType == 'text' &&
                     <TextAnswerStatisticDisplay answerStatistic={answerStatistic} question={question} />
             }
             {
-                answerStatistic.type == 'grid'  && question.type == 'grid' &&
+                answerStatistic.type == 'grid'  && question.questionType == 'grid' &&
                     <GridAnswerStatisticDisplay answerStatistic={answerStatistic} question={question} />
             }
         </li>
@@ -192,8 +197,8 @@ function AnswerStatisticDisplay({answerStatistic, question, index}:{answerStatis
 }
 
 function StatisticDisplay({statisticData, questions}:
-                          {statisticData:Array<TextQuestionStatistic|GridQuestionStatistic>,
-                              questions:Array<TextQuestion|GridQuestion>}) {
+                          {statisticData:Array<QuestionStatisticUnion>,
+                              questions:Array<QuestionUnion>}) {
 
     return (
         <ol style={{padding:'10px'}}>
@@ -201,7 +206,7 @@ function StatisticDisplay({statisticData, questions}:
                 statisticData.map((ansStat, index)=>{
                     return(
                         <AnswerStatisticDisplay answerStatistic={ansStat}
-                                                question={questions[index] as TextQuestion|GridQuestion}
+                                                question={questions[index] as QuestionUnion}
                                                 index={index}/>
                     )
                 })
@@ -217,10 +222,10 @@ export function SubmissionData() {
     const form: FormInfo = useOutletContext();
 
     let submissions;
-    let questions:Array<TextQuestion|GridQuestion>;
+    let questions:Array<QuestionUnion>;
 
     submissions = form.submissions;
-    questions = form.questions;
+    questions = form.elements.filter(element=>element.elemType===ElemType.QUESTION);
 
     const statisticData = useQuery({
         queryFn:async()=>getFormSubmissionData(form.id),

@@ -4,12 +4,12 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {addForm, createTemplate} from "src/backend-connection/users";
-import type {NewForm} from "src/domain/types";
-import type {TextQuestion, GridQuestion} from "src/domain/types";
-import {useLocation, useNavigate} from "react-router-dom";
+import {createTemplate} from "src/backend-connection/users";
+import type {NewForm, QuestionUnion} from "src/domain/types";
+import type {TextQuestion} from "src/domain/types";
+import {useNavigate} from "react-router-dom";
 
-import {newFormSchema} from "src/domain/schemas";
+import {ElemType, newFormSchema, QuestionType} from "src/domain/schemas";
 import {useMutation} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
@@ -36,9 +36,9 @@ export default function TemplateCreator() {
 
     const [loadingProgress, setLoadingProgress] = React.useState(false)
 
-    const {register, formState:{errors}, handleSubmit, control, watch, getValues, setValue} = useForm<NewForm>({defaultValues:{questions:[], name:'New template'}});
-    const {append, update, remove, swap} = useFieldArray({control, name:'questions'});
-    const formQuestions = watch("questions");
+    const {register, formState:{errors}, handleSubmit, control, watch, getValues, setValue} = useForm<NewForm>({defaultValues:{elements:[], name:'New template'}});
+    const {append, update, remove, swap} = useFieldArray({control, name:'elements'});
+    const formElements = watch("elements");
     const [isOfficial, setIsOfficial] = useState(false)
 
     const {mutate, isPending} = useMutation({
@@ -76,7 +76,7 @@ export default function TemplateCreator() {
         if(progress) {
             const parseResult = newFormSchema.safeParse(JSON.parse(progress))
             if (parseResult.success) {
-                setValue("questions", parseResult.data.questions);
+                setValue("elements", parseResult.data.elements);
                 setValue("name", parseResult.data.name);
             }
         }
@@ -85,17 +85,23 @@ export default function TemplateCreator() {
 
 
     const addQuestion = ():number => {
-        const newQuestion:TextQuestion = {text:`Question #${formQuestions.length+1}`, type:"text", maxChars:30, isOptional:false}
+        const newQuestion:TextQuestion = {
+            text:`Question #${formElements.length+1}`,
+            elemType: ElemType.QUESTION,
+            questionType:QuestionType.TEXT,
+            maxChars:30,
+            isOptional:false
+        }
         append(newQuestion);
-        return formQuestions.length;
+        return formElements.length;
     }
 
     const swapQuestions = (q1Index:number, q2Index:number)=>{
-        if (q1Index >= 0  &&  q2Index >= 0 && q1Index < formQuestions.length && q2Index < formQuestions.length)
+        if (q1Index >= 0  &&  q2Index >= 0 && q1Index < formElements.length && q2Index < formElements.length)
             swap(q1Index, q2Index)
     }
 
-    const saveQuestionChanges = (questionIndex:number, questionOptions:TextQuestion|GridQuestion) => {
+    const saveQuestionChanges = (questionIndex:number, questionOptions:QuestionUnion) => {
         update(questionIndex, questionOptions);
     }
 
@@ -108,7 +114,7 @@ export default function TemplateCreator() {
         log(data);
         const newForm:NewForm = newFormSchema.parse({
                                 name:data.name,
-                                questions:data.questions,
+                                questions:data.elements,
                             })
         mutate({templateData:newForm, type:isOfficial?'official':undefined});
     }
@@ -121,7 +127,7 @@ export default function TemplateCreator() {
                                      style={{width: '100%'}}>
                 <FormEditor register={register}
                             errors={errors}
-                            formQuestions={formQuestions}
+                            formElements={formElements}
                             addNewQuestion={addQuestion}
                             saveQuestion={saveQuestionChanges}
                             deleteQuestion={deleteQuestion}
@@ -137,7 +143,7 @@ export default function TemplateCreator() {
                     </BackButton>
 
                     {
-                        user && (user.is_admin) &&
+                        user && (user.isAdmin) &&
                         <Checkbox text={"Official"}
                               checked={isOfficial}
                               setChecked={setIsOfficial}

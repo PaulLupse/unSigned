@@ -6,18 +6,18 @@ import {
 import {useOutletContext} from "react-router-dom";
 import {useForm} from "react-hook-form";
 import type {SubmitHandler} from "react-hook-form";
-import React, {use, useEffect} from "react";
-import {gridAnswerSchema, textAnswerSchema} from 'src/domain/schemas'
+import React, {useEffect} from "react";
+import {ElemType, gridAnswerSchema, QuestionType, textAnswerSchema} from 'src/domain/schemas'
 
 import {useKey, submitForm, checkFormId, checkKey} from "src/backend-connection/sub-users";
-import type {FormInfo, GridQuestion, Submission, TextQuestion} from "src/domain/types";
+import type {FormInfo, Submission} from "src/domain/types";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import toast, {Toaster} from "react-hot-toast";
 import SubUsersNavBar from "src/components/NavBar/SubUsersNavBar";
 import * as style from './SubUsersMain.module.css'
 import {FixedElement} from "src/components/FixedElement/FixedElement";
-import {BackButton, NavButton} from "src/components/Buttons/Buttons";
+import {BackButton} from "src/components/Buttons/Buttons";
 import {FormDisplayer} from "src/components/Form/FormDisplayer";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {useAlert} from "src/components/AlertProvider";
@@ -38,7 +38,7 @@ function parseData(data:any, form:FormInfo):Submission {
     for(const [key, value] of answers.entries()) {
 
         submission.answers.push(
-            form.questions[key]?.type == 'text' ?
+            form.elements.filter(e=>e.elemType===ElemType.QUESTION)[key]?.questionType == QuestionType.TEXT ?
                 textAnswerSchema.parse({text: value, type:'text'})
                 :
                 gridAnswerSchema.parse({choices: value?parseGridChoices([...value]):[], type:'grid'})
@@ -96,7 +96,7 @@ export function ShowFormComponent() {
         :
 
         <form id={"barosan"} onSubmit={handleSubmit(onSubmit)} className={style.formFrame}>
-            <FormDisplayer name={data.name} questions={data.questions} register={register} errors={errors} resetField={resetField}/>
+            <FormDisplayer name={data.name} elements={data.elements} register={register} errors={errors} resetField={resetField}/>
         </form>
         }
 

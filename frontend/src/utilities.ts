@@ -1,5 +1,5 @@
 import {forEach} from "lodash";
-import type {Credentials} from "src/domain/auth-types";
+import type {Credentials} from "src/domain/auth/types";
 
 // Wrapper care funcționează ca shorthand pentru log
 export const log = (any:any) => console.log(any)

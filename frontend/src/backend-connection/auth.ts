@@ -6,8 +6,8 @@ import {
 import {fetch} from "src/utilities";
 import {z} from "zod";
 import {BAD_USER_DATA_ERR, REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
-import {emailSchema, userSchema} from "src/domain/auth-schemas";
-import type {RegisterData, User} from "src/domain/auth-types";
+import {emailSchema, userSchema} from "src/domain/auth/schemas";
+import type {RegisterData, User} from "src/domain/auth/types";
 
 // Cere un jeton de access (jwt).
 // Returneaza un obiect response cu detaliile de autorizare.

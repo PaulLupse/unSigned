@@ -1,5 +1,5 @@
 import React from "react";
-import {getValue, validateKey} from "src/utilities";
+import {validateKey} from "src/utilities";
 import type {pair} from "src/utilities";
 import './table.css'
 

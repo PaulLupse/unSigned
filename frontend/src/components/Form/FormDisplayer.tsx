@@ -1,36 +1,38 @@
 import React from "react";
-import type {GridQuestion,TextQuestion} from "../../domain/types";
+import type {FormElementUnion, QuestionUnion} from "src/domain/types";
 import {QuestionDisplayer} from "./QuestionDisplayer/QuestionDisplayer";
 
 import "./CommonFormStyle.css"
-import type {Field, FieldErrors, UseFormRegister, UseFormReset, UseFormResetField} from "react-hook-form";
-import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
+import type {FieldErrors, UseFormRegister, UseFormResetField} from "react-hook-form";
+import {ElemType} from "src/domain/schemas";
+import {log} from "src/utilities";
 
 
 interface QuestionListProps {
-    questions:Array<TextQuestion|GridQuestion>
+    elements:Array<FormElementUnion>
     register?:UseFormRegister<any>
     errors?:FieldErrors<any>
     resetField?:UseFormResetField<any>
 }
 
-function QuestionList({questions, register, errors, resetField}:QuestionListProps) {
+function ElementList({elements, register, errors, resetField}:QuestionListProps) {
     return (
         <ol className={'question-list'}>
             {
-                questions.length > 0 ?
-                    questions.map(
-                        (question: TextQuestion | GridQuestion, index: number) => {
-                            return (
-                                <>
-                                    <QuestionDisplayer key={index}
-                                                       question={question}
-                                                       index={index}
-                                                       register={register}
-                                                       errors={errors}
-                                                       resetField={resetField}/>
-                                </>
-                            )
+                elements.length > 0 ?
+                    elements.map(
+                        (element: FormElementUnion, index: number) => {
+
+                            if (element.elemType === ElemType.QUESTION) {
+
+                                return  <QuestionDisplayer key={index}
+                                                           question={element}
+                                                           index={index}
+                                                           register={register}
+                                                           errors={errors}
+                                                           resetField={resetField}/>
+
+                            }
                         }
                     ) :
                     <div style={{display: 'flex', justifyContent: 'center'}}>
@@ -45,13 +47,13 @@ function QuestionList({questions, register, errors, resetField}:QuestionListProp
 
 interface FormDisplayerProps {
     name:string
-    questions:Array<GridQuestion|TextQuestion>
+    elements:Array<FormElementUnion>
     register?:UseFormRegister<any>
     errors?:FieldErrors<any>
     resetField?:UseFormResetField<any>
 }
 
-export function FormDisplayer({name, questions, register, errors, resetField}:FormDisplayerProps) {
+export function FormDisplayer({name, elements, register, errors, resetField}:FormDisplayerProps) {
 
     return (
         <div className={'form'}>
@@ -62,7 +64,7 @@ export function FormDisplayer({name, questions, register, errors, resetField}:Fo
                 </h2>
             </div>
 
-            <QuestionList questions={questions}
+            <ElementList elements={elements}
                           register={register}
                           errors={errors}
                           resetField={resetField} />

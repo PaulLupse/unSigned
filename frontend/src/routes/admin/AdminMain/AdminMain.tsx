@@ -1,5 +1,4 @@
 import React from "react";
-import Loading from "src/components/Loading";
 import * as style from './AdminMain.module.css'
 import {Outlet} from "react-router-dom";
 

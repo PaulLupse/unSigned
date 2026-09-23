@@ -11,8 +11,6 @@ import {deleteTemplate} from "src/backend-connection/users";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {useAuth} from "src/components/AuthProvider";
-import {userSchema} from "src/domain/auth-schemas";
-import type {User} from "src/domain/auth-types";
 
 export default function DisplayTemplate() {
 
@@ -46,7 +44,7 @@ export default function DisplayTemplate() {
     return (
         <div className={style.formFrame}>
 
-            <FormDisplayer name={template.name} questions={template.questions} />
+            <FormDisplayer name={template.name} elements={template.elements} />
 
             <FixedElement>
                 <ButtonBar>

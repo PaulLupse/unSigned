@@ -1,7 +1,7 @@
 import React, {StrictMode, useState} from 'react'
 import {createRoot} from "react-dom/client";
 import {BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate} from "react-router-dom";
-import {QueryCache, QueryClient, QueryClientProvider, useQuery} from "@tanstack/react-query";
+import {QueryCache, QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import {AlertProvider} from "./components/AlertProvider";
 
 
@@ -43,8 +43,8 @@ import Loading from "src/components/Loading";
 import {LoadingOverlayProvider} from "src/components/LoadingOverlayProvider";
 import {GoogleOAuthProvider} from "@react-oauth/google";
 import {AuthProvider, useAuth} from "src/components/AuthProvider";
-import {getCurrentUserData} from "src/backend-connection/auth";
 import {MeRedirect} from "src/components/MeRedirect";
+import {QuestionType, TemplateType} from "src/domain/schemas";
 
 
 
@@ -119,7 +119,7 @@ function RoutingLayout () {
                     <Route path='user/:username' >
                         <Route index element={<Profile />} />
                         <Route path='forms' element={<ListForms />} />
-                        <Route path='templates' element={<ListTemplates type={'private'} />} />
+                        <Route path='templates' element={<ListTemplates type={TemplateType.PRIVATE} />} />
                     </Route>
 
                     <Route path={'form/:formId'} element={<Form />}>
@@ -136,8 +136,8 @@ function RoutingLayout () {
 
                     <Route path='templates' >
                         <Route index element={<TemplatesMenu />} />
-                        <Route path={"official"} element={<ListTemplates type={"official"} />} />
-                        <Route path={"public"} element={<ListTemplates type={"public"} />}  />
+                        <Route path={"official"} element={<ListTemplates type={TemplateType.OFFICIAL} />} />
+                        <Route path={"public"} element={<ListTemplates type={TemplateType.PUBLIC} />}  />
                         <Route path={'create'} element={<TemplateCreator />}/>
                     </Route>
                 </Route>
@@ -158,7 +158,7 @@ function RoutingLayout () {
 
 window.onload = ()=>{
     const rootDiv:HTMLDivElement = document.getElementById("root") as HTMLDivElement
-    const root = createRoot(rootDiv);
+    const root = createRoot(rootDiv)
 
     root.render(
         <StrictMode>
