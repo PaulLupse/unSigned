@@ -12,26 +12,61 @@ Rularea proiectului se poate efectua în două metode:
 - Containerizat, folosind docker
 
 
-
 Întrucât aplicația se folosește de variabile de mediu (environment variables), care nu sunt distribuite alături de codul
 sursă și fișierele de configurație, este necesară setarea următoarelor variabile de mediu:
 
-    SECURE_JWT_KEY
-    SECURE_PYSETO_KEY
-    BACKEND_ADDRESS
-    FRONTEND_PORT
-    JWT_ALG
-    DB_ADDRESS
+    
     SENDER_EMAIL
     GMAIL_APP_PASSWORD
+    GOOGLE_CLIENT_ID
+    GOOGLE_CLIENT_SECRET
+    SECURE_JWT_KEY
+    JWT_ALG
+    SECURE_PYSETO_KEY
+    ACCESS_TOKEN_LIFESPAN_MINUTES
+    REFRESH_TOKEN_LIFESPAN_DAYS
 
-1) SECURE_JWT_KEY: o cheie de 256 de biți, sub format hexazecimal
-2) SECURE_PYSETO_KEY: o cheie de 256 de biți, sub format hexazecimal
-3) BACKEND_ADDRESS: adresa server-ului FastAPI (default http://127.0.0.1:8000)
-4) JWT_ALG: algoritmul pt semnarea JWT-ului
-5) DB_ADDRESS: adresa bazei de date, în acest caz MongoDB (de regulă mongodb://localhost:27017/)
-6) SENDER_EMAIL: adresa care trimite email-urile având cheile de acces. Email-ul trebuie să fie gmail și contul gmail trebuie să aibă pornită autentificarea în doi pași
-7) GMAIL_APP_PASSWORD: parola de aplicație, configurată în contul google
+    DB_ADDRESS
+    FRONTEND_PORT
+    BACKEND_ADDRESS
+
+1) _SECURE_JWT_KEY_: o cheie de 256 de biți, sub format hexazecimal
+2) _SECURE_PYSETO_KEY_: o cheie de 256 de biți, sub format hexazecimal
+3) _BACKEND_ADDRESS_: adresa server-ului FastAPI 
+4) _JWT_ALG_: algoritmul pt semnarea JWT-urilor
+5) _DB_ADDRESS_: adresa bazei de date, în acest caz MongoDB (de regulă mongodb://localhost:27017/)
+6) _SENDER_EMAIL_: adresa care trimite email-urile având cheile de acces. Email-ul trebuie să fie gmail și contul gmail trebuie să aibă pornită autentificarea în doi pași
+7) _GMAIL_APP_PASSWORD_: parola de aplicație, configurată în contul google
+8) _GOOGLE_CLIENT_ID_: id-ul clientului google, pentru implementarea autentificării automate prin google
+9) _GOOGLE_CLIENT_SECRET_: secret-ul clientului google, pentru implementarea autentificării automate prin google
+10) _ACCESS_TOKEN_LIFESPAN_MINUTES_: Durata de viață a unui token de autentificare, exprimată în minute
+11) _REFRESH_TOKEN_LIFESPAN_DAYS_: Durata de viață a unui token de refresh, exprimată în zile
+
+Variabilele ce țin de conectivitate nu sunt necesare pentru rularea containerizată.
+
+## Rulare containerizată
+
+Rularea containerizată presupune capacitatea de a rula containere Docker pe mașina dorită, necesitând anumite elemente:
+docker engine, docker CLI, WSL (În cazul rulării în Windows), Docker Desktop (opțional). 
+
+Rularea containerizată se folosește de fișiere Dockerfiles custom pentru serviciile de backend și frontend
+și de imaginea docker pentru mongodb; aceste servicii sunt conectate prin intermediul docker compose, având mai mule 
+configurații:
+
+- Dezvoltare (dev): Se folosește de webpack-dev-server pentru servirea resurselor specifice frontend-ului
+- Producție (prod) (WIP): Se folosește de nginx pentru servirea resurselor specifice frontend-ului
+
+În ambele dintre cazuri, rularea se realizează prin intermediul a câte unei linii de comandă specifice:
+
+- Dezvoltare:
+
+    docker compose -f docker-compose.dev.yaml -f docker-compose.yaml up -d --build
+
+- Producție:
+
+    docker compose -f docker-compose.prod.yaml -f docker-compose.yaml up -d --build
+
+## Rulare clasică
 
 ### Rularea serverului de backend
 

@@ -31,7 +31,6 @@ services:
 networks:
   proiect-chestionare:
     driver: bridge
-    external: true
 
 volumes:
   proiect-chestionare-db: # folosit la baza de date
