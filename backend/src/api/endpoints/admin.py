@@ -8,7 +8,6 @@ from src.domain.auth import User
 from src.db.DBConnector import DBConnector, get_db
 from src.db.DBResult import DBResult
 from src.domain.models import NewForm, NewTemplate
-from src.api.requests import EditFormRequest
 
 router:APIRouter = APIRouter(prefix="/admin",
                              tags=['admin'])
@@ -33,16 +32,14 @@ async def create_official_template(new_template:NewTemplate, user:Annotated[User
 
 
 @router.put("/official-templates/{template_id}/edit", status_code=200)
-async def edit_official_template(template_id:str, edit_template_request:EditFormRequest, user:Annotated[User, Depends(authenticate)]):
+async def edit_official_template(template_id:str, edit_template_request:NewTemplate, user:Annotated[User, Depends(authenticate)]):
 
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Unauthorized.")
 
     result: DBResult = db_connector.edit_template(
         template_id = template_id,
-        new_name=edit_template_request.name,
-        new_questions=edit_template_request.questions,
-        user=user
+        new_template_data=edit_template_request
     )
 
     if result.status != 200:

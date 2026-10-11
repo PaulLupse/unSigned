@@ -5,10 +5,13 @@
 Acest proiect este menit pentru a dezvolta un serviciu de creare și completare a unor formulare complet anonime, oferind 
 o interfață utilizarilor prin intermediul unui site web. 
 
-## Rulare proiect (outdated)
+## Rulare proiect
 
-Rularea proiectului necesită rularea a două servere: cel de backend (FastAPI & Uvicorn) și cel web (Node.js &
-Webpack dev server).
+Rularea proiectului se poate efectua în două metode:
+- Clasic, rulând fiecare server în parte (frontend, backend, mongodb)
+- Containerizat, folosind docker
+
+
 
 Întrucât aplicația se folosește de variabile de mediu (environment variables), care nu sunt distribuite alături de codul
 sursă și fișierele de configurație, este necesară setarea următoarelor variabile de mediu:

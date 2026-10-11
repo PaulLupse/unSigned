@@ -2,11 +2,11 @@ import React from "react";
 import {useQuery} from "@tanstack/react-query";
 import {getTemplate} from "src/backend-connection/users";
 import {Outlet, useParams} from "react-router-dom";
-import type {Template} from "src/domain/types";
 import Loading from "src/components/Loading";
+import type {Template} from "src/client/types.gen";
 
 
-export default function Template() {
+export default function TemplateComponent() {
 
     const templateId = useParams().templateId as string;
 

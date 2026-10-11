@@ -11,9 +11,11 @@
   "contributors": [],
   "scripts": {
     "build": "webpack",
-    "dev": "webpack serve --mode development --host 0.0.0.0 --port 3000"
+    "dev": "webpack serve --mode development --host 0.0.0.0 --port 3000",
+    "gen:api": "openapi-ts"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "0.99.0",
     "@types/lodash": "^4.17.24",
     "@types/node": "^26.4.0",
     "@types/react-spinner": "^0.2.4",

@@ -10,8 +10,9 @@ import * as style from "./credential-form.module.css"
 import {ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
 import toast from "react-hot-toast";
 import {login} from "src/backend-connection/auth";
-import {credentialsSchema} from "src/domain/auth/schemas";
-import type {Credentials} from "src/domain/auth/types";
+
+import {zCredentials} from "src/auth/schemas";
+import type {Credentials} from "src/auth/types";
 
 // Componenta ce expune un formular de autentificare.
 export function LoginForm() {
@@ -25,7 +26,7 @@ export function LoginForm() {
         handleSubmit,
         formState:{errors},
         setError} = useForm<Credentials>(
-            {resolver:zodResolver(credentialsSchema)}
+            {resolver:zodResolver(zCredentials)}
         )
 
     const submitButton = useRef<HTMLButtonElement>(null);

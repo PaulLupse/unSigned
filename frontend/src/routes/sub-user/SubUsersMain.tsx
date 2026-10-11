@@ -7,10 +7,9 @@ import {useOutletContext} from "react-router-dom";
 import {useForm} from "react-hook-form";
 import type {SubmitHandler} from "react-hook-form";
 import React, {useEffect} from "react";
-import {ElemType, gridAnswerSchema, QuestionType, textAnswerSchema} from 'src/domain/schemas'
 
 import {useKey, submitForm, checkFormId, checkKey} from "src/backend-connection/sub-users";
-import type {FormInfo, Submission} from "src/domain/types";
+
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import toast, {Toaster} from "react-hot-toast";
@@ -22,6 +21,8 @@ import {FormDisplayer} from "src/components/Form/FormDisplayer";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {useAlert} from "src/components/AlertProvider";
 import Loading from "src/components/Loading";
+import {ElemType, QuestionType, type Form, type Submission} from "src/client/types.gen";
+import {zGridAnswer, zTextAnswer} from "src/client/zod.gen";
 
 interface KeyFormInput {
     key:string
@@ -31,7 +32,7 @@ export function parseGridChoices (choices:string[]) {
     return choices.map(choice=>parseInt(choice))
 }
 
-function parseData(data:any, form:FormInfo):Submission {
+function parseData(data:any, form:Form):Submission {
     const answers:any[] = Object.values(data)
     const submission:Submission = {answers:[]}
 
@@ -39,9 +40,9 @@ function parseData(data:any, form:FormInfo):Submission {
 
         submission.answers.push(
             form.elements.filter(e=>e.elemType===ElemType.QUESTION)[key]?.questionType == QuestionType.TEXT ?
-                textAnswerSchema.parse({text: value, type:'text'})
+                zTextAnswer.parse({text: value, type:'text'})
                 :
-                gridAnswerSchema.parse({choices: value?parseGridChoices([...value]):[], type:'grid'})
+                zGridAnswer.parse({choices: value?parseGridChoices([...value]):[], type:'grid'})
         );
     }
     return submission
@@ -73,7 +74,7 @@ export function ShowFormComponent() {
             nav(`/complete-form/${formId}/done`, {replace:true});
         },
         onError:(error)=>{
-            toast.error("Could not submit error: " + error);
+            toast.error(error.message);
         }
     })
 
@@ -96,7 +97,7 @@ export function ShowFormComponent() {
         :
 
         <form id={"barosan"} onSubmit={handleSubmit(onSubmit)} className={style.formFrame}>
-            <FormDisplayer name={data.name} elements={data.elements} register={register} errors={errors} resetField={resetField}/>
+            <FormDisplayer form={data} register={register} errors={errors} resetField={resetField}/>
         </form>
         }
 

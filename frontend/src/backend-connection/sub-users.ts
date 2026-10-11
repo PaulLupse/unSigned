@@ -1,13 +1,14 @@
-import {type FormInfo, type Submission} from "src/domain/types";
+
 import {z} from 'zod'
-import {formSchema, submissionSchema} from "src/domain/schemas";
 import {fetch} from "src/utilities";
 import {REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
+import {zForm, zSubmission} from "src/client/zod.gen";
+import type {Form, Submission} from "src/client/types.gen";
 
 const UseKeyResponseSchema = z.object(
     {
         message:z.string(),
-        form:formSchema
+        form:zForm
     }
 );
 type UseKeyResponseType = z.TypeOf<typeof UseKeyResponseSchema>;
@@ -50,7 +51,7 @@ export async function checkKey({key, formId}: { key: string, formId: string }):P
 }
 
 // Utilizeaza cheia pentru a obtine formularul
-export async function useKey({k, formId}:{k: string, formId: string}):Promise<FormInfo|undefined> {
+export async function useKey({k, formId}:{k: string, formId: string}):Promise<Form|undefined> {
 
     if (k === '') throw new Error("Please input key again.")
 
@@ -79,7 +80,7 @@ export async function useKey({k, formId}:{k: string, formId: string}):Promise<Fo
 export async function submitForm({key, formId, submission}:{key: string, formId: string, submission: Submission}):Promise<void> {
 
     // verificam daca submission-ul este de forma schemei de submission-uri
-    const parseResult = submissionSchema.safeParse(submission);
+    const parseResult = zSubmission.safeParse(submission);
     if(!parseResult.success) {
         throw new Error("Invalid submission parameters.")
     }

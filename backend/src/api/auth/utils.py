@@ -58,7 +58,7 @@ def generate_refresh_token() -> tuple[str, str]:
 # genereaza o cheie de access pentru un chestionar
 def generate_key(data:Key)->str:
 
-    data.footer.keyId = str(uuid.uuid4())
+    data.footer.key_id = str(uuid.uuid4())
 
     if not data.footer: raise ValueError("No footer")
 
@@ -71,11 +71,11 @@ def decode_key(token:str)->Key|None:
     try:
         decoded = pyseto.decode(keys=paseto_key, token=token.strip(' '))
         payload = json.loads(decoded.payload.decode("utf-8"))
-        key_id = json.loads(decoded.footer.decode("utf-8"))['keyId']
+        key_id = json.loads(decoded.footer.decode("utf-8"))['key_id']
 
         return Key(payload=KeyPayload(form_id=payload['form_id']), footer=KeyFooter(key_id=key_id))
 
     except Exception as e:
         print(token)
-        # print("Could not decode paseto token: " + str(e))
+        print("Could not decode paseto token: " + str(e))
         return None

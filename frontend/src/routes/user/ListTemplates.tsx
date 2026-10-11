@@ -3,12 +3,12 @@ import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {getTemplates} from "src/backend-connection/users";
 import Loading from "src/components/Loading";
 import {Table} from "src/components/Table/Table";
-import type {TemplateSummary} from "src/domain/types";
 import {NavButton} from "src/components/Buttons/Buttons";
 import React from "react";
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import {useAuth} from "src/components/AuthProvider";
-import {TemplateType} from "src/domain/schemas";
+import type {TemplateSummary} from "src/client/types.gen";
+import {TemplateType} from "src/client/types.gen";
 
 export function ListTemplates({type}:{type:TemplateType}) {
 

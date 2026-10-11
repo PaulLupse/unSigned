@@ -10,7 +10,6 @@ from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
 from src.domain.models import TextQuestionStatistic, GridQuestionStatistic
 from src.db.DBResult import DBResult
-from src.api.requests import EditFormRequest
 from src.common import limiter
 from src.api.KeyDistributor import distribute_keys
 from src.domain.auth import User
@@ -27,10 +26,16 @@ class TokenData(BaseModel):
     username:str
 
 
-# Verifica daca utilizatorul este autorizat pentru a accesa chestionarul. Returneaza chestionarul in caz afirmativ.
 def check_form_authorization(
         form_id:str,
         user:Annotated[User, Depends(authenticate)])->Form:
+
+    """
+    Verifica daca utilizatorul este autorizat pentru a accesa chestionarul. Returneaza chestionarul in caz afirmativ.
+    :param form_id: ID-ul formularului
+    :param user: Datele despre utilizator
+    :return: Formularul in discutie
+    """
 
     user_id = user.id
 
@@ -103,7 +108,7 @@ async def get_form(form_id:str,
 @router.put("/{form_id}/edit", dependencies=[Depends(authenticate)], status_code=200)
 @limiter.limit("60/minute")
 async def edit_form(form_id: str,
-                    edit_form_request:EditFormRequest,
+                    edit_form_request: NewForm,
                     user:Annotated[User, Depends(authenticate)],
                     form:Annotated[Form, Depends(check_form_authorization)],
                     request:Request):
@@ -114,9 +119,8 @@ async def edit_form(form_id: str,
             detail="Published forms cannot be edited.")
 
     edit_form_result:DBResult = db_connector.edit_form(
-                                            form_id,
-                                            new_title=edit_form_request.name,
-                                            new_questions=edit_form_request.questions,
+                                            new_form_data=edit_form_request,
+                                            form_id=form_id,
                                             owner_id=user.id)
 
     if edit_form_result.status != 200:

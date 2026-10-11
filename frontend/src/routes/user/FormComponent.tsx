@@ -1,4 +1,4 @@
-import type { FormInfo} from "src/domain/types";
+
 import {getForm} from "src/backend-connection/users";
 import React, {useEffect} from "react";
 
@@ -6,15 +6,17 @@ import React, {useEffect} from "react";
 import {Outlet, useNavigate, useParams} from "react-router-dom";
 import {useQuery} from "@tanstack/react-query";
 import Loading from "src/components/Loading";
+import type {Form} from "src/client/types.gen";
 
-export function Form() {
+
+export function FormComponent() {
 
     const formId = useParams().formId as string;
     const nav = useNavigate();
 
     const {data, isLoading, isError, error} = useQuery({
         queryKey:["form"],
-        queryFn:async():Promise<FormInfo|undefined>=>getForm(formId),
+        queryFn:async():Promise<Form|undefined>=>getForm(formId),
         retry:0,
         refetchOnWindowFocus:false
     })

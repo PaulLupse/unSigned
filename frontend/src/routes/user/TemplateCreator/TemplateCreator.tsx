@@ -5,11 +5,8 @@ import {
     useFieldArray,
 } from "react-hook-form";
 import {createTemplate} from "src/backend-connection/users";
-import type {NewForm, QuestionUnion} from "src/domain/types";
-import type {TextQuestion} from "src/domain/types";
 import {useNavigate} from "react-router-dom";
 
-import {ElemType, newFormSchema, QuestionType} from "src/domain/schemas";
 import {useMutation} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
@@ -26,6 +23,8 @@ import {Checkbox} from "src/components/Checkbox/Checkbox";
 import {useAuth} from "src/components/AuthProvider";
 
 import {log} from "src/utilities";
+import {ElemType, type NewForm, QuestionType, type QuestionUnion, type TextQuestion} from "src/client/types.gen";
+import {zNewForm} from "src/client/zod.gen";
 
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
@@ -48,7 +47,7 @@ export default function TemplateCreator() {
             navigate(`/template/${formId}/view`)
         },
         onError:(error)=>{
-            toast.error("Could not create form. " + error?.message);
+            toast.error(error?.message);
         }
     })
 
@@ -74,7 +73,7 @@ export default function TemplateCreator() {
 
         const progress:string|null = sessionStorage.getItem("savedProgress")
         if(progress) {
-            const parseResult = newFormSchema.safeParse(JSON.parse(progress))
+            const parseResult = zNewForm.safeParse(JSON.parse(progress))
             if (parseResult.success) {
                 setValue("elements", parseResult.data.elements);
                 setValue("name", parseResult.data.name);
@@ -112,7 +111,7 @@ export default function TemplateCreator() {
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
 
         log(data);
-        const newForm:NewForm = newFormSchema.parse({
+        const newForm:NewForm = zNewForm.parse({
                                 name:data.name,
                                 questions:data.elements,
                             })

@@ -1,31 +1,27 @@
 import React from "react";
-import {
-    useForm,
-    type UseFormRegister,
-    type UseFormWatch,
-    type FieldErrors,
-    useFieldArray,
-    type Control,
-    type FieldArrayWithId,
-} from "react-hook-form";
+import {type Control, type FieldErrors, useForm, type UseFormRegister, type UseFormWatch,} from "react-hook-form";
 
+import {z} from "zod"
+import {zodResolver} from '@hookform/resolvers/zod';
 
-import type {
-    QuestionOptions,
-    GridChoice,
-    GridOptions, TextOptions, QuestionUnion
-} from "src/domain/types";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 
-import {gridQuestionSchema, QuestionType, textQuestionSchema} from "src/domain/schemas";
+import {Switch} from "src/components/Switch";
+import {ElemType, type GridQuestion, QuestionType, type QuestionUnion, type TextQuestion} from "src/client/types.gen";
+import { zGridChoice } from "src/domain/schemas";
+import type {GridChoice} from "src/domain/types";
 
-interface QuestionOptionsComponentProps {
-    register:UseFormRegister<QuestionOptions>
-    watch:UseFormWatch<QuestionOptions>
-    control:Control<QuestionOptions>
-    errors:FieldErrors<QuestionOptions>
+interface QuestionOptionsComponentProps<QType extends QuestionUnion> {
+    register:UseFormRegister<QType>
+    watch:UseFormWatch<QType>
+    control:Control<QType>
+    errors:FieldErrors<QType>
 }
 
+/**
+ *   @param action Acțiunea realizată de editorul de element asupra elementului, folosind index-ul și datele despre element.
+ *   @param questionIsNew Funcție ce precizează dacă întrebarea este nou adăugată.
+ */
 interface QuestionEditorProps {
     setQuestionToBeEdited:(questionIndex:number, set:boolean)=>void
     setQuestionNew:(questionIndex:number, set:boolean)=>void
@@ -36,30 +32,25 @@ interface QuestionEditorProps {
     questionData?:QuestionUnion
 }
 
-interface GridQuestionChoiceComponentProps {
-    option:FieldArrayWithId<QuestionOptions, 'specificOptions.choices', 'id'>
-    register:UseFormRegister<QuestionOptions>
+interface GridChoiceComponentProps {
+    choice:GridChoice
     index:number
-    errors:FieldErrors<QuestionOptions>
+    register:UseFormRegister<GridChoices>
+    errors:FieldErrors<GridChoices>
     removeChoice:(optionIndex:number)=>void
 }
 
 // Componenta menita pentru afisarea optiunilor intrebarilor de tip text.
-function TextQuestionOptions(props:QuestionOptionsComponentProps) {
+function TextQuestionOptions(props:QuestionOptionsComponentProps<TextQuestion>) {
     return (
         <div className={'text-question'}>
-
-            <div className={'is-optional'}>
-                <input {...props.register("isOptional")} type='checkbox'/>
-                <label>Optional</label>
-            </div>
-
+            
             <div className={'max-chars'}>
                 <label>
                     Maximum characters:
                 </label>
                 <input data-tooltip-id={'specificOptions.maxChars'}
-                       {...props.register("specificOptions.maxChars",
+                       {...props.register("maxChars",
                            {max: {value:10000,
                                        message:"Answers should not have more than 10000 characters!"}
                            })} defaultValue={30}  type={'number'} />
@@ -70,14 +61,13 @@ function TextQuestionOptions(props:QuestionOptionsComponentProps) {
 }
 
 // Componenta creata pentru a afisa caseta de introducere a unei variante de raspuns al intrebarii grila
-function GridQuestionChoiceComponent ({option, register, removeChoice, index, errors}:GridQuestionChoiceComponentProps) {
+function GridChoiceComponent ({register, removeChoice, index, errors}:GridChoiceComponentProps) {
     return (
-        <li key={option.id} >
+        <li key={index} >
             <div >
-                <input defaultValue={`Choice #${index}`} {...register(`specificOptions.choices.${index}.text`,
-                        {required:'Option cannot be null.'})}
+                <input defaultValue={`Choice #${index}`} {...register(`choices.${index}.text`)}
                        data-tooltip-id={`choices.${index}.text`}
-                        type={'text'}/>
+                       type={'text'}/>
 
                 <FormInputErrorPopup name={`choices.${index+1}.text`} errors={errors} place={'left'} />
 
@@ -89,44 +79,53 @@ function GridQuestionChoiceComponent ({option, register, removeChoice, index, er
     )
 }
 
+const gridChoicesSchema = z.object({
+    choices:z.array(zGridChoice)
+}); type GridChoices = z.infer<typeof gridChoicesSchema>
+
 // Componenta menita pentru afisarea optiunilor intrebarilor de tip grilă.
-function GridQuestionOptions(props:QuestionOptionsComponentProps) {
-
-    // folosim un camp de tip array pentru a inregistra optiunile intrebarii grila
-    const {fields, append, remove} = useFieldArray<QuestionOptions>({control:props.control, name:"specificOptions.choices"})
-
+function GridQuestionOptions(props:QuestionOptionsComponentProps<GridQuestion>) {
+    
+    // Folosim un formular separat pentru variantele de raspuns.
+    // O alternativa ar fii fost folosirea hook-ului useFieldArray, dar dat fiind faptul ca variantele sunt reprezentate
+    // sub forma unui sir de string-uri, ar fii fost nevoie de folosirea unui obiect specific pentru variantele de raspuns,
+    // respectiv al unui nou obiect pentru intrebarea propriu-zisa (care ar fii fost prea complex ca sa merite).
+    const {getValues, register, setValue, formState:{errors}} = useForm<GridChoices>({resolver:zodResolver(gridChoicesSchema)})
+    
+    const currentChoices = getValues("choices")
+    
+    // Adaugă un loc nou de introducere a unei opțiuni
     function addChoice() {
-        append({text:''});
+        const newChoice:GridChoice = {text:`Choice ${currentChoices.length + 1}`}
+        setValue("choices", [...currentChoices, newChoice])
     }
-
-    function removeChoice(optionIndex:number) {
-        remove(optionIndex);
+    
+    // Sterge o opțiune
+    function removeChoice(choiceIndex:number) {
+        const newChoices = currentChoices.splice(choiceIndex, 1)
+        setValue("choices", newChoices)
     }
 
     return (
         <div className={'grid-question'}>
             <div className={'options-frame'}>
-                <div className={'option'}>
-                    <input {...props.register("isOptional")} type='checkbox'/>
-                    <p>Optional</p>
-                </div>
 
                 <div className={'option'}>
-                    <input {...props.register("specificOptions.isMultipleChoice")} type='checkbox'/>
+                    <input {...props.register("isMultipleChoice")} type='checkbox'/>
                     <p>Multiple choice</p>
                 </div>
             </div>
             {
-                fields.length>0 &&
+               currentChoices.length>0 &&
                 <ol>
                     {
-                        fields.map((option, index)=>{
+                        currentChoices.map((choice, index)=>{
                             return (
-                                <GridQuestionChoiceComponent
-                                     option={option}
-                                     register={props.register}
+                                <GridChoiceComponent
+                                     choice={choice}
+                                     register={register}
                                      index={index}
-                                     errors={props.errors}
+                                     errors={errors}
                                      removeChoice={removeChoice} />
                             )
                         })
@@ -144,37 +143,19 @@ function GridQuestionOptions(props:QuestionOptionsComponentProps) {
 }
 
 
-function getDefaultQuestionOptions(questionData:QuestionUnion|undefined, questionIndex:number):QuestionOptions {
-
-    if(questionData) {
-         let specificOptions:GridOptions|TextOptions
-        if (questionData.questionType === QuestionType.GRID) {
-             specificOptions = {
-                 questionType:QuestionType.GRID,
-                 choices:questionData.choices.map(
-                     (choice:string):GridChoice=> {
-                         return {text:choice}
-                     }),
-                 isMultipleChoice: questionData.isMultipleChoice
-             }
-        } else {
-            specificOptions = {
-                questionType:QuestionType.TEXT,
-                maxChars:questionData.maxChars
-            }
-        }
-
+function getDefaultQuestionOptions(questionData:QuestionUnion|undefined, questionIndex:number):QuestionUnion {
+    
+    if (questionData)
+        return questionData
+    else {
         return {
-            text:questionData.text!==''?questionData.text:`Question #${questionIndex+1} text`,
-            isOptional:questionData.isOptional,
-            specificOptions:specificOptions
+            text: `Question #${questionIndex + 1} text`,
+            isOptional: false,
+            maxChars: 30,
+            questionType: QuestionType.TEXT,
+            elemType: ElemType.QUESTION
         }
-    } return {
-        text:`Question #${questionIndex+1} text`,
-        isOptional:false,
-        specificOptions:{questionType:QuestionType.TEXT, maxChars:30}
     }
-
 }
 
 // Componenta ce ofera posibilitatea de a creea o noua intrebare sau de a edita o intrebare existenta
@@ -183,30 +164,18 @@ export function QuestionEditor(props:QuestionEditorProps) {
     // aceasta componenta este si ea un formular a carui folosire creeaza o noua intrebare
     // de fapt, si editarea se realizeaza sub forma de creare a unei intrebari noi, prin inlocuirea optiunilor
     // optiunilor intrebarii cu noi opriuni
-    const {register, formState:{errors}, control, watch, getValues, trigger} = useForm<QuestionOptions>(
+    const {register, formState:{errors}, control, watch, getValues, trigger} = useForm<QuestionUnion>(
         { values:getDefaultQuestionOptions(props.questionData, props.questionIndex),
             mode: "onChange"
         }
     );
 
-    const type = watch('specificOptions.questionType');
+    const type = watch('questionType');
 
     // handler pentru adaugarea unei noi intrebari
-    const submit = async (data:QuestionOptions)=>{
+    const submit = async (data:QuestionUnion)=>{
 
-        let constructedQuestion:any = {text:data.text, isOptional:data.isOptional, type:data.specificOptions.questionType}, question;
-        if(data.specificOptions.questionType==='grid') {
-
-            constructedQuestion.choices=data.specificOptions.choices.map((choice:GridChoice) => choice.text);
-            constructedQuestion.isMultipleChoice=data.specificOptions.isMultipleChoice;
-            question = gridQuestionSchema.parse(constructedQuestion)
-
-        } else {
-            constructedQuestion.maxChars=data.specificOptions.maxChars;
-            question = textQuestionSchema.parse(constructedQuestion)
-        }
-
-        props.action(props.questionIndex, question);
+        props.action(props.questionIndex, data);
     };
 
     return (
@@ -224,19 +193,38 @@ export function QuestionEditor(props:QuestionEditorProps) {
                 <FormInputErrorPopup id={`text${props.questionIndex}`} name={`text`} errors={errors} place={"bottom"}/>
 
                 {/* selector al tipului de intrebare */}
-                <select {...register("specificOptions.questionType")}>
+                <select {...register("questionType")}>
                     <option value='text'>Text Question</option>
                     <option value='grid'>Grid Question</option>
                 </select>
             </div>
-
+            
+            
+            <div className={'option'}>
+                <input {...register("isOptional")} type='checkbox'/>
+                <p>Optional</p>
+            </div>
+            
             {
-                type==='grid' &&
-                <GridQuestionOptions register={register} watch={watch} errors={errors} control={control} />
-            }
-            {
-                type==='text' &&
-                <TextQuestionOptions register={register} watch={watch} errors={errors} control={control} />
+                <Switch<QuestionType> components={[
+                    {
+                        Component:<GridQuestionOptions register={register as UseFormRegister<GridQuestion>}
+                                     watch={watch as UseFormWatch<GridQuestion>}
+                                     errors={errors}
+                                     control={control as Control<GridQuestion>} />,
+                        condition: QuestionType.GRID
+                    },
+                    {
+                        Component:<TextQuestionOptions register={register as UseFormRegister<TextQuestion>}
+                                     watch={watch as UseFormWatch<TextQuestion>}
+                                     errors={errors}
+                                     control={control as Control<TextQuestion>} />,
+                        condition: QuestionType.TEXT
+                    }
+                ]}
+                    switchValue={type}
+                    conditionEvaluator={(a:QuestionType, b:QuestionType)=>{return a === b}}
+                />
             }
 
             <div className={'button-bar'}>

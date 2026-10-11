@@ -6,7 +6,7 @@ import {AlertProvider} from "./components/AlertProvider";
 
 
 import FormCreator from "./routes/user/FormCreator/FormCreator";
-import {Form} from "./routes/user/Form";
+import {FormComponent} from "./routes/user/FormComponent";
 import {DisplayFrom} from "./routes/user/DisplayForm/DisplayForm";
 import {SubmissionData} from "./routes/user/SubmissionData/SubmissionData";
 import
@@ -28,7 +28,7 @@ import {Profile} from "./routes/user/Profile/Profile";
 
 import './routes/user/Presentation/Presentation.module.css'
 import EditForm from "./routes/user/EditForm/EditForm";
-import Template from "./routes/user/Template";
+import TemplateComponent from "./routes/user/TemplateComponent";
 import DisplayTemplate from "./routes/user/DisplayTemplate/DisplayTemplate";
 import EditTemplate from "./routes/user/EditTemplate/EditTemplate";
 import {Presentation} from "./routes/user/Presentation/Presentation";
@@ -44,7 +44,7 @@ import {LoadingOverlayProvider} from "src/components/LoadingOverlayProvider";
 import {GoogleOAuthProvider} from "@react-oauth/google";
 import {AuthProvider, useAuth} from "src/components/AuthProvider";
 import {MeRedirect} from "src/components/MeRedirect";
-import {QuestionType, TemplateType} from "src/domain/schemas";
+import {TemplateType} from "src/client/types.gen";
 
 
 
@@ -122,14 +122,14 @@ function RoutingLayout () {
                         <Route path='templates' element={<ListTemplates type={TemplateType.PRIVATE} />} />
                     </Route>
 
-                    <Route path={'form/:formId'} element={<Form />}>
+                    <Route path={'form/:formId'} element={<FormComponent />}>
                         <Route path="view" element={<DisplayFrom />} />
                         <Route path="edit" element={<EditForm />} />
                         <Route path='submissions' element={<SubmissionData />} />
                         <Route path='keys' element={<DistributeKeys />}/>
                     </Route>
 
-                    <Route path='template/:templateId' element={<Template />}>
+                    <Route path='template/:templateId' element={<TemplateComponent />}>
                         <Route path="view" element={<DisplayTemplate />}/>
                         <Route path='edit' element={<EditTemplate />}/>
                     </Route>

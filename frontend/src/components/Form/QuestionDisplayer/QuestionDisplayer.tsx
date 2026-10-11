@@ -1,12 +1,12 @@
 // acest script contine componente folosite pentru afisarea intrebarilor
 
-import type {GridQuestion, QuestionUnion, TextQuestion} from "src/domain/types";
 import React, {useMemo} from "react";
 
 import * as style from './QuestionDisplayer.module.css'
 import type {FieldErrors, UseFormRegister, UseFormResetField} from "react-hook-form";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {log} from "src/utilities";
+import type {GridQuestion, QuestionUnion, TextQuestion} from "src/domain/types";
 
 
 interface QuestionProps {

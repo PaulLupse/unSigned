@@ -12,8 +12,10 @@ import {CredentialError, CustomError} from "src/utilities";
 import {useNavigate} from "react-router-dom";
 import {useLoading} from "src/components/LoadingOverlayProvider";
 import {ButtonWithIcon, ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
-import {registerData} from "src/domain/auth/schemas";
-import type {RegisterData} from "src/domain/auth/types";
+
+import {zRegisterData} from "src/auth/schemas";
+import type {RegisterData} from "src/auth/types";
+
 
 
 
@@ -250,7 +252,7 @@ export function RegisterForm() {
         handleSubmit,
         formState:{errors}} = useForm<RegisterData>(
             {
-                resolver:zodResolver(registerData)
+                resolver:zodResolver(zRegisterData)
             }
         )
     const email = watch("email")

@@ -2,22 +2,20 @@
 
 import {CustomError, handleGenericErrorResponses, log} from "src/utilities";
 
-import {
-    type FormInfo,
-    type NewForm,
-    type FormSummary,
-    type TemplateSummary, type Template, type QuestionStatisticUnion
-} from "src/domain/types";
-import {
-    formSchema,
-    formSummarySchema,
-    templateSummarySchema,
-    templateSchema, TemplateType
-} from "src/domain/schemas";
 import {fetch} from "src/utilities";
 import {BAD_USER_DATA_ERR, REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
-import {userDataWithStatsSchema, userSchema} from "src/domain/auth/schemas";
-import type {Email, User, UserDataWithStats} from "src/domain/auth/types";
+import {zUser, zUserProfileWithStats} from "src/auth/schemas";
+import type {
+    Form,
+    FormSummary,
+    NewForm,
+    QuestionStatisticUnion, Template, TemplateSummary, TemplateType,
+    User,
+    UserProfileWithStats
+} from "src/client/types.gen";
+import {zForm, zFormSummary, zTemplate, zTemplateSummary} from "src/client/zod.gen";
+
+import type {Email} from "src/auth/types";
 
 
 
@@ -45,7 +43,7 @@ export async function getUserData({userId, username}:{userId?:string, username?:
     if (response.ok) {
         const data = await response.json()
 
-        const parseResult = userSchema.safeParse(data)
+        const parseResult = zUser.safeParse(data)
         if (parseResult.success) return parseResult.data
         else {
             log(parseResult.error)
@@ -59,7 +57,7 @@ export async function getUserData({userId, username}:{userId?:string, username?:
 }
 
 
-export async function getUserDataAndStats({userId, username}:{userId?:string, username?:string}):Promise<UserDataWithStats|undefined> {
+export async function getUserDataAndStats({userId, username}:{userId?:string, username?:string}):Promise<UserProfileWithStats|undefined> {
 
     if (userId === username === undefined)
         throw new Error("No user identifier provided.")
@@ -81,7 +79,7 @@ export async function getUserDataAndStats({userId, username}:{userId?:string, us
 
         const data = await response.json()
 
-        const parseResult = userDataWithStatsSchema.safeParse(data)
+        const parseResult = zUserProfileWithStats.safeParse(data)
 
         if(!parseResult.success) {
             log(parseResult.error)
@@ -97,7 +95,7 @@ export async function getUserDataAndStats({userId, username}:{userId?:string, us
 }
 
 // Cauta un formular dupa id si il returneaza (daca il gaseste).
-export async function getForm(formId:string):Promise<FormInfo|undefined> {
+export async function getForm(formId:string):Promise<Form|undefined> {
 
     const getItemsRequest = new Request(
         `/api/form/${formId}`,
@@ -111,7 +109,7 @@ export async function getForm(formId:string):Promise<FormInfo|undefined> {
 
         const data = await response.json();
 
-        const dataParseResult = formSchema.safeParse(data);
+        const dataParseResult = zForm.safeParse(data);
 
         if (dataParseResult.success) {
             return dataParseResult.data
@@ -146,7 +144,7 @@ export async function getForms({user_id}:{user_id:string}):Promise<Array<FormSum
         const data = await response.json();
 
 
-        const parseResult = formSummarySchema.array().safeParse(data);
+        const parseResult = zFormSummary.array().safeParse(data);
         if (parseResult.success) {
             return parseResult.data;
         } else {
@@ -339,7 +337,7 @@ export async function getTemplates({type, userId}:{type:TemplateType, userId?:st
 
     if(getTemplatesResponse.ok) {
         
-        const parseResult = templateSummarySchema.array().safeParse(await getTemplatesResponse.json())
+        const parseResult = zTemplateSummary.array().safeParse(await getTemplatesResponse.json())
         if (parseResult.success) {
             return parseResult.data
         } else {
@@ -361,7 +359,7 @@ export async function getTemplate({templateId}:{templateId:string}):Promise<Temp
 
     if(getTemplateResponse.ok) {
 
-        const parseResult = templateSchema.safeParse(await getTemplateResponse.json())
+        const parseResult = zTemplate.safeParse(await getTemplateResponse.json())
 
         if (parseResult.success) {
             return parseResult.data

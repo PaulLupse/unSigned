@@ -1,13 +1,4 @@
-import type {
-    AnswerUnion,
-    FormInfo,
-    GridAnswer,
-    GridQuestion, GridQuestionStatistic, QuestionStatisticUnion, QuestionUnion,
-    Submission,
-    TextAnswer,
-    TextQuestion,
-    TextQuestionStatistic
-} from "src/domain/types";
+
 import {useNavigate, useOutletContext} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import {useQuery} from "@tanstack/react-query";
@@ -20,7 +11,20 @@ import * as questionDisplayerStyle from 'src/components/Form/QuestionDisplayer/Q
 import 'src/components/Form/CommonFormStyle.css'
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import Loading from "src/components/Loading";
-import {ElemType, QuestionType} from "src/domain/schemas";
+import {
+    type AnswerUnion, ElemType,
+    type Form,
+    type GridAnswer,
+    type GridQuestion,
+    type GridQuestionStatistic,
+    type QuestionStatisticUnion,
+    QuestionType,
+    type QuestionUnion,
+    type Submission,
+    type TextAnswer,
+    type TextQuestion,
+    type TextQuestionStatistic
+} from "src/client/types.gen";
 
 function TextAnswerDisplayComponent({answer}:{answer:TextAnswer}) {
     return (
@@ -219,7 +223,7 @@ export function SubmissionData() {
 
     const navigate = useNavigate();
 
-    const form: FormInfo = useOutletContext();
+    const form: Form = useOutletContext();
 
     let submissions;
     let questions:Array<QuestionUnion>;

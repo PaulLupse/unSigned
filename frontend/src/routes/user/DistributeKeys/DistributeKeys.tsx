@@ -1,8 +1,7 @@
 import React, {useCallback, useRef} from "react";
 import {type SubmitHandler, useFieldArray, useForm} from "react-hook-form";
-import type {FormInfo} from "src/domain/types";
+
 import {z} from "zod";
-import {formSchema} from "src/domain/schemas";
 import {zodResolver} from "@hookform/resolvers/zod";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {useNavigate, useOutletContext} from "react-router-dom";
@@ -14,8 +13,9 @@ import * as style from './DistributeKeys.module.css'
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {NavButton} from "src/components/Buttons/Buttons";
-import {emailSchema} from "src/domain/auth/schemas";
-import type {Email} from "src/domain/auth/types";
+import {zEmail, zForm} from "src/client/zod.gen";
+import type {Form} from "src/domain/types";
+import type {Email} from "src/auth/types";
 
 
 interface EmailsList {
@@ -23,7 +23,7 @@ interface EmailsList {
 }
 
 const emailsListSchema = z.object({
-    emails:z.array(emailSchema).refine((emails) => new Set(emails.map(email=>email.email)).size === emails.length, {
+    emails:z.array(zEmail).refine((emails) => new Set(emails.map(email=>email.email)).size === emails.length, {
         message: "Emails must be unique",
     }).refine((emails)=>emails.length >= 2, {message: 'Please enter at least two emails.'})
 })
@@ -34,7 +34,7 @@ function getDefaultValues ():EmailsList {
 
 export function DistributeKeys() {
 
-    const form: FormInfo = formSchema.parse(useOutletContext());
+    const form: Form = zForm.parse(useOutletContext());
 
     const {register, handleSubmit, formState:{errors}, control, watch} = useForm<EmailsList>({resolver:zodResolver(emailsListSchema), defaultValues:getDefaultValues()});
     const {append, remove, fields} = useFieldArray({control, name: "emails"})

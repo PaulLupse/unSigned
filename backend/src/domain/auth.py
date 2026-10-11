@@ -25,16 +25,35 @@ class UserProfileWithStats(BaseModel):
 
 
 class KeyPayload(BaseModel):
+    """
+    Datele retinute de o cheie de access.
+    Attributes:
+        form_id: ID-ul formularului
+    """
+
     form_id: str
 
 
 class KeyFooter(BaseModel):
+    """
+    Date generale despre o cheie de access.
+    Attributes:
+        key_id: ID-ul cheii, folosit la înregistrarea folosirii acesteia.
+    """
+
     key_id: Optional[str] = None
 
 
 class Key(BaseModel):
+    """
+    Reprezentare sub formă de model pydantic al unei chei de acces la un formular.
+    Attributes:
+        payload: Datele reținute de cheie
+        footer: Date generale atașate cheii
+    """
+
     payload: KeyPayload
-    footer: Optional[KeyFooter] = KeyFooter()
+    footer: KeyFooter = KeyFooter()
 
 
 class VerificationCode(BaseModel):

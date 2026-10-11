@@ -1,7 +1,6 @@
 import React, {useCallback} from "react";
-import {templateSchema} from "src/domain/schemas";
 import {useNavigate, useOutletContext} from "react-router-dom";
-import type {Template} from "src/domain/types";
+
 import * as style from "./DisplayTemplate.module.css"
 import {FormDisplayer} from "src/components/Form/FormDisplayer";
 import {FixedElement} from "src/components/FixedElement/FixedElement";
@@ -11,6 +10,8 @@ import {deleteTemplate} from "src/backend-connection/users";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import {useAuth} from "src/components/AuthProvider";
+import {type Form, type Template, TemplateType} from "src/domain/types";
+import {zTemplate} from "src/domain/schemas";
 
 export default function DisplayTemplate() {
 
@@ -18,7 +19,7 @@ export default function DisplayTemplate() {
     const context = useOutletContext<{template:Template}>()
     const {user} = useAuth()
 
-    const template:Template = templateSchema.parse(context.template)
+    const template:Template = zTemplate.parse(context.template)
 
     const navigate = useNavigate()
 
@@ -30,7 +31,7 @@ export default function DisplayTemplate() {
                 navigate('/me/templates')
             },
             onError:(error)=>{
-                toast.error("Could not delete template: " + error.message)
+                toast.error(error.message)
             }
         }
     )
@@ -44,7 +45,7 @@ export default function DisplayTemplate() {
     return (
         <div className={style.formFrame}>
 
-            <FormDisplayer name={template.name} elements={template.elements} />
+            <FormDisplayer form={template} />
 
             <FixedElement>
                 <ButtonBar>
@@ -53,7 +54,7 @@ export default function DisplayTemplate() {
                         Back
                     </NavButton>
                     {
-                        ((template.status=='private' && user?.id === template.ownerId) || (template.status=='official' && user?.is_admin)) &&
+                        ((template.status=='private' && user?.id === template.ownerId) || (template.status==TemplateType.OFFICIAL && user?.isAdmin)) &&
                         <>
                             <NavButton to={`/template/${template.id}/edit`}>
                                 Edit

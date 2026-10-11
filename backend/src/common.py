@@ -10,4 +10,4 @@ limiter = Limiter(key_func=get_remote_address)
 
 logger = logging.getLogger('uvicorn.error')
 logger.setLevel(logging.DEBUG)
-mongo_client = MongoClient(DB_URL)
+mongo_client = MongoClient(DB_URL, tz_aware=True)

@@ -1,20 +1,18 @@
 import {CredentialError, CustomError, handleGenericErrorResponses, log} from "src/utilities";
 
-import {
-    LoginInfo
-} from "src/domain/types";
 import {fetch} from "src/utilities";
 import {z} from "zod";
 import {BAD_USER_DATA_ERR, REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
-import {emailSchema, userSchema} from "src/domain/auth/schemas";
-import type {RegisterData, User} from "src/domain/auth/types";
+import type {User} from "src/domain/types";
+import {zUser} from "src/client/zod.gen";
+import type {Credentials, Email, RegisterData} from "src/auth/types";
 
 // Cere un jeton de access (jwt).
 // Returneaza un obiect response cu detaliile de autorizare.
-async function getAccessToken(loginInfo:LoginInfo) {
+async function getAccessToken(loginInfo:Credentials) {
 
     const loginForm = new FormData();
-    loginForm.append("username", loginInfo.username)
+    loginForm.append("username", loginInfo.identifier)
     loginForm.append("password", loginInfo.password)
 
     return await fetch("/api/auth/token", {method:"POST", body:loginForm});
@@ -22,10 +20,10 @@ async function getAccessToken(loginInfo:LoginInfo) {
 
 // Incearca autorizarea utilizatorului folosind nume si parola.
 // Arunca erori daca autorizarea a esuat, cu motivele esuarii.
-export async function login({identifier, password}:{identifier:string, password:string}):Promise<void>{
+export async function login(credentials:Credentials):Promise<void>{
 
 
-    const tokenResponse: Response = await getAccessToken(new LoginInfo(identifier, password));
+    const tokenResponse: Response = await getAccessToken(credentials);
 
     if (tokenResponse.ok) return
 
@@ -83,7 +81,7 @@ export async function handleGoogleUser({googleCode}:{googleCode:string}) {
 }
 
 // Trimite o cerere de verificare a email-ului specificat.
-export async function requestVerificationCode({email}:z.infer<typeof emailSchema>) {
+export async function requestVerificationCode({email}:Email) {
 
     const request = new Request("api/auth/verification-code/request",{
         method:"PUT",
@@ -142,7 +140,7 @@ export async function getCurrentUserData():Promise<User|undefined>{
         const data:any = await loginResponse.json();
         log(data)
 
-        const parseResult = userSchema.safeParse(data)
+        const parseResult = zUser.safeParse(data)
         if (parseResult.success) return parseResult.data
         else {
             log(parseResult.error)

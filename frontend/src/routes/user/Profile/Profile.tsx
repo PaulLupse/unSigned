@@ -13,7 +13,7 @@ import Loading from "src/components/Loading";
 import {useAuth} from "src/components/AuthProvider";
 
 import {log} from "src/utilities";
-import type {User, UserStats} from "src/domain/auth/types";
+import type {User, UserStats} from "src/auth/types";
 
 
 function ProfileEntry ({text, value}:{text:string, value:string}) {

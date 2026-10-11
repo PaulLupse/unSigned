@@ -8,10 +8,9 @@ from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
 from src.common import limiter
 from src.domain.auth import User
-from src.api.requests import EditFormRequest
 from src.db.DBConnector import get_db, DBConnector
 from src.db.DBResult import DBResult
-from src.domain.models import TemplateSummary, Template, NewForm, NewTemplate
+from src.domain.models import TemplateSummary, Template, NewForm, NewTemplate, TemplateType, Action
 
 router:APIRouter = APIRouter(prefix='/template',
                              tags=['template'],
@@ -19,12 +18,32 @@ router:APIRouter = APIRouter(prefix='/template',
 
 db_connector:DBConnector = get_db()
 
-# Verifica daca utilizatorul este autorizat pentru a accesa sablonul. Returneaza chestionarul in caz afirmativ.
+
 def check_template_authorization(
         action:Literal['read','write']):
 
+    """
+    Returneaza o functie ce verifica daca utilizatorul este autorizat pentru a accesa sablonul, menita sa fie folosita ca
+    si o dependenta in endpoint-uri.
+    Este necesar apelul acestei functii cu un argument specificand actiunea ('read' sau 'write'). Folosirea functiei in
+    Sine ca si o dependenta duce la eroare.
+
+    Utilizare: *template:Annotated[Template, Depends(check_template_authorization(* **'read'** *))]*
+
+    :param action: Actiunea pe care o intreprinde endpoint-ul.
+    :return: Functia de verificare, menita sa fie folosita ca si o dependenta
+    """
+
     def wrapper(template_id: str,
         user: Annotated[User, Depends(authenticate)])->Template:
+
+        """
+        Verifica daca utilizatorul este autorizat pentru a accesa sablonul specificat. Returneaza sablonul in caz afirmativ,
+        sau genereaza o exceptie HTTP.
+        :param template_id: ID-ul sablonului
+        :param user: Datele utilizatorului
+        :return: Sablonul in discutie
+        """
 
         get_template_response = db_connector.get_template(template_id=template_id)
 
@@ -39,13 +58,13 @@ def check_template_authorization(
             )
 
         template = get_template_response.data
-        if template.status == "private" and not (template.owner_id == user.id):
+        if template.status == TemplateType.PRIVATE and not (template.owner_id == user.id):
             raise auth_exception
 
-        elif template.status == "official" and (not user.is_admin and action == "write"):
+        elif template.status == TemplateType.OFFICIAL and (not user.is_admin and action == Action.READ):
             raise auth_exception
 
-        if template.status == "public" and not template.owner_id == user.id and action == "write":
+        if template.status == TemplateType.PUBLIC and not template.owner_id == user.id and action == Action.WRITE:
             raise auth_exception
 
 
@@ -109,18 +128,18 @@ async def create_template(create_template_request:NewTemplate,
     return CreateTemplateResult(template_id=result.data)
 
 
-@router.put("/{template_id}/edit", status_code=200, dependencies=[Depends(check_template_authorization('write'))])
+@router.put("/{template_id}/edit", status_code=200, dependencies=[
+        Depends(check_template_authorization('write')),
+        Depends(authenticate)
+    ])
 @limiter.limit("60/minute")
 async def edit_template(template_id: str,
-                        edit_temp_req: EditFormRequest,
-                        user:Annotated[User, Depends(authenticate)],
+                        edit_temp_req: NewTemplate,
                         request: Request):
 
     edit_template_response = db_connector.edit_template(
         template_id=template_id,
-        new_name = edit_temp_req.name,
-        new_questions = edit_temp_req.questions,
-        user=user
+        new_template_data=edit_temp_req
     )
 
     if edit_template_response.status != 200:

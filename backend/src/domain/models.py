@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Optional, List, Literal, Annotated, Union
 
-from pydantic import BeforeValidator, Field
+from pydantic import BeforeValidator, Field, RootModel, AwareDatetime
 
 from src.api.BaseModel import BaseModel
 from src.utilities import PyObjectId, PyObjectIdField
@@ -41,6 +41,11 @@ class TemplateType(str, Enum):
     OFFICIAL = "official"
 
 
+class Action(str, Enum):
+    READ = 'read'
+    WRITE = 'write'
+
+
 class FormElement(BaseModel):
 
     """
@@ -53,12 +58,12 @@ class FormElement(BaseModel):
 
 
 class Paragraph(FormElement):
-    elem_type: Literal[ElemType.PARAGRAPH] = ElemType.PARAGRAPH
+    elem_type: Literal[ElemType.PARAGRAPH] # = ElemType.PARAGRAPH
     text: str
 
 
 class Heading(BaseModel):
-    elem_type: Literal[ElemType.HEADING] = ElemType.HEADING
+    elem_type: Literal[ElemType.HEADING] # = ElemType.HEADING
     text: str
     number: int
 
@@ -71,7 +76,7 @@ class Question(BaseModel):
         question_type: Discriminatorul intre tipurile de intrebari.
     """
 
-    elem_type: Literal[ElemType.QUESTION] = ElemType.QUESTION
+    elem_type: Literal[ElemType.QUESTION] # = ElemType.QUESTION
 
     text: str
     question_type: QuestionType
@@ -79,19 +84,21 @@ class Question(BaseModel):
 
 
 class GridQuestion(Question):
-    question_type: Literal[QuestionType.GRID] = QuestionType.GRID
+    question_type: Literal[QuestionType.GRID] # = QuestionType.GRID
     choices: list[str]
     is_multiple_choice: bool
 
 
 class TextQuestion(Question):
-    question_type: Literal[QuestionType.TEXT] = QuestionType.TEXT
+    question_type: Literal[QuestionType.TEXT] # = QuestionType.TEXT
     max_chars: int
 
 
-QuestionUnion = Annotated[Union[TextQuestion, GridQuestion], Field(discriminator="question_type")]
+class QuestionUnion(RootModel[ Annotated[Union[TextQuestion, GridQuestion], Field(discriminator="question_type")]]):
+    pass
 
-FormElementUnion = Annotated[Union[QuestionUnion, Paragraph, Heading], Field(discriminator="elem_type")]
+class FormElementUnion (RootModel[Annotated[Union[QuestionUnion, Paragraph, Heading], Field(discriminator="elem_type")]]):
+    pass
 
 
 class Answer(BaseModel):
@@ -105,16 +112,17 @@ class Answer(BaseModel):
 
 
 class GridAnswer(Answer):
-    type: Literal[QuestionType.GRID] = QuestionType.GRID
+    type: Literal[QuestionType.GRID] # = QuestionType.GRID
     choices: list[int]
 
 
 class TextAnswer(Answer):
-    type: Literal[QuestionType.TEXT] = QuestionType.TEXT
+    type: Literal[QuestionType.TEXT] # = QuestionType.TEXT
     text: str
 
 
-AnswerUnion = Annotated[Union[TextAnswer, GridAnswer], Field(discriminator="type")]
+class AnswerUnion (RootModel[Annotated[Union[TextAnswer, GridAnswer], Field(discriminator="type")]]):
+    pass
 
 
 class Submission(BaseModel):
@@ -123,17 +131,21 @@ class Submission(BaseModel):
     Clasă reprezentând o submisie pentru un formular.
     """
 
-    answers: list[Answer]
+    answers: list[AnswerUnion]
 
 
 class BaseForm(BaseModel):
 
+    """
+    Forma de bază a unui formular.
+    """
+
     id: PyObjectId = PyObjectIdField
     name: str
     owner_id: str
-    date_created: Optional[datetime]
-    date_opened: Optional[datetime] = None
-    date_closed: Optional[datetime] = None
+    date_created: Optional[AwareDatetime]
+    date_opened: Optional[AwareDatetime] = None
+    date_closed: Optional[AwareDatetime] = None
 
 
 class FormSummary(BaseForm):
@@ -197,7 +209,7 @@ class TextQuestionStatistic(QuestionStatistic):
     Statistici legate de raspunsurile pentru o singura intrebare de tip text.
     """
 
-    type: QuestionType = QuestionType.TEXT
+    type: Literal[QuestionType.TEXT]  = QuestionType.TEXT
     avg_word_count: float
     frequent_words: list[str]
 
@@ -208,14 +220,18 @@ class GridQuestionStatistic(QuestionStatistic):
     Statistici legate de raspunsurile pentru o singura intrebare de tip grilă.
     """
 
-    type: QuestionType = QuestionType.GRID
+    type: Literal[QuestionType.GRID] # = QuestionType.GRID
     answer_rate: list[float]  # procentul de oameni care au ales o varianta de raspuns anume
 
 
-QuestionStatisticUnion = Annotated[Union[GridQuestionStatistic, TextQuestionStatistic], Field(discriminator="type")]
-
+class QuestionStatisticUnion (RootModel[Annotated[Union[GridQuestionStatistic, TextQuestionStatistic], Field(discriminator="type")]]):
+    pass
 
 class BaseTemplate(BaseModel):
+
+    """
+    Forma de bază a unui șablon.
+    """
 
     id: PyObjectId = PyObjectIdField
     name: str
@@ -233,7 +249,7 @@ class TemplateSummary(BaseTemplate):
 
 class Template(BaseTemplate):
 
-    elements: list[FormElement]
+    elements: list[FormElementUnion]
 
     def summarize(self) -> TemplateSummary:
 

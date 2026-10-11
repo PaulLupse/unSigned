@@ -5,11 +5,8 @@ import {
     useFieldArray,
 } from "react-hook-form";
 import {addForm, getTemplate} from "src/backend-connection/users";
-import type {NewForm, QuestionUnion} from "src/domain/types";
-import type {TextQuestion} from "src/domain/types";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
-import {ElemType, newFormSchema, QuestionType} from "src/domain/schemas";
 import {useMutation, useQuery} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
@@ -23,6 +20,9 @@ import {FixedElement} from "src/components/FixedElement/FixedElement"
 import {NavButton} from "src/components/Buttons/Buttons";
 import ButtonWithMenu from "src/components/FloatingMenu/FloatingMenu";
 import Loading from "src/components/Loading";
+import {ElemType, type NewForm, QuestionType, type TextQuestion} from "src/client/types.gen";
+import {zNewForm} from "src/client/zod.gen";
+import type {QuestionUnion} from "src/domain/types";
 
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
@@ -51,7 +51,7 @@ export default function FormCreator() {
 
         const progress:string|null = sessionStorage.getItem("savedProgress")
         if(progress) {
-            const parseResult = newFormSchema.safeParse(JSON.parse(progress))
+            const parseResult = zNewForm.safeParse(JSON.parse(progress))
             if (parseResult.success) {
                 setValue("elements", parseResult.data.elements);
                 setValue("name", parseResult.data.name);
@@ -84,7 +84,7 @@ export default function FormCreator() {
             navigate(`/form/${formId}/view`)
         },
         onError:(error)=>{
-            toast.error("Could not create form. " + error?.message);
+            toast.error(error?.message);
         },
         retry:0,
     })
@@ -116,7 +116,7 @@ export default function FormCreator() {
 
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
 
-        const newForm:NewForm = newFormSchema.parse({
+        const newForm:NewForm = zNewForm.parse({
                                 name:data.name,
                                 elements:data.elements,
                             })

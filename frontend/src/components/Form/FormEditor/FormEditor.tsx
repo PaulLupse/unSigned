@@ -4,14 +4,14 @@ import {
     type FieldErrors,
 } from "react-hook-form";
 
-import type {FormElementUnion, NewForm, QuestionUnion} from "src/domain/types";
 import {QuestionDisplayer} from "src/components/Form/QuestionDisplayer/QuestionDisplayer";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 
 import {QuestionEditor} from "../QuestionEditor/QuestionEditor";
 import * as style from './FormEditor.module.css'
 import {log} from "src/utilities";
-import {ElemType} from "src/domain/schemas";
+import {ElemType, type NewForm} from "src/client/types.gen";
+import type {FormElementUnion, QuestionUnion} from "src/domain/types";
 
 interface EditableFormProps {
     register:UseFormRegister<NewForm>

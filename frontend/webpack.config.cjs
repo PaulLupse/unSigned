@@ -5,8 +5,16 @@ const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { watch } = require('fs');
 
+
 const BACKEND_ADDRESS =  process.env.BACKEND_ADDRESS
 if (!BACKEND_ADDRESS) throw new Error("BACKEND_ADDRESS not configured.")
+
+const FRONTEND_PORT = process.env.FRONTEND_PORT
+if (!FRONTEND_PORT) throw new Error("FRONTEND_PORT not configured.")
+
+const GOOGLE_CLIENT_ID =  process.env.GOOGLE_CLIENT_ID
+if (!GOOGLE_CLIENT_ID) throw new Error("GOOGLE_CLIENT_ID not configured.")
+
 
 
 module.exports = {
@@ -74,16 +82,16 @@ module.exports = {
             filename:'index.html'
         }),
         new webpack.DefinePlugin({
-            'process.env.GOOGLE_CLIENT_ID': JSON.stringify(process.env.GOOGLE_CLIENT_ID),
+            'process.env.GOOGLE_CLIENT_ID': JSON.stringify(GOOGLE_CLIENT_ID),
         }),
     ],
     devServer: {
-        port: process.env.FRONTEND_PORT,
+        port: FRONTEND_PORT,
         hot: true,
         historyApiFallback: true,
         proxy: [{
             context: ['/api'],
-            target: process.env.BACKEND_ADDRESS,
+            target: BACKEND_ADDRESS,
             changeOrigin: true,
             secure: false
         }],

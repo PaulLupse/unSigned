@@ -1,5 +1,5 @@
 from src.api.BaseModel import BaseModel
-from src.domain.models import Question
+from src.domain.models import Question, NewForm, NewTemplate, Submission
 
 
 class RegisterRequest(BaseModel):
@@ -17,11 +17,6 @@ class CheckKeyRequest(BaseModel):
     form_id:str
 
 
-class EditFormRequest(BaseModel):
-    name: str | None = None
-    questions:list[Question]|None = None
-
-
 class VerificationCodeRequest(BaseModel):
     email:str
 
@@ -33,3 +28,9 @@ class VerifyEmailRequest(BaseModel):
 
 class ChangeUsernameRequest(BaseModel):
     new_username:str
+
+
+class SubmitFormRequest(BaseModel):
+    key:str
+    submission:Submission
+    form_id:str

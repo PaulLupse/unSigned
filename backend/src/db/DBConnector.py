@@ -2,6 +2,7 @@ import re
 from collections import Counter
 from typing import Literal, Mapping, Any
 
+from warnings import deprecated
 import pymongo.errors
 from bson import ObjectId, CodecOptions
 from fastapi.encoders import jsonable_encoder
@@ -33,9 +34,9 @@ class DBConnector:
             opt = CodecOptions(tz_aware=True)
 
             self.users_table = database["users"]
-            self.forms_table = database["forms"]
-            self.keys_table = database["keys"]
-            self.templates_table = database["templates"]
+            self.forms_table = database.get_collection("forms", codec_options=opt)
+            self.keys_table = database.get_collection("keys", codec_options=opt)
+            self.templates_table = database.get_collection("templates", codec_options=opt)
             self.sessions_table = database.get_collection("sessions", codec_options=opt)
             self.verification_codes_table = database.get_collection("verification_codes", codec_options=opt)
 
@@ -300,10 +301,10 @@ class DBConnector:
 
         try:
 
-            current_date: date = datetime.now().date()
+            current_date: date = datetime.now()
 
             new_form_dict = new_form.model_dump(mode="json")
-            new_form_dict['date_created'] = current_date.isoformat()
+            new_form_dict['date_created'] = current_date
             new_form_dict['submissions'] = []
             new_form_dict['owner_id'] = owner_id
 
@@ -320,11 +321,12 @@ class DBConnector:
         form_from_db = self.forms_table.find_one({"_id": ObjectId(form_id), "owner_id": owner_id})
         if not form_from_db: return DBResult(404, "Form not found.")
 
-        print(form_from_db)
-        if "date_published" in form_from_db.keys(): return DBResult(409, "Form closed.")
+        form = Form.model_validate(form_from_db)
+
+        if form.date_closed: return DBResult(409, "Form closed.")
 
         self.forms_table.update_one({"_id": ObjectId(form_id)},
-                                    update={"$set": {"date_published": datetime.now().isoformat()}})
+                                    update={"$set": {"date_opened": datetime.now().isoformat()}})
         return DBResult(200, "Published.")
 
     # 'inchide' un chestionar.
@@ -335,8 +337,6 @@ class DBConnector:
         if not form_from_db: return DBResult(404, "Form not found.")
 
         form = Form.model_validate(form_from_db)
-
-        print(form)
 
         if form.date_opened is None: DBResult(409, "Form not published.")
 
@@ -430,21 +430,14 @@ class DBConnector:
     def edit_form(self,
                   form_id: str,
                   owner_id: str,
-                  new_title: str | None = None,
-                  new_elements: list[FormElementUnion] | None = None):
+                  new_form_data: NewForm):
 
         try:
-
-            new_data:dict = {}
-
-            if new_elements: new_data["elements"] = jsonable_encoder(new_elements)
-            if new_title: new_data["name"] = new_title
-
 
             result = self.forms_table.update_one(
                 {"_id": ObjectId(form_id), "owner_id": owner_id},
                 {
-                    "$set": new_data
+                    "$set": new_form_data.model_dump()
                 }
             )
 
@@ -479,11 +472,12 @@ class DBConnector:
         except Exception as e:
             return DBResult(500, "Unexpected error: " + str(e))
 
-    def check_authorization(self,
-                            template_id: str,
-                            owner_id: str,
-                            is_admin: bool,
-                            req: Literal['read', 'write']) -> DBResult[Template]:
+    @deprecated("Este recomandat verificarea autorizarii in endpoint-ul api.")
+    def check_template_authorization(self,
+                                     template_id: str,
+                                     owner_id: str,
+                                     is_admin: bool,
+                                     req: Literal['read', 'write']) -> DBResult[Template]:
 
         try:
 
@@ -561,18 +555,9 @@ class DBConnector:
             return DBResult(409, "Template with this name already exists.")
 
     # modifica template-ul, inlocuind numele si intrebarile cu cele pasate
-    def edit_template(self, template_id: str, user: User, new_name: str | None,
-                      new_elements: list[FormElementUnion] | None) -> DBResult:
+    def edit_template(self, template_id: str, new_template_data: NewTemplate) -> DBResult:
 
-        chk_auth: DBResult[Template] = self.check_authorization(template_id, user.id, user.is_admin, req='write')
-
-        if chk_auth.status != 200:
-            return DBResult(chk_auth.status, chk_auth.message)
-
-        new_template_in_db: dict = {}
-
-        if new_name: new_template_in_db['name'] = new_name
-        if new_elements: new_template_in_db['elements'] = new_elements
+        new_template_in_db: dict = new_template_data.model_dump()
 
         result = self.templates_table.update_one(
             {"_id": ObjectId(template_id)},
@@ -583,10 +568,11 @@ class DBConnector:
 
         return DBResult(200, "Updated.")
 
+
     # sterge template-ul
     def delete_template(self, template_id, user: User) -> DBResult:
 
-        chk_auth: DBResult[Template] = self.check_authorization(template_id, user.id, user.is_admin, req='write')
+        chk_auth: DBResult[Template] = self.check_template_authorization(template_id, user.id, user.is_admin, req='write')
         if chk_auth.status != 200:
             return DBResult(chk_auth.status, chk_auth.message)
 

@@ -5,11 +5,8 @@ import {
     useFieldArray,
 } from "react-hook-form";
 import {updateTemplate} from "src/backend-connection/users";
-import type {NewForm, QuestionUnion, Template} from "src/domain/types";
-import type {TextQuestion} from "src/domain/types";
 import {useNavigate, useOutletContext} from "react-router-dom";
 
-import {newFormSchema, QuestionType, templateSchema} from "src/domain/schemas";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
@@ -21,6 +18,10 @@ import 'src/components/Form/QuestionDisplayer/QuestionDisplayer.module.css'
 import * as style from './EditTemplate.module.css'
 import {FixedElement} from "src/components/FixedElement/FixedElement"
 import {NavButton} from "src/components/Buttons/Buttons";
+import {ElemType, type NewForm, QuestionType, type Template, type TextQuestion} from "src/client/types.gen";
+import {zNewForm, zTemplate} from "src/client/zod.gen";
+import type {QuestionUnion} from "src/domain/types";
+import {zodResolver} from "@hookform/resolvers/zod";
 
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
@@ -31,14 +32,15 @@ export default function EditForm() {
     const context = useOutletContext<{template:Template}>()
 
     // luam datele despre chestionar de la componenta parent UpdateForm, care da fetch la chestionar
-    const parseResult = templateSchema.safeParse(context.template);
+    const parseResult = zTemplate.safeParse(context.template);
     if(!parseResult.success) {
         toast.error("Error when parsing form . . .");
         navigate('/me');
     }
 
     const {register, formState:{errors}, handleSubmit, control, watch} =
-        useForm<NewForm>({defaultValues:{elements:parseResult.data?.elements, name:parseResult.data?.name}});
+        useForm<NewForm>({defaultValues:{elements:parseResult.data?.elements, name:parseResult.data?.name},
+        resolver:zodResolver(zNewForm)});
 
     const {append, update, remove, swap} = useFieldArray({control, name:'elements'});
     const formQuestions = watch("elements");
@@ -51,13 +53,13 @@ export default function EditForm() {
             navigate(`/template/${parseResult.data?.id}/view`)
         },
         onError:(error)=>{
-            toast.error("Could not update template. " + error?.message);
+            toast.error(error?.message);
         }
     })
 
 
     const addQuestion = ():number => {
-        const newQuestion:TextQuestion = {text:"", questionType:QuestionType.TEXT, maxChars:30, isOptional:false}
+        const newQuestion:TextQuestion = {text:"", questionType:QuestionType.TEXT, maxChars:30, isOptional:false, elemType:ElemType.QUESTION}
         append(newQuestion);
         return formQuestions.length;
     }
@@ -77,7 +79,7 @@ export default function EditForm() {
 
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
 
-        const newForm:NewForm = newFormSchema.parse({
+        const newForm:NewForm = zNewForm.parse({
                                 name:data.name,
                                 questions:data.elements,
                             })

@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi.middleware import SlowAPIMiddleware
+from typing import Union, Annotated, TypeAliasType
+from pydantic import TypeAdapter, Field
 
 from starlette.responses import RedirectResponse
 
@@ -15,6 +17,9 @@ from src.api.endpoints.sub_user import router as sub_users_router
 from src.api.endpoints.admin import router as admin_router
 from src.api.endpoints.template import router as templates_router
 from src.common import limiter
+from src.domain.models import TemplateType, ElemType, QuestionType, FormElementUnion, QuestionUnion, QuestionStatistic, \
+    QuestionStatisticUnion, Paragraph, Heading
+from src.utilities import custom_openapi_spec, PyObjectIdField, PyObjectId
 
 app = FastAPI()
 app.include_router(users_router, prefix="/api")
@@ -46,7 +51,12 @@ from src.api.handlers import http_exception_handler as heh
 async def http_exception_handler(request:Request, exception : HTTPException):
     return await heh(request, exception)
 
+# Adăugăm enumerațiile la schema openapi, întrucât s-ar putea să nu fie incluse.
+EXTRA_SCHEMAS = Union[TemplateType, ElemType, QuestionType, FormElementUnion, QuestionUnion, QuestionStatisticUnion]
+_original_openapi = app.openapi
+app.openapi = lambda:custom_openapi_spec(_original_openapi, EXTRA_SCHEMAS)
 
+app.separate_input_output_schemas = False
 
 @app.get("/", response_class=RedirectResponse)
 async def root():

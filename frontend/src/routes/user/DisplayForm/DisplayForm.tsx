@@ -1,9 +1,8 @@
-import type { FormInfo} from "src/domain/types";
+
 import {closeForm, deleteForm, openForm} from "src/backend-connection/users";
 import React, {useCallback, useEffect} from "react";
 
 import {useNavigate, useOutletContext} from "react-router-dom";
-import {formSchema} from "src/domain/schemas";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {NavButton} from "src/components/Buttons/Buttons";
 import toast from "react-hot-toast";
@@ -13,6 +12,8 @@ import {FixedElement} from "src/components/FixedElement/FixedElement";
 
 import * as styles from './DisplayForm.module.css'
 import {useAlert} from "src/components/AlertProvider";
+import type {Form} from "src/domain/types";
+import {zForm} from "src/domain/schemas";
 
 
 export function DisplayFrom() {
@@ -21,7 +22,7 @@ export function DisplayFrom() {
 
     const queryClient = useQueryClient();
 
-    const form: FormInfo = formSchema.parse(useOutletContext());
+    const form: Form = zForm.parse(useOutletContext());
     const [formStatus, setFormStatus] = React.useState<string>();
     const navigate = useNavigate();
 
@@ -98,7 +99,7 @@ export function DisplayFrom() {
         form &&
         <div className={styles.formFrame}>
 
-            <FormDisplayer name={form.name} elements={form.elements} />
+            <FormDisplayer form={form} />
 
             <FixedElement>
 

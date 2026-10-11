@@ -1,11 +1,9 @@
 from fastapi import APIRouter, status, Request
 from fastapi.encoders import jsonable_encoder
 from starlette.responses import HTMLResponse, JSONResponse
-from pydantic import BaseModel
-
 from src.db.DBResult import DBResult
-from src.api.requests import CheckKeyRequest
-from src.common import limiter
+from src.api.requests import CheckKeyRequest, SubmitFormRequest
+from src.common import limiter, logger
 from src.api.auth.utils import decode_key
 from src.domain.models import Submission, Form
 from src.domain.auth import Key
@@ -20,8 +18,13 @@ router:APIRouter = APIRouter(prefix="/sub-user",
 def validate_key(key:str, form_id:str)->Key|None:
 
     key:Key|None = decode_key(key)
+
     if not key:
         return None
+
+    logger.debug(key.payload.form_id)
+    logger.warning(form_id)
+
     if key.payload.form_id != form_id:
         return None
     if db_connector.check_key_usage(key):
@@ -39,6 +42,7 @@ async def check_form_id(form_id:str, request: Request):
         return JSONResponse(status_code=status.HTTP_404_NOT_FOUND, content={"message":"Form not found."})
     else:
         return JSONResponse(status_code=status.HTTP_200_OK, content={"message":"Form found."})
+
 
 @router.post("/check-key", response_class=HTMLResponse)
 @limiter.limit("60/minute")
@@ -65,6 +69,7 @@ async def check_key(chk_key_req: CheckKeyRequest, request: Request):
 
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Invalid Key."})
 
+
 @router.post("/use-key", response_class=JSONResponse)
 @limiter.limit("60/minute")
 async def use_key(chk_key_req: CheckKeyRequest, request: Request):
@@ -90,10 +95,6 @@ async def use_key(chk_key_req: CheckKeyRequest, request: Request):
 
     return JSONResponse(status_code=status.HTTP_400_BAD_REQUEST, content={"message":"Invalid key."})
 
-class SubmitFormRequest(BaseModel):
-    key:str
-    submission:Submission
-    form_id:str
 
 @router.post("/submit-form", response_class=JSONResponse)
 @limiter.limit("60/minute")

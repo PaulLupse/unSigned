@@ -1,11 +1,10 @@
 import React from "react";
-import type {FormElementUnion, QuestionUnion} from "src/domain/types";
 import {QuestionDisplayer} from "./QuestionDisplayer/QuestionDisplayer";
 
 import "./CommonFormStyle.css"
 import type {FieldErrors, UseFormRegister, UseFormResetField} from "react-hook-form";
-import {ElemType} from "src/domain/schemas";
 import {log} from "src/utilities";
+import {ElemType, type Form, type FormElementUnion, type Template} from "src/domain/types";
 
 
 interface QuestionListProps {
@@ -46,14 +45,13 @@ function ElementList({elements, register, errors, resetField}:QuestionListProps)
 }
 
 interface FormDisplayerProps {
-    name:string
-    elements:Array<FormElementUnion>
+    form:Form|Template
     register?:UseFormRegister<any>
     errors?:FieldErrors<any>
     resetField?:UseFormResetField<any>
 }
 
-export function FormDisplayer({name, elements, register, errors, resetField}:FormDisplayerProps) {
+export function FormDisplayer({form:{name, elements}, register, errors, resetField}:FormDisplayerProps) {
 
     return (
         <div className={'form'}>
