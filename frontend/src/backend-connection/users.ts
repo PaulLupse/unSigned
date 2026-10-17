@@ -13,9 +13,17 @@ import type {
     User,
     UserProfileWithStats
 } from "src/client/types.gen";
-import {zForm, zFormSummary, zTemplate, zTemplateSummary} from "src/client/zod.gen";
+import {
+    zCreateFormResponse,
+    zCreateTemplateResult,
+    zForm,
+    zFormSummary,
+    zTemplate,
+    zTemplateSummary
+} from "src/client/zod.gen";
 
 import type {Email} from "src/auth/types";
+import {ZodError} from "zod";
 
 
 
@@ -157,7 +165,7 @@ export async function getForms({user_id}:{user_id:string}):Promise<Array<FormSum
 }
 
 // Adauga un nou formular.
-export async function addForm(form:NewForm):Promise<string|undefined> {
+export async function createForm(form:NewForm):Promise<string|undefined> {
 
 
     const request = new Request("/api/form/add",
@@ -172,12 +180,13 @@ export async function addForm(form:NewForm):Promise<string|undefined> {
     if(response.ok) {
 
         const data = await response.json()
-        log("DATA: " + data)
-
-        if (!Object.hasOwn(data, "formId"))
-            throw new Error("Could not get the created form.")
-
-        return data.formId;
+        
+        try {
+            const {formId} = zCreateFormResponse.parse(data)
+            return formId
+        } catch (error) {
+            throw new Error("Could not get form id.")
+        }
     }
 
     if(response.status == 409)
@@ -303,16 +312,19 @@ export async function createTemplate({templateData, type}:{templateData:NewForm,
     if(createItemResponse.ok) {
 
         const data = await createItemResponse.json()
-
-        if (!Object.hasOwn(data, 'formId')) throw new Error("Could not get created template id.")
-
-        return data.formId;
+        
+        try {
+            const {templateId} = zCreateTemplateResult.parse(data)
+            return templateId
+        } catch (error) {
+            throw new Error("Could not get template id.")
+        }
     }
 
     if(createItemResponse.status == 409)
-        throw new CustomError("Form with this name already exists.", 409)
+        throw new CustomError("Template with this name already exists.", 409)
     if(createItemResponse.status == 400)
-        throw new CustomError("Invalid form structure.", 400)
+        throw new CustomError("Invalid template structure.", 400)
 
     handleGenericErrorResponses(createItemResponse)
 }

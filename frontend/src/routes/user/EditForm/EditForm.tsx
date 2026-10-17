@@ -97,8 +97,7 @@ export default function EditForm() {
 
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
 
-        const newForm:NewForm = zNewForm.parse(data)
-        mutate({newFormData:newForm, formId:currentForm?currentForm.id:'' });
+        mutate({newFormData:data, formId:currentForm?currentForm.id:'' });
     }
 
     return (

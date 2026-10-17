@@ -144,7 +144,7 @@ function ProfileDataDisplay({user, stats}:{user:User, stats:UserStats}) {
                         </button>
                     </>
                 }
-
+                
             </div>
         </div>
 

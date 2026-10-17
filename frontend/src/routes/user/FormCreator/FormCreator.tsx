@@ -4,7 +4,7 @@ import {
     type SubmitHandler,
     useFieldArray,
 } from "react-hook-form";
-import {addForm, getTemplate} from "src/backend-connection/users";
+import {createForm, getTemplate} from "src/backend-connection/users";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
 import {useMutation, useQuery} from "@tanstack/react-query";
@@ -55,6 +55,8 @@ export default function FormCreator() {
             if (parseResult.success) {
                 setValue("elements", parseResult.data.elements);
                 setValue("name", parseResult.data.name);
+            } else {
+                toast.error("Could not load progress.")
             }
         }
         setLoadingProgress(false);
@@ -78,7 +80,7 @@ export default function FormCreator() {
     }, []);
 
     const {mutate} = useMutation({
-        mutationFn:addForm,
+        mutationFn:createForm,
         onSuccess:(formId:string|undefined)=>{
             toast.success("Form added successfully!");
             navigate(`/form/${formId}/view`)
@@ -116,11 +118,7 @@ export default function FormCreator() {
 
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
 
-        const newForm:NewForm = zNewForm.parse({
-                                name:data.name,
-                                elements:data.elements,
-                            })
-        mutate(newForm);
+        mutate(data);
     }
 
     return (

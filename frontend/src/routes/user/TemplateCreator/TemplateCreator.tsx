@@ -23,8 +23,16 @@ import {Checkbox} from "src/components/Checkbox/Checkbox";
 import {useAuth} from "src/components/AuthProvider";
 
 import {log} from "src/utilities";
-import {ElemType, type NewForm, QuestionType, type QuestionUnion, type TextQuestion} from "src/client/types.gen";
-import {zNewForm} from "src/client/zod.gen";
+import {
+    ElemType,
+    type NewForm,
+    type NewTemplate,
+    QuestionType,
+    type QuestionUnion,
+    type TextQuestion
+} from "src/client/types.gen";
+import {zNewForm, zNewTemplate} from "src/client/zod.gen";
+import {zodResolver} from "@hookform/resolvers/zod";
 
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
@@ -35,7 +43,9 @@ export default function TemplateCreator() {
 
     const [loadingProgress, setLoadingProgress] = React.useState(false)
 
-    const {register, formState:{errors}, handleSubmit, control, watch, getValues, setValue} = useForm<NewForm>({defaultValues:{elements:[], name:'New template'}});
+    const {register, formState:{errors}, handleSubmit, control, watch, getValues, setValue} =
+        useForm<NewTemplate>({defaultValues:{elements:[], name:'New template'}, resolver:zodResolver(zNewTemplate)});
+    
     const {append, update, remove, swap} = useFieldArray({control, name:'elements'});
     const formElements = watch("elements");
     const [isOfficial, setIsOfficial] = useState(false)
@@ -108,14 +118,8 @@ export default function TemplateCreator() {
         remove(questionIndex)
     }
 
-    const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
-
-        log(data);
-        const newForm:NewForm = zNewForm.parse({
-                                name:data.name,
-                                questions:data.elements,
-                            })
-        mutate({templateData:newForm, type:isOfficial?'official':undefined});
+    const createNewForm:SubmitHandler<NewTemplate> = async(data:NewTemplate) => {
+        mutate({templateData:data, type:isOfficial?'official':undefined});
     }
 
     return (

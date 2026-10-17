@@ -25,21 +25,19 @@ import {zodResolver} from "@hookform/resolvers/zod";
 
 // Componenta de baza a creatorului de formulare.
 // Printre altele, afiseaza un preview al formularului.
-export default function EditForm() {
+export default function EditTemplate() {
 
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const context = useOutletContext<{template:Template}>()
-
-    // luam datele despre chestionar de la componenta parent UpdateForm, care da fetch la chestionar
-    const parseResult = zTemplate.safeParse(context.template);
-    if(!parseResult.success) {
-        toast.error("Error when parsing form . . .");
+    const {template} = useOutletContext<{template:Template}>()
+    
+    if(!template) {
+        toast.error("No template received . . .");
         navigate('/me');
     }
 
     const {register, formState:{errors}, handleSubmit, control, watch} =
-        useForm<NewForm>({defaultValues:{elements:parseResult.data?.elements, name:parseResult.data?.name},
+        useForm<NewForm>({defaultValues:{elements:template?.elements, name:template?.name},
         resolver:zodResolver(zNewForm)});
 
     const {append, update, remove, swap} = useFieldArray({control, name:'elements'});
@@ -50,7 +48,7 @@ export default function EditForm() {
         onSuccess:async ()=>{
             toast.success("Template updated successfully!");
             await queryClient.invalidateQueries({queryKey:['template']})
-            navigate(`/template/${parseResult.data?.id}/view`)
+            navigate(`/template/${template?.id}/view`)
         },
         onError:(error)=>{
             toast.error(error?.message);
@@ -78,12 +76,8 @@ export default function EditForm() {
     }
 
     const createNewForm:SubmitHandler<NewForm> = async(data:NewForm) => {
-
-        const newForm:NewForm = zNewForm.parse({
-                                name:data.name,
-                                questions:data.elements,
-                            })
-        mutate({newTemplateData:newForm, templateId:parseResult.data?parseResult.data.id:''});
+        
+        mutate({newTemplateData:data, templateId:template?template.id:''});
     }
 
     return (
@@ -100,7 +94,7 @@ export default function EditForm() {
 
             <FixedElement>
                   <ButtonBar>
-                      <NavButton to={`/template/${parseResult.data?.id}/view`} >Cancel</NavButton>
+                      <NavButton to={`/template/${template?.id}/view`} >Cancel</NavButton>
                       <button form={"barosan"} type='submit' className='plain-button'>Done</button>
                   </ButtonBar>
             </FixedElement>

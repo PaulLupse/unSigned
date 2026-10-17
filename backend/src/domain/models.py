@@ -1,10 +1,10 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List, Literal, Annotated, Union
+from typing import Optional, List, Literal, Annotated, Union, TypeAliasType
 
-from pydantic import BeforeValidator, Field, RootModel, AwareDatetime
+from pydantic import BeforeValidator, Field, AwareDatetime
 
-from src.api.BaseModel import BaseModel
+from src.api.BaseModel import BaseModel, RootModel
 from src.utilities import PyObjectId, PyObjectIdField
 
 class ElemType(str, Enum):
@@ -96,6 +96,7 @@ class TextQuestion(Question):
 
 class QuestionUnion(RootModel[ Annotated[Union[TextQuestion, GridQuestion], Field(discriminator="question_type")]]):
     pass
+
 
 class FormElementUnion (RootModel[Annotated[Union[QuestionUnion, Paragraph, Heading], Field(discriminator="elem_type")]]):
     pass
@@ -226,6 +227,7 @@ class GridQuestionStatistic(QuestionStatistic):
 
 class QuestionStatisticUnion (RootModel[Annotated[Union[GridQuestionStatistic, TextQuestionStatistic], Field(discriminator="type")]]):
     pass
+
 
 class BaseTemplate(BaseModel):
 

@@ -60,6 +60,7 @@
     "react-spinners": "^0.17.0",
     "react-tooltip": "^5.30.0",
     "style-loader": "^4.0.0",
+    "tailwindcss": "^4.3.3",
     "ts-to-zod": "^5.1.0",
     "zod": "^4.3.6"
   }

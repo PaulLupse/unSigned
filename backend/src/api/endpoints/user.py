@@ -7,9 +7,9 @@ from starlette.responses import Response
 
 from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
-from src.domain.models import TemplateSummary
+from src.domain.models import TemplateSummary, QuestionUnion, FormElementUnion
 from src.db.DBResult import DBResult
-from src.common import limiter
+from src.common import limiter, logger
 from src.domain.auth import User, UserProfileWithStats
 from src.domain.models import FormSummary
 from src.db.DBConnector import DBConnector, get_db
@@ -83,7 +83,6 @@ async def get_user_forms(user:Annotated[User, Depends(authenticate)],
 async def get_user_templates(user:Annotated[User, Depends(authenticate)],
                              user_id,
                              request: Request):
-
     if user_id != user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 

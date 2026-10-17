@@ -452,8 +452,7 @@ class DBConnector:
     # Returneaza template-urile utilizatorului sub format minimal
     def get_templates(self,
                       owner_id: str,
-                      status: Literal['public', 'private', 'official']) -> DBResult[
-        list[TemplateSummary]]:
+                      status: Literal['public', 'private', 'official']) -> DBResult[list[TemplateSummary]]:
 
         try:
 
@@ -464,8 +463,10 @@ class DBConnector:
             else:
                 templates_from_db = self.templates_table.find({'status': 'public'})
 
+            templates = [t for t in templates_from_db]
+
             template_list: list[TemplateSummary] =  [Template.model_validate(template).summarize()
-                                                    for template in templates_from_db]
+                                                    for template in templates]
 
             return DBResult[list[TemplateSummary]](status=200, message="Queried successfully.", data=template_list)
 
