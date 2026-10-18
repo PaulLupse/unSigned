@@ -58,6 +58,7 @@ module.exports = {
                 test: /\.css$/i,
                 use: [
                   "style-loader", // Injects CSS into the DOM
+                  "postcss-loader",
                   {
                     loader: "css-loader",
                     options: {

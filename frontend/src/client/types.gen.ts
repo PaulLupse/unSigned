@@ -10,13 +10,13 @@ export type ClientOptions = {
 export type AnswerUnion = ({
     type: 'text';
 } & TextAnswer) | ({
-    type: 'grid';
-} & GridAnswer);
+    type: 'mc';
+} & MCAnswer);
 
 /**
  * Body_login_api_auth_token_post
  */
-export type BodyLoginApiAuthTokenPost = {
+export type Body_login_api_auth_token_post = {
     /**
      * Grant Type
      */
@@ -99,6 +99,8 @@ export type Email = {
 
 /**
  * Form
+ *
+ * Formatul complet al unui formular.
  */
 export type Form = {
     /**
@@ -106,9 +108,9 @@ export type Form = {
      */
     id: string;
     /**
-     * Name
+     * Title
      */
-    name: string;
+    title: string;
     /**
      * Ownerid
      */
@@ -144,6 +146,8 @@ export type FormElementUnion = QuestionUnion | Paragraph | Heading;
  * FormSummary
  *
  * Formatul minimal al unui formular. NU contine intrebarile aferente si submisiile.
+ * Attributes:
+ * sub_count: Numărul de submisii.
  */
 export type FormSummary = {
     /**
@@ -151,9 +155,9 @@ export type FormSummary = {
      */
     id: string;
     /**
-     * Name
+     * Title
      */
-    name: string;
+    title: string;
     /**
      * Ownerid
      */
@@ -177,73 +181,9 @@ export type FormSummary = {
 };
 
 /**
- * GridAnswer
- */
-export type GridAnswer = {
-    /**
-     * Type
-     */
-    type: 'grid';
-    /**
-     * Choices
-     */
-    choices: Array<number>;
-};
-
-/**
- * GridQuestion
- */
-export type GridQuestion = {
-    /**
-     * Elemtype
-     */
-    elemType: 'question';
-    /**
-     * Text
-     */
-    text: string;
-    /**
-     * Questiontype
-     */
-    questionType: 'grid';
-    /**
-     * Isoptional
-     */
-    isOptional: boolean;
-    /**
-     * Choices
-     */
-    choices: Array<string>;
-    /**
-     * Ismultiplechoice
-     */
-    isMultipleChoice: boolean;
-};
-
-/**
- * GridQuestionStatistic
- *
- * Statistici legate de raspunsurile pentru o singura intrebare de tip grilă.
- */
-export type GridQuestionStatistic = {
-    /**
-     * Engagement
-     */
-    engagement: number;
-    /**
-     * Type
-     */
-    type: 'grid';
-    /**
-     * Answerrate
-     */
-    answerRate: Array<number>;
-};
-
-/**
  * HTTPValidationError
  */
-export type HttpValidationError = {
+export type HTTPValidationError = {
     /**
      * Detail
      */
@@ -262,6 +202,10 @@ export type HandleGoogleUserRequest = {
 
 /**
  * Heading
+ *
+ * Un subtitlu, cu rol delimitator și informativ pentru persoana ce completează formularul.
+ * Attributes:
+ * text: Textul subtitlului.
  */
 export type Heading = {
     /**
@@ -272,20 +216,114 @@ export type Heading = {
      * Text
      */
     text: string;
+};
+
+/**
+ * MCAnswer
+ *
+ * Răspuns la o întrebare cu variante multiple de răspuns.
+ * Attributes:
+ * choices: Lista id-urilor răspunsurilor alese.
+ */
+export type MCAnswer = {
     /**
-     * Number
+     * Type
      */
-    number: number;
+    type: 'mc';
+    /**
+     * Questionid
+     */
+    questionId: string;
+    /**
+     * Choices
+     */
+    choices: Array<number>;
+};
+
+/**
+ * MCQuestion
+ *
+ * (MC = Multiple Choice) O întrebare cu mai multe răspunsuri.
+ * Attributes:
+ * choices: Variantele de răspuns.
+ * is_multiple_select: Flag ce semnalează dacă se pot selecta două sau mai multe de o variante de răspuns în același timp.
+ */
+export type MCQuestion = {
+    /**
+     * Elemtype
+     */
+    elemType: 'question';
+    /**
+     * Text
+     */
+    text: string;
+    /**
+     * Questiontype
+     */
+    questionType: 'mc';
+    /**
+     * Isoptional
+     */
+    isOptional?: boolean;
+    /**
+     * Choices
+     */
+    choices: Array<MCQuestionChoice>;
+    /**
+     * Ismultipleselect
+     */
+    isMultipleSelect: boolean;
+};
+
+/**
+ * MCQuestionChoice
+ *
+ * O variantă de răspuns, specifică unei întrebări cu răspunsuri multiple.
+ * Attributes:
+ * id: Identificatorul variantei.
+ * label: Textul variantei de răspuns.
+ */
+export type MCQuestionChoice = {
+    /**
+     * Id
+     */
+    id: number;
+    /**
+     * Label
+     */
+    label: string;
+};
+
+/**
+ * MCQuestionStatistic
+ *
+ * Statistici legate de raspunsurile pentru o singura intrebare de tip grilă.
+ */
+export type MCQuestionStatistic = {
+    /**
+     * Engagement
+     */
+    engagement: number;
+    /**
+     * Type
+     */
+    type: 'mc';
+    /**
+     * Answerrate
+     */
+    answerRate: Array<number>;
 };
 
 /**
  * NewForm
+ *
+ * Formă 'primitivă' al unui formular.
  */
 export type NewForm = {
     /**
-     * Name
+     * Title
      */
-    name: string;
+    title: string;
     /**
      * Elements
      */
@@ -294,12 +332,14 @@ export type NewForm = {
 
 /**
  * NewTemplate
+ *
+ * Formă 'primitivă' al unui șablon.
  */
 export type NewTemplate = {
     /**
-     * Name
+     * Title
      */
-    name: string;
+    title: string;
     /**
      * Elements
      */
@@ -308,12 +348,20 @@ export type NewTemplate = {
 
 /**
  * Paragraph
+ *
+ * Un paragraf, cu rol informativ pentru persoana ce completează formularul.
+ * Attributes:
+ * text: Textul paragrafului.
  */
 export type Paragraph = {
     /**
      * Elemtype
      */
     elemType: 'paragraph';
+    /**
+     * Id
+     */
+    id: string;
     /**
      * Text
      */
@@ -326,8 +374,8 @@ export type Paragraph = {
 export type QuestionUnion = ({
     questionType: 'text';
 } & TextQuestion) | ({
-    questionType: 'grid';
-} & GridQuestion);
+    questionType: 'mc';
+} & MCQuestion);
 
 /**
  * RegisterRequest
@@ -351,6 +399,8 @@ export type RegisterRequest = {
  * Submission
  *
  * Clasă reprezentând o submisie pentru un formular.
+ * Attributes:
+ * answers: Lista răspunsurilor.
  */
 export type Submission = {
     /**
@@ -376,6 +426,8 @@ export type SubmitFormRequest = {
 
 /**
  * Template
+ *
+ * Forma completă al unui șablon.
  */
 export type Template = {
     /**
@@ -400,7 +452,7 @@ export type Template = {
 /**
  * TemplateSummary
  *
- * Formatul minimal al unui template. NU contine intrebarile aferente.
+ * Formatul minimal al unui șablon. NU contine intrebarile aferente.
  */
 export type TemplateSummary = {
     /**
@@ -442,12 +494,20 @@ export type TemplateType = typeof TemplateType[keyof typeof TemplateType];
 
 /**
  * TextAnswer
+ *
+ * Răspuns la o întrebare de tip text.
+ * Attributes:
+ * text: Răspunsul, sub formă de text.
  */
 export type TextAnswer = {
     /**
      * Type
      */
     type: 'text';
+    /**
+     * Questionid
+     */
+    questionId: string;
     /**
      * Text
      */
@@ -456,6 +516,10 @@ export type TextAnswer = {
 
 /**
  * TextQuestion
+ *
+ * Întrebare cu răspuns de tip text.
+ * Attributes:
+ * max_chars: Numărul maxim de caractere permis
  */
 export type TextQuestion = {
     /**
@@ -473,7 +537,7 @@ export type TextQuestion = {
     /**
      * Isoptional
      */
-    isOptional: boolean;
+    isOptional?: boolean;
     /**
      * Maxchars
      */
@@ -506,6 +570,8 @@ export type TextQuestionStatistic = {
 
 /**
  * User
+ *
+ * Date despre utilizator.
  */
 export type User = {
     /**
@@ -528,6 +594,8 @@ export type User = {
 
 /**
  * UserProfileWithStats
+ *
+ * Date extinse despre utilizator.
  */
 export type UserProfileWithStats = {
     user: User;
@@ -536,6 +604,8 @@ export type UserProfileWithStats = {
 
 /**
  * UserStats
+ *
+ * Statistici legate de un utilizator.
  */
 export type UserStats = {
     /**
@@ -614,8 +684,8 @@ export type ElemType = typeof ElemType[keyof typeof ElemType];
  * QuestionStatisticUnion
  */
 export type QuestionStatisticUnion = ({
-    type: 'grid';
-} & GridQuestionStatistic) | ({
+    type: 'mc';
+} & MCQuestionStatistic) | ({
     type: 'text';
 } & TextQuestionStatistic);
 
@@ -625,7 +695,7 @@ export type QuestionStatisticUnion = ({
  * Tipurile de întrebări ale unui formular, sub formă de string. Folosite pentru discriminarea între elementele
  * ce moștenesc clasa Question.
  */
-export const QuestionType = { GRID: 'grid', TEXT: 'text' } as const;
+export const QuestionType = { MC: 'mc', TEXT: 'text' } as const;
 
 /**
  * QuestionType
@@ -667,7 +737,7 @@ export type GetUserDataApiUserIdentifierGetErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type GetUserDataApiUserIdentifierGetError = GetUserDataApiUserIdentifierGetErrors[keyof GetUserDataApiUserIdentifierGetErrors];
@@ -697,7 +767,7 @@ export type GetUserStatsApiUserIdentifierStatsGetErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type GetUserStatsApiUserIdentifierStatsGetError = GetUserStatsApiUserIdentifierStatsGetErrors[keyof GetUserStatsApiUserIdentifierStatsGetErrors];
@@ -727,7 +797,7 @@ export type GetUserFormsApiUserUserIdFormsGetErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type GetUserFormsApiUserUserIdFormsGetError = GetUserFormsApiUserUserIdFormsGetErrors[keyof GetUserFormsApiUserUserIdFormsGetErrors];
@@ -759,7 +829,7 @@ export type GetUserTemplatesApiUserUserIdTemplatesGetErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type GetUserTemplatesApiUserUserIdTemplatesGetError = GetUserTemplatesApiUserUserIdTemplatesGetErrors[keyof GetUserTemplatesApiUserUserIdTemplatesGetErrors];
@@ -791,7 +861,7 @@ export type DeleteUserApiUserUserIdDeleteDeleteErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type DeleteUserApiUserUserIdDeleteDeleteError = DeleteUserApiUserUserIdDeleteDeleteErrors[keyof DeleteUserApiUserUserIdDeleteDeleteErrors];
@@ -814,7 +884,7 @@ export type CreateFormApiFormAddPostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type CreateFormApiFormAddPostError = CreateFormApiFormAddPostErrors[keyof CreateFormApiFormAddPostErrors];
@@ -844,7 +914,7 @@ export type OpenFormApiFormFormIdOpenPostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type OpenFormApiFormFormIdOpenPostError = OpenFormApiFormFormIdOpenPostErrors[keyof OpenFormApiFormFormIdOpenPostErrors];
@@ -872,7 +942,7 @@ export type CloseFormApiFormFormIdClosePostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type CloseFormApiFormFormIdClosePostError = CloseFormApiFormFormIdClosePostErrors[keyof CloseFormApiFormFormIdClosePostErrors];
@@ -900,7 +970,7 @@ export type GetFormApiFormFormIdGetErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type GetFormApiFormFormIdGetError = GetFormApiFormFormIdGetErrors[keyof GetFormApiFormFormIdGetErrors];
@@ -930,7 +1000,7 @@ export type EditFormApiFormFormIdEditPutErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type EditFormApiFormFormIdEditPutError = EditFormApiFormFormIdEditPutErrors[keyof EditFormApiFormFormIdEditPutErrors];
@@ -958,7 +1028,7 @@ export type DeleteFormApiFormFormIdDeleteDeleteErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type DeleteFormApiFormFormIdDeleteDeleteError = DeleteFormApiFormFormIdDeleteDeleteErrors[keyof DeleteFormApiFormFormIdDeleteDeleteErrors];
@@ -986,7 +1056,7 @@ export type GetFormSubmissionDataApiFormFormIdSubmissionDataGetErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type GetFormSubmissionDataApiFormFormIdSubmissionDataGetError = GetFormSubmissionDataApiFormFormIdSubmissionDataGetErrors[keyof GetFormSubmissionDataApiFormFormIdSubmissionDataGetErrors];
@@ -997,7 +1067,7 @@ export type GetFormSubmissionDataApiFormFormIdSubmissionDataGetResponses = {
      *
      * Successful Response
      */
-    200: Array<TextQuestionStatistic | GridQuestionStatistic>;
+    200: Array<TextQuestionStatistic | MCQuestionStatistic>;
 };
 
 export type GetFormSubmissionDataApiFormFormIdSubmissionDataGetResponse = GetFormSubmissionDataApiFormFormIdSubmissionDataGetResponses[keyof GetFormSubmissionDataApiFormFormIdSubmissionDataGetResponses];
@@ -1018,7 +1088,7 @@ export type DistributeFormKeysApiFormFormIdDistributeKeysPostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type DistributeFormKeysApiFormFormIdDistributeKeysPostError = DistributeFormKeysApiFormFormIdDistributeKeysPostErrors[keyof DistributeFormKeysApiFormFormIdDistributeKeysPostErrors];
@@ -1046,7 +1116,7 @@ export type CheckFormIdApiSubUserCheckFormIdPostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type CheckFormIdApiSubUserCheckFormIdPostError = CheckFormIdApiSubUserCheckFormIdPostErrors[keyof CheckFormIdApiSubUserCheckFormIdPostErrors];
@@ -1069,7 +1139,7 @@ export type CheckKeyApiSubUserCheckKeyPostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type CheckKeyApiSubUserCheckKeyPostError = CheckKeyApiSubUserCheckKeyPostErrors[keyof CheckKeyApiSubUserCheckKeyPostErrors];
@@ -1094,7 +1164,7 @@ export type UseKeyApiSubUserUseKeyPostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type UseKeyApiSubUserUseKeyPostError = UseKeyApiSubUserUseKeyPostErrors[keyof UseKeyApiSubUserUseKeyPostErrors];
@@ -1117,7 +1187,7 @@ export type SubmitFormApiSubUserSubmitFormPostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type SubmitFormApiSubUserSubmitFormPostError = SubmitFormApiSubUserSubmitFormPostErrors[keyof SubmitFormApiSubUserSubmitFormPostErrors];
@@ -1140,7 +1210,7 @@ export type CreateOfficialTemplateApiAdminOfficialTemplatesCreatePostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type CreateOfficialTemplateApiAdminOfficialTemplatesCreatePostError = CreateOfficialTemplateApiAdminOfficialTemplatesCreatePostErrors[keyof CreateOfficialTemplateApiAdminOfficialTemplatesCreatePostErrors];
@@ -1168,7 +1238,7 @@ export type EditOfficialTemplateApiAdminOfficialTemplatesTemplateIdEditPutErrors
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type EditOfficialTemplateApiAdminOfficialTemplatesTemplateIdEditPutError = EditOfficialTemplateApiAdminOfficialTemplatesTemplateIdEditPutErrors[keyof EditOfficialTemplateApiAdminOfficialTemplatesTemplateIdEditPutErrors];
@@ -1196,7 +1266,7 @@ export type DeleteOfficialTemplateApiAdminOfficialTemplatesTemplateIdDeleteDelet
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type DeleteOfficialTemplateApiAdminOfficialTemplatesTemplateIdDeleteDeleteError = DeleteOfficialTemplateApiAdminOfficialTemplatesTemplateIdDeleteDeleteErrors[keyof DeleteOfficialTemplateApiAdminOfficialTemplatesTemplateIdDeleteDeleteErrors];
@@ -1260,7 +1330,7 @@ export type GetTemplateApiTemplateTemplateIdGetErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type GetTemplateApiTemplateTemplateIdGetError = GetTemplateApiTemplateTemplateIdGetErrors[keyof GetTemplateApiTemplateTemplateIdGetErrors];
@@ -1285,7 +1355,7 @@ export type CreateTemplateApiTemplateCreatePostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type CreateTemplateApiTemplateCreatePostError = CreateTemplateApiTemplateCreatePostErrors[keyof CreateTemplateApiTemplateCreatePostErrors];
@@ -1315,7 +1385,7 @@ export type EditTemplateApiTemplateTemplateIdEditPutErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type EditTemplateApiTemplateTemplateIdEditPutError = EditTemplateApiTemplateTemplateIdEditPutErrors[keyof EditTemplateApiTemplateTemplateIdEditPutErrors];
@@ -1343,7 +1413,7 @@ export type DeleteTemplateApiTemplateTemplateIdDeleteDeleteErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type DeleteTemplateApiTemplateTemplateIdDeleteDeleteError = DeleteTemplateApiTemplateTemplateIdDeleteDeleteErrors[keyof DeleteTemplateApiTemplateTemplateIdDeleteDeleteErrors];
@@ -1356,7 +1426,7 @@ export type DeleteTemplateApiTemplateTemplateIdDeleteDeleteResponses = {
 };
 
 export type LoginApiAuthTokenPostData = {
-    body: BodyLoginApiAuthTokenPost;
+    body: Body_login_api_auth_token_post;
     path?: never;
     query?: never;
     url: '/api/auth/token';
@@ -1366,7 +1436,7 @@ export type LoginApiAuthTokenPostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type LoginApiAuthTokenPostError = LoginApiAuthTokenPostErrors[keyof LoginApiAuthTokenPostErrors];
@@ -1403,7 +1473,7 @@ export type RequestVerificationCodeApiAuthVerificationCodeRequestPutErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type RequestVerificationCodeApiAuthVerificationCodeRequestPutError = RequestVerificationCodeApiAuthVerificationCodeRequestPutErrors[keyof RequestVerificationCodeApiAuthVerificationCodeRequestPutErrors];
@@ -1426,7 +1496,7 @@ export type CheckVerificationCodeApiAuthVerificationCodeCheckPutErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type CheckVerificationCodeApiAuthVerificationCodeCheckPutError = CheckVerificationCodeApiAuthVerificationCodeCheckPutErrors[keyof CheckVerificationCodeApiAuthVerificationCodeCheckPutErrors];
@@ -1449,7 +1519,7 @@ export type RegisterUserApiAuthRegisterPutErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type RegisterUserApiAuthRegisterPutError = RegisterUserApiAuthRegisterPutErrors[keyof RegisterUserApiAuthRegisterPutErrors];
@@ -1472,7 +1542,7 @@ export type HandleGoogleUserApiAuthGooglePostErrors = {
     /**
      * Validation Error
      */
-    422: HttpValidationError;
+    422: HTTPValidationError;
 };
 
 export type HandleGoogleUserApiAuthGooglePostError = HandleGoogleUserApiAuthGooglePostErrors[keyof HandleGoogleUserApiAuthGooglePostErrors];

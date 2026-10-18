@@ -7,9 +7,9 @@ from src.common import limiter, logger
 from src.api.auth.utils import decode_key
 from src.domain.models import Submission, Form
 from src.domain.auth import Key
-from src.db.DBConnector import DBConnector, get_db
+from src.db.DBConnector import DBConnector
 
-db_connector:DBConnector = get_db()
+db_connector:DBConnector = DBConnector.get_db()
 
 router:APIRouter = APIRouter(prefix="/sub-user",
                              tags=["sub-users"])

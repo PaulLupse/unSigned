@@ -54,46 +54,17 @@ export const zDistributeKeysRequest = z.object({
  * FormSummary
  *
  * Formatul minimal al unui formular. NU contine intrebarile aferente si submisiile.
+ * Attributes:
+ * sub_count: Numărul de submisii.
  */
 export const zFormSummary = z.object({
     id: z.string(),
-    name: z.string(),
+    title: z.string(),
     ownerId: z.string(),
     dateCreated: z.iso.datetime().nullable(),
     dateOpened: z.iso.datetime().nullish(),
     dateClosed: z.iso.datetime().nullish(),
     subCount: z.int()
-});
-
-/**
- * GridAnswer
- */
-export const zGridAnswer = z.object({
-    type: z.literal('grid'),
-    choices: z.array(z.int())
-});
-
-/**
- * GridQuestion
- */
-export const zGridQuestion = z.object({
-    elemType: z.literal('question'),
-    text: z.string(),
-    questionType: z.literal('grid'),
-    isOptional: z.boolean(),
-    choices: z.array(z.string()),
-    isMultipleChoice: z.boolean()
-});
-
-/**
- * GridQuestionStatistic
- *
- * Statistici legate de raspunsurile pentru o singura intrebare de tip grilă.
- */
-export const zGridQuestionStatistic = z.object({
-    engagement: z.number(),
-    type: z.literal('grid'),
-    answerRate: z.array(z.number())
 });
 
 /**
@@ -105,18 +76,80 @@ export const zHandleGoogleUserRequest = z.object({
 
 /**
  * Heading
+ *
+ * Un subtitlu, cu rol delimitator și informativ pentru persoana ce completează formularul.
+ * Attributes:
+ * text: Textul subtitlului.
  */
 export const zHeading = z.object({
     elemType: z.literal('heading'),
+    text: z.string()
+});
+
+/**
+ * MCAnswer
+ *
+ * Răspuns la o întrebare cu variante multiple de răspuns.
+ * Attributes:
+ * choices: Lista id-urilor răspunsurilor alese.
+ */
+export const zMcAnswer = z.object({
+    type: z.literal('mc'),
+    questionId: z.string().length(6),
+    choices: z.array(z.int())
+});
+
+/**
+ * MCQuestionChoice
+ *
+ * O variantă de răspuns, specifică unei întrebări cu răspunsuri multiple.
+ * Attributes:
+ * id: Identificatorul variantei.
+ * label: Textul variantei de răspuns.
+ */
+export const zMcQuestionChoice = z.object({
+    id: z.int(),
+    label: z.string()
+});
+
+/**
+ * MCQuestion
+ *
+ * (MC = Multiple Choice) O întrebare cu mai multe răspunsuri.
+ * Attributes:
+ * choices: Variantele de răspuns.
+ * is_multiple_select: Flag ce semnalează dacă se pot selecta două sau mai multe de o variante de răspuns în același timp.
+ */
+export const zMcQuestion = z.object({
+    elemType: z.literal('question'),
     text: z.string(),
-    number: z.int()
+    questionType: z.literal('mc'),
+    isOptional: z.boolean().optional().default(false),
+    choices: z.array(zMcQuestionChoice),
+    isMultipleSelect: z.boolean()
+});
+
+/**
+ * MCQuestionStatistic
+ *
+ * Statistici legate de raspunsurile pentru o singura intrebare de tip grilă.
+ */
+export const zMcQuestionStatistic = z.object({
+    engagement: z.number(),
+    type: z.literal('mc'),
+    answerRate: z.array(z.number())
 });
 
 /**
  * Paragraph
+ *
+ * Un paragraf, cu rol informativ pentru persoana ce completează formularul.
+ * Attributes:
+ * text: Textul paragrafului.
  */
 export const zParagraph = z.object({
     elemType: z.literal('paragraph'),
+    id: z.string().length(6),
     text: z.string()
 });
 
@@ -143,7 +176,7 @@ export const zTemplateType = z.enum([
 /**
  * TemplateSummary
  *
- * Formatul minimal al unui template. NU contine intrebarile aferente.
+ * Formatul minimal al unui șablon. NU contine intrebarile aferente.
  */
 export const zTemplateSummary = z.object({
     id: z.string(),
@@ -155,9 +188,14 @@ export const zTemplateSummary = z.object({
 
 /**
  * TextAnswer
+ *
+ * Răspuns la o întrebare de tip text.
+ * Attributes:
+ * text: Răspunsul, sub formă de text.
  */
 export const zTextAnswer = z.object({
     type: z.literal('text'),
+    questionId: z.string().length(6),
     text: z.string()
 });
 
@@ -166,13 +204,15 @@ export const zTextAnswer = z.object({
  */
 export const zAnswerUnion = z.discriminatedUnion('type', [
     zTextAnswer,
-    zGridAnswer
+    zMcAnswer
 ]);
 
 /**
  * Submission
  *
  * Clasă reprezentând o submisie pentru un formular.
+ * Attributes:
+ * answers: Lista răspunsurilor.
  */
 export const zSubmission = z.object({
     answers: z.array(zAnswerUnion)
@@ -189,12 +229,16 @@ export const zSubmitFormRequest = z.object({
 
 /**
  * TextQuestion
+ *
+ * Întrebare cu răspuns de tip text.
+ * Attributes:
+ * max_chars: Numărul maxim de caractere permis
  */
 export const zTextQuestion = z.object({
     elemType: z.literal('question'),
     text: z.string(),
     questionType: z.literal('text'),
-    isOptional: z.boolean(),
+    isOptional: z.boolean().optional().default(false),
     maxChars: z.int()
 });
 
@@ -203,7 +247,7 @@ export const zTextQuestion = z.object({
  */
 export const zQuestionUnion = z.discriminatedUnion('questionType', [
     zTextQuestion,
-    zGridQuestion
+    zMcQuestion
 ]);
 
 /**
@@ -217,10 +261,12 @@ export const zFormElementUnion = z.union([
 
 /**
  * Form
+ *
+ * Formatul complet al unui formular.
  */
 export const zForm = z.object({
     id: z.string(),
-    name: z.string(),
+    title: z.string(),
     ownerId: z.string(),
     dateCreated: z.iso.datetime().nullable(),
     dateOpened: z.iso.datetime().nullish(),
@@ -231,22 +277,28 @@ export const zForm = z.object({
 
 /**
  * NewForm
+ *
+ * Formă 'primitivă' al unui formular.
  */
 export const zNewForm = z.object({
-    name: z.string(),
+    title: z.string(),
     elements: z.array(zFormElementUnion)
 });
 
 /**
  * NewTemplate
+ *
+ * Formă 'primitivă' al unui șablon.
  */
 export const zNewTemplate = z.object({
-    name: z.string(),
+    title: z.string(),
     elements: z.array(zFormElementUnion)
 });
 
 /**
  * Template
+ *
+ * Forma completă al unui șablon.
  */
 export const zTemplate = z.object({
     id: z.string(),
@@ -270,6 +322,8 @@ export const zTextQuestionStatistic = z.object({
 
 /**
  * User
+ *
+ * Date despre utilizator.
  */
 export const zUser = z.object({
     id: z.string(),
@@ -280,6 +334,8 @@ export const zUser = z.object({
 
 /**
  * UserStats
+ *
+ * Statistici legate de un utilizator.
  */
 export const zUserStats = z.object({
     formCount: z.int(),
@@ -288,6 +344,8 @@ export const zUserStats = z.object({
 
 /**
  * UserProfileWithStats
+ *
+ * Date extinse despre utilizator.
  */
 export const zUserProfileWithStats = z.object({
     user: zUser,
@@ -341,7 +399,7 @@ export const zElemType = z.enum([
  * QuestionStatisticUnion
  */
 export const zQuestionStatisticUnion = z.discriminatedUnion('type', [
-    zGridQuestionStatistic,
+    zMcQuestionStatistic,
     zTextQuestionStatistic
 ]);
 
@@ -351,4 +409,4 @@ export const zQuestionStatisticUnion = z.discriminatedUnion('type', [
  * Tipurile de întrebări ale unui formular, sub formă de string. Folosite pentru discriminarea între elementele
  * ce moștenesc clasa Question.
  */
-export const zQuestionType = z.enum(['grid', 'text']);
+export const zQuestionType = z.enum(['mc', 'text']);

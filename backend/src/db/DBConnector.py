@@ -1,6 +1,6 @@
 import re
 from collections import Counter
-from typing import Literal, Mapping, Any
+from typing import Literal
 
 from warnings import deprecated
 import pymongo.errors
@@ -11,18 +11,16 @@ from pydantic import TypeAdapter, ValidationError
 from pymongo.errors import ServerSelectionTimeoutError
 from pymongo.results import DeleteResult, InsertOneResult
 
-from src.common import logger, mongo_client
-from src.config import REFRESH_TOKEN_LIFESPAN_DAYS
+from src.common import mongo_client
 from src.db.DBResult import DBResult
-from src.domain.models import TextAnswer, TextQuestionStatistic, GridQuestionStatistic, GridAnswer, \
-    Question, NewTemplate, QuestionType, Answer, ElemType, QuestionUnion, FormElementUnion, QuestionStatisticUnion
+from src.domain.models import TextAnswer, TextQuestionStatistic, MCQuestionStatistic, MCAnswer, \
+    NewTemplate, QuestionType, Answer, ElemType, QuestionUnion, QuestionStatisticUnion
 from src.domain.models import TemplateSummary, Template
-from src.domain.models import TextQuestion, GridQuestion
-from src.api.auth.utils import hash_password, verify_password
+from src.domain.models import TextQuestion, MCQuestion
 from src.domain.models import Form, Submission, FormSummary, NewForm
-from src.domain.auth import Key, User, UserStats, RefreshToken
+from src.domain.auth import Key, User, UserStats
 
-from datetime import date, datetime, timezone, timedelta
+from datetime import date, datetime
 
 
 class DBConnector:
@@ -33,261 +31,21 @@ class DBConnector:
 
             opt = CodecOptions(tz_aware=True)
 
-            self.users_table = database["users"]
             self.forms_table = database.get_collection("forms", codec_options=opt)
             self.keys_table = database.get_collection("keys", codec_options=opt)
             self.templates_table = database.get_collection("templates", codec_options=opt)
-            self.sessions_table = database.get_collection("sessions", codec_options=opt)
             self.verification_codes_table = database.get_collection("verification_codes", codec_options=opt)
 
         except ServerSelectionTimeoutError as e:
             print("ERROR: Server Selection Timeout. Check backend-connection connection.")
             raise e
 
-    # Valideaza detaliile de logare si returneaza detaliile despre utilizator
-    # Identificatorul poate fii un email sau un username
-    def validate_credentials(self, password: str, identifier: str) -> DBResult[User]:
-
-        # Cautam utilizatorul atat dupa email cat si dupa parola
-        user: Mapping[str, Any] | None = self.users_table.find_one(
-            {
-                "$or":
-                    [
-                        {"username": identifier},
-                        {"email": identifier}
-                    ]
-            })
-
-        user: dict = dict(user)
-
-        if user:
-
-            password_in_db: str | None = user.get("password")
-
-            if password_in_db is None:
-                return DBResult(400, "No password set.")
-
-            if verify_password(plain_password=password, hashed_password=password_in_db):
-                user.pop("password")
-
-                return DBResult[User](200,
-                                      "Valid credentials.",
-                                      User.model_validate(user))
-
-            return DBResult(400, "Invalid credentials.")
-
-        return DBResult(404, "User not found.")
-
-    def store_refresh_token(self, user_id: str, refresh_token_hash: str) -> DBResult[str]:
-
-        expiration_date = datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_LIFESPAN_DAYS)
-
-        res: InsertOneResult = self.sessions_table.insert_one(
-            {"user_id": user_id,
-             "hash": refresh_token_hash,
-             "is_used": False,
-             "expires_at": expiration_date}, )
-
-        if not res.inserted_id:
-            return DBResult(500, "Cannot store refresh token.")
-
-        return DBResult(200, "Stored refresh token.")
-
-    # Sterge toate refresh token-urile apartinand utilizatorului
-    def end_user_session(self, user_id: str, ) -> DBResult[str]:
-
-        self.sessions_table.delete_many({"user_id": user_id})
-
-        return DBResult(200, "Done.")
-
-    def invalidate_refresh_token(self, refresh_token_hash: str) -> DBResult[str]:
-
-        result = self.sessions_table.update_one(filter={"hash": refresh_token_hash},
-                                                update={"$set": {"is_used": True}}, upsert=False)
-
-        if result.modified_count == 0: return DBResult(404, "Token not found.")
-        return DBResult(200, "Invalidated token.")
-
-    # Verifica refresh token-ul
-    def check_refresh_token(self, refresh_token_hash: str) -> DBResult[User | None]:
-
-        result_from_db = self.sessions_table.find_one({"hash": refresh_token_hash})
-        if not result_from_db: return DBResult(404, "Token not found.")
-
-        result = RefreshToken.model_validate(result_from_db)
-
+    @staticmethod
+    def get_db():
         try:
-
-            if result.is_used:
-                return DBResult(401, "Token used.")
-
-            if result.is_expired():
-                return DBResult(401, "Token expired.")
-
-            logger.warning(result)
-
-            find_res = self.find_user(user_id=result.user_id)
-
-            return find_res
-
-
-        except ValidationError as e:
-
-            return DBResult(401, "Token is invalid.")
-
-    def find_user(self,
-                  user_id: str | None = None,
-                  email: str | None = None,
-                  username: str | None = None,
-                  provider_user_id: str | None = None,
-                  provider: str | None = None) -> DBResult[User | None]:
-
-        search_filter = {}
-        if user_id: search_filter.update({"_id": ObjectId(user_id)})
-        if email: search_filter.update({"email": email})
-        if username: search_filter.update({"username": username})
-        if provider and provider_user_id:
-            print("DEBUG:    " + provider + "::" + provider_user_id)
-            search_filter.update({
-                "providers": {
-                    "$elemMatch": {
-                        "provider": provider,
-                        "provider_user_id": provider_user_id
-                    }
-                }
-            })
-
-        user = self.users_table.find_one(search_filter)
-
-        if user:
-
-            return DBResult(200, "User exists.", data=User.model_validate(user))
-        else:
-            return DBResult(404, "User not found.", data=None)
-
-    # Metoda ce inregistreaza un utilizator
-    # inregistreaza parola in baza de date sub forma 'hash'-uita, folosind un string generat aleator
-    # returneaza id-ul utilizatorului
-    def register_user(self,
-                      username: str,
-                      password: str | None,
-                      email: str,
-                      provider: str | None = None,
-                      provider_user_id: str | None = None) -> DBResult[str]:
-
-        hashed_password = hash_password(password) if password else None
-        new_user_data: dict = {"username": username,
-                               "password": hashed_password,
-                               "email": email,
-                               "is_admin": False}
-
-        if provider and provider_user_id:
-            new_user_data.update(
-                {
-                    "providers": [
-                        {
-                            "provider": provider,
-                            "provider_user_id": provider_user_id
-                        }
-                    ],
-                }
-            )
-
-        try:
-
-            result: InsertOneResult = self.users_table.insert_one(new_user_data)
-
-            return DBResult(201, "Created.", str(result.inserted_id))
-
-        except pymongo.errors.DuplicateKeyError:
-
-            return DBResult(409, "Username taken.")
-
-    # Memoreaza un cod de verificare a unui email.
-    def store_verification_code(self, verification_code: str, email: str) -> DBResult[str]:
-
-        exp_date = datetime.now(timezone.utc) + timedelta(minutes=5)
-
-        # Daca exista deja un cod de verificare pentru un email, acesta este suprascris, impreuna cu data de expirare.
-        self.verification_codes_table.update_one(
-            update={
-                "$set": {
-                    "verification_code": verification_code,
-                    "email": email,
-                    "expires_at": exp_date
-                },
-            }, filter={"email": email}, upsert=True)
-
-        return DBResult(200, "Verification code stored.")
-
-    # Verifica existenta si validitatea unui cod de verificare. Returneaza id-ul codului (spre a fii sters).
-    def check_verification_code(self, verification_code: str, email: str) -> DBResult[str | None]:
-
-        check_result = self.verification_codes_table.find_one({"email": email})
-
-        if check_result:
-
-            if check_result["verification_code"] != verification_code:
-                return DBResult(400, "Verification code invalid.")
-
-            if check_result["expires_at"] < datetime.now(timezone.utc):
-                return DBResult(400, "Verification code expired.")
-
-            return DBResult(200, "Ok.", data=str(check_result["_id"]))
-
-        # Daca email-ul nu detine un cod de verificare, il consideram invalid.
-        return DBResult(404, "No verification code found.")
-
-    # Sterge codul de verificare cu id-ul specificat
-    def delete_verification_code(self, verification_code_id: str) -> DBResult[str]:
-
-        delete_result = self.verification_codes_table.delete_one({"_id": ObjectId(verification_code_id)})
-
-        if not delete_result.deleted_count:
-            return DBResult(404, "Verification code not found.")
-
-        return DBResult(200, "Deleted.")
-
-    # Modifica numele de utilizator al unui utilizator
-    def change_username(self, user_id: str, new_username: str) -> DBResult:
-
-        result = self.users_table.update_one({"_id": ObjectId(user_id)}, update={"$set": {"username": new_username}})
-        if result.modified_count == 0:
-            return DBResult(404, "User not found.")
-
-        return DBResult(200, "Ok")
-
-    # Adauga un provider la un cont de utilizator
-    def link_user_account(self, user_id: str, provider: str, provider_user_id) -> DBResult[str]:
-
-        result = self.users_table.update_one(
-            filter={"_id": ObjectId(user_id)},
-            update={
-                "$push": {
-                    "providers": {
-                        "provider": provider,
-                        "provider_user_id": provider_user_id
-                    }
-                }
-            }
-        )
-
-        if not result.modified_count: return DBResult(404, "User not found.")
-
-        return DBResult(200, f"Linked user {user_id} to provider: {provider}")
-
-    # sterge un utilizator pe baza username-ului
-    def delete_user(self, user_id: str) -> DBResult:
-
-        self.templates_table.delete_many({"owner_id": user_id})
-        self.forms_table.delete_many({"owner_id": user_id})
-        result: DeleteResult = self.users_table.delete_one({"_id": ObjectId(user_id)})
-
-        logger.warning(result)
-
-        if result.deleted_count == 0: return DBResult(404, "User not found.")
-
-        return DBResult(200, "Deleted.")
+            return DBConnector()
+        except Exception as e:
+            raise Exception("Unexpected error: " + str(e))
 
     def get_user_stats(self, user_id: str) -> DBResult[UserStats]:
 
@@ -473,7 +231,7 @@ class DBConnector:
         except Exception as e:
             return DBResult(500, "Unexpected error: " + str(e))
 
-    @deprecated("Este recomandat verificarea autorizarii in endpoint-ul api.")
+    @deprecated("Este recomandată verificarea autorizării în endpoint-ul api.")
     def check_template_authorization(self,
                                      template_id: str,
                                      owner_id: str,
@@ -542,7 +300,7 @@ class DBConnector:
         try:
 
             template_in_db = {
-                "name": template.name,
+                "name": template.title,
                 "elements": jsonable_encoder(template.elements),
                 "owner_id": owner_id,
                 "status": status
@@ -604,8 +362,8 @@ class DBConnector:
                                      frequent_words=top_5_words)
 
     @staticmethod
-    def calculate_grid_submission_data(answers: list[GridAnswer],
-                                       question: GridQuestion) -> GridQuestionStatistic:
+    def calculate_grid_submission_data(answers: list[MCAnswer],
+                                       question: MCQuestion) -> MCQuestionStatistic:
 
         choices_counter: list[int] = [0 for _ in question.choices]
         nr_answered: int = 0
@@ -616,9 +374,9 @@ class DBConnector:
             if answer.choices: nr_answered += 1
 
         answers_len = len(answers)
-        return GridQuestionStatistic(type=QuestionType.GRID,
-                                     engagement=nr_answered / answers_len * 100,
-                                     answer_rate=[cnt / nr_answered * 100 for cnt in choices_counter])
+        return MCQuestionStatistic(type=QuestionType.MC,
+                                   engagement=nr_answered / answers_len * 100,
+                                   answer_rate=[cnt / nr_answered * 100 for cnt in choices_counter])
 
     @staticmethod
     def get_questions_answers(subs: list[Submission]) -> list[list[Answer]]:
@@ -651,14 +409,14 @@ class DBConnector:
 
                 form = Form.model_validate(form_from_db)
 
-            questions: list[QuestionUnion] = [e for e in form.elements if e.elem_type is ElemType.QUESTION]
+            questions: list[QuestionUnion] = [e for e in form.elements if e.elem_type is ElemType.QUESTION] # extrage toate întrebările din formular
             submissions: list[Submission] | None = form.submissions
 
             if not submissions: return DBResult(200, "No submissions found.", [])
 
             questions_answers: list[list[Answer]] = self.get_questions_answers(submissions)
 
-            statistics: list[TextQuestionStatistic | GridQuestionStatistic] = []
+            statistics: list[TextQuestionStatistic | MCQuestionStatistic] = []
 
             for question_index, question in enumerate(questions):
 
@@ -668,22 +426,17 @@ class DBConnector:
                                                                  isinstance(ans, TextAnswer)]
                     statistics.append(self.calculate_text_submission_data(current_question_answers))
 
-                elif isinstance(question, GridQuestion):
+                elif isinstance(question, MCQuestion):
 
-                    current_question_answers: list[GridAnswer] = [ans for ans in questions_answers[question_index] if
-                                                                  isinstance(ans, GridAnswer)]
+                    current_question_answers: list[MCAnswer] = [ans for ans in questions_answers[question_index] if
+                                                                isinstance(ans, MCAnswer)]
                     statistics.append(self.calculate_grid_submission_data(current_question_answers, question))
 
 
-            return DBResult[list[TextQuestionStatistic | GridQuestionStatistic]](status=200,
-                                                                                 data=statistics)
+            return DBResult[list[QuestionStatisticUnion]](status=200, data=statistics)
 
         except Exception as e:
             return DBResult(500, "Unexpected error: " + str(e))
 
 
-def get_db() -> DBConnector:
-    try:
-        return DBConnector()
-    except Exception as e:
-        raise Exception("Unexpected error: " + str(e))
+

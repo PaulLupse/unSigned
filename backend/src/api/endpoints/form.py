@@ -8,15 +8,15 @@ from typing import Annotated
 from src.api.BaseModel import BaseModel
 from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
-from src.domain.models import TextQuestionStatistic, GridQuestionStatistic
+from src.domain.models import TextQuestionStatistic, MCQuestionStatistic
 from src.db.DBResult import DBResult
 from src.common import limiter
 from src.api.KeyDistributor import distribute_keys
 from src.domain.auth import User
 from src.domain.models import NewForm, Form
-from src.db.DBConnector import DBConnector, get_db
+from src.db.DBConnector import DBConnector
 
-db_connector:DBConnector = get_db()
+db_connector:DBConnector = DBConnector.get_db()
 
 router:APIRouter = APIRouter(prefix="/form",
                              tags=["forms"],
@@ -143,13 +143,13 @@ async def delete_form(form_id:str,
             detail=result.message)
 
 
-@router.get("/{form_id}/submission-data", response_model=list[TextQuestionStatistic | GridQuestionStatistic])
+@router.get("/{form_id}/submission-data", response_model=list[TextQuestionStatistic | MCQuestionStatistic])
 async def get_form_submission_data(form_id:str,
                                    user:Annotated[User, Depends(authenticate)],
                                    form:Annotated[Form, Depends(check_form_authorization)],
                                    request: Request):
 
-    sub_data_res:DBResult[list[TextQuestionStatistic | GridQuestionStatistic]] = (
+    sub_data_res:DBResult[list[TextQuestionStatistic | MCQuestionStatistic]] = (
         db_connector.get_submission_data(
             form_id=form_id,
             owner_id=user.id,

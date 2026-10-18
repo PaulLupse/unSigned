@@ -8,12 +8,10 @@ from src.api.BaseModel import BaseModel, RootModel
 from src.utilities import PyObjectId, PyObjectIdField
 
 class ElemType(str, Enum):
-
     """
     Tipurile de elemente ale unui formular, sub formă de string. Folosite pentru discriminarea între elementele
     ce moștenesc clasa FormElement.
     """
-
     PARAGRAPH = "paragraph"
     HEADING = "heading"
     QUESTION = "question"
@@ -26,7 +24,7 @@ class QuestionType(str, Enum):
     ce moștenesc clasa Question.
     """
 
-    GRID = "grid"
+    MC = "mc"
     TEXT = "text"
 
 
@@ -47,54 +45,85 @@ class Action(str, Enum):
 
 
 class FormElement(BaseModel):
-
     """
-    Clasa de baza pentru toate elementele unui formular (in afara de titlu).
+    Modelul de bază pentru toate elementele dinamice ale unui formular.
     Attributes:
         elem_type: Discriminatorul intre tipurile de elemente.
+        id: Identificatorul elementului (un id de 6 caractere)
     """
-
     elem_type: ElemType
+    id:str = Field(min_length=6, max_length=6)
 
 
 class Paragraph(FormElement):
+    """
+    Un paragraf, cu rol informativ pentru persoana ce completează formularul.
+    Attributes:
+        text: Textul paragrafului.
+    """
     elem_type: Literal[ElemType.PARAGRAPH] # = ElemType.PARAGRAPH
     text: str
 
 
 class Heading(BaseModel):
+    """
+    Un subtitlu, cu rol delimitator și informativ pentru persoana ce completează formularul.
+    Attributes:
+        text: Textul subtitlului.
+    """
     elem_type: Literal[ElemType.HEADING] # = ElemType.HEADING
     text: str
-    number: int
 
 
 class Question(BaseModel):
-
     """
     Clasa de baza pentru toate intrebarile unui formular.
     Attributes:
         question_type: Discriminatorul intre tipurile de intrebari.
+        text: Textul întrebării.
+        is_optional: Flag ce semnalează opționalitatea întrebării.
     """
-
     elem_type: Literal[ElemType.QUESTION] # = ElemType.QUESTION
 
     text: str
     question_type: QuestionType
-    is_optional: bool
+    is_optional: bool = False
 
 
-class GridQuestion(Question):
-    question_type: Literal[QuestionType.GRID] # = QuestionType.GRID
-    choices: list[str]
-    is_multiple_choice: bool
+class MCQuestionChoice(BaseModel):
+    """
+    O variantă de răspuns, specifică unei întrebări cu răspunsuri multiple.
+    Attributes:
+        id: Identificatorul variantei.
+        label: Textul variantei de răspuns.
+    """
+    id: int
+    label: str
+
+
+class MCQuestion(Question):
+    """
+    (MC = Multiple Choice) O întrebare cu mai multe răspunsuri.
+    Attributes:
+        choices: Variantele de răspuns.
+        is_multiple_select: Flag ce semnalează dacă se pot selecta două sau mai multe de o variante de răspuns în același timp.
+    """
+    question_type: Literal[QuestionType.MC] # = QuestionType.MC
+    choices: list[MCQuestionChoice]
+    is_multiple_select: bool
 
 
 class TextQuestion(Question):
+    """
+    Întrebare cu răspuns de tip text.
+    Attributes:
+        max_chars: Numărul maxim de caractere permis
+    """
     question_type: Literal[QuestionType.TEXT] # = QuestionType.TEXT
     max_chars: int
 
 
-class QuestionUnion(RootModel[ Annotated[Union[TextQuestion, GridQuestion], Field(discriminator="question_type")]]):
+class QuestionUnion(RootModel[ Annotated[Union[TextQuestion, MCQuestion], Field(discriminator="question_type")]]):
     pass
 
 
@@ -103,35 +132,45 @@ class FormElementUnion (RootModel[Annotated[Union[QuestionUnion, Paragraph, Head
 
 
 class Answer(BaseModel):
-
     """
     Clasa de baza pentru un raspuns la o intrebare particulară.
-    Discriminarea între tipuri se realizează prin atributul type.
+    Attributes:
+        type: Discriminatorul intre tipurile de răspunsuri.
     """
-
     type: QuestionType
+    question_id: str = Field(min_length=6, max_length=6)
 
 
-class GridAnswer(Answer):
-    type: Literal[QuestionType.GRID] # = QuestionType.GRID
+class MCAnswer(Answer):
+    """
+    Răspuns la o întrebare cu variante multiple de răspuns.
+    Attributes:
+        choices: Lista id-urilor răspunsurilor alese.
+    """
+    type: Literal[QuestionType.MC] # = QuestionType.GRID
     choices: list[int]
 
 
 class TextAnswer(Answer):
+    """
+    Răspuns la o întrebare de tip text.
+    Attributes:
+        text: Răspunsul, sub formă de text.
+    """
     type: Literal[QuestionType.TEXT] # = QuestionType.TEXT
     text: str
 
 
-class AnswerUnion (RootModel[Annotated[Union[TextAnswer, GridAnswer], Field(discriminator="type")]]):
+class AnswerUnion (RootModel[Annotated[Union[TextAnswer, MCAnswer], Field(discriminator="type")]]):
     pass
 
 
 class Submission(BaseModel):
-
     """
     Clasă reprezentând o submisie pentru un formular.
+    Attributes:
+        answers: Lista răspunsurilor.
     """
-
     answers: list[AnswerUnion]
 
 
@@ -142,7 +181,7 @@ class BaseForm(BaseModel):
     """
 
     id: PyObjectId = PyObjectIdField
-    name: str
+    title: str
     owner_id: str
     date_created: Optional[AwareDatetime]
     date_opened: Optional[AwareDatetime] = None
@@ -152,6 +191,8 @@ class BaseForm(BaseModel):
 class FormSummary(BaseForm):
     """
     Formatul minimal al unui formular. NU contine intrebarile aferente si submisiile.
+    Attributes:
+        sub_count: Numărul de submisii.
     """
 
     sub_count: Annotated[int, BeforeValidator(lambda submissions:
@@ -161,7 +202,9 @@ class FormSummary(BaseForm):
 
 
 class Form(BaseForm):
-
+    """
+    Formatul complet al unui formular.
+    """
     elements: list[FormElementUnion]
     submissions: Optional[List[Submission]] = None
 
@@ -174,7 +217,7 @@ class Form(BaseForm):
 
         return FormSummary(
             id=self.id,
-            name=self.name,
+            title=self.title,
             owner_id=self.owner_id,
             date_created=self.date_created,
             date_opened=self.date_opened,
@@ -184,12 +227,18 @@ class Form(BaseForm):
 
 
 class NewForm(BaseModel):
-    name: str
+    """
+    Formă 'primitivă' al unui formular.
+    """
+    title: str
     elements: list[FormElementUnion]
 
 
 class NewTemplate(BaseModel):
-    name: str
+    """
+    Formă 'primitivă' al unui șablon.
+    """
+    title: str
     elements: list[FormElementUnion]
 
 
@@ -215,17 +264,17 @@ class TextQuestionStatistic(QuestionStatistic):
     frequent_words: list[str]
 
 
-class GridQuestionStatistic(QuestionStatistic):
+class MCQuestionStatistic(QuestionStatistic):
 
     """
     Statistici legate de raspunsurile pentru o singura intrebare de tip grilă.
     """
 
-    type: Literal[QuestionType.GRID] # = QuestionType.GRID
+    type: Literal[QuestionType.MC] # = QuestionType.GRID
     answer_rate: list[float]  # procentul de oameni care au ales o varianta de raspuns anume
 
 
-class QuestionStatisticUnion (RootModel[Annotated[Union[GridQuestionStatistic, TextQuestionStatistic], Field(discriminator="type")]]):
+class QuestionStatisticUnion (RootModel[Annotated[Union[MCQuestionStatistic, TextQuestionStatistic], Field(discriminator="type")]]):
     pass
 
 
@@ -243,14 +292,16 @@ class BaseTemplate(BaseModel):
 
 class TemplateSummary(BaseTemplate):
     """
-    Formatul minimal al unui template. NU contine intrebarile aferente.
+    Formatul minimal al unui șablon. NU contine intrebarile aferente.
     """
 
     question_count: int
 
 
 class Template(BaseTemplate):
-
+    """
+    Forma completă al unui șablon.
+    """
     elements: list[FormElementUnion]
 
     def summarize(self) -> TemplateSummary:

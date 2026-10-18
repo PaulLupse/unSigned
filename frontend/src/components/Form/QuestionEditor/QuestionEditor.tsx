@@ -7,7 +7,7 @@ import {zodResolver} from '@hookform/resolvers/zod';
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 
 import {Switch} from "src/components/Switch";
-import {ElemType, type GridQuestion, QuestionType, type QuestionUnion, type TextQuestion} from "src/client/types.gen";
+import {ElemType, type MCQuestion, QuestionType, type QuestionUnion, type TextQuestion} from "src/client/types.gen";
 import { zGridChoice } from "src/domain/schemas";
 import type {GridChoice} from "src/domain/types";
 
@@ -84,7 +84,7 @@ const gridChoicesSchema = z.object({
 }); type GridChoices = z.infer<typeof gridChoicesSchema>
 
 // Componenta menita pentru afisarea optiunilor intrebarilor de tip grilă.
-function GridQuestionOptions(props:QuestionOptionsComponentProps<GridQuestion>) {
+function MCQuestionOptions(props:QuestionOptionsComponentProps<MCQuestion>) {
     
     // Folosim un formular separat pentru variantele de raspuns.
     // O alternativa ar fii fost folosirea hook-ului useFieldArray, dar dat fiind faptul ca variantele sunt reprezentate
@@ -208,11 +208,11 @@ export function QuestionEditor(props:QuestionEditorProps) {
             {
                 <Switch<QuestionType> components={[
                     {
-                        Component:<GridQuestionOptions register={register as UseFormRegister<GridQuestion>}
-                                     watch={watch as UseFormWatch<GridQuestion>}
+                        Component:<MCQuestionOptions register={register as UseFormRegister<MCQuestion>}
+                                     watch={watch as UseFormWatch<MCQuestion>}
                                      errors={errors}
-                                     control={control as Control<GridQuestion>} />,
-                        condition: QuestionType.GRID
+                                     control={control as Control<MCQuestion>} />,
+                        condition: QuestionType.MC
                     },
                     {
                         Component:<TextQuestionOptions register={register as UseFormRegister<TextQuestion>}

@@ -5,14 +5,14 @@ from starlette.responses import JSONResponse
 
 from src.api.auth.Authenticator import authenticate
 from src.domain.auth import User
-from src.db.DBConnector import DBConnector, get_db
+from src.db.DBConnector import DBConnector
 from src.db.DBResult import DBResult
 from src.domain.models import NewForm, NewTemplate
 
 router:APIRouter = APIRouter(prefix="/admin",
                              tags=['admin'])
 
-db_connector:DBConnector = get_db()
+db_connector:DBConnector = DBConnector.get_db()
 
 
 @router.post("/official-templates/create", status_code=201, response_class=JSONResponse)

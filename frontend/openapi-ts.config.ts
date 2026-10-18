@@ -16,7 +16,9 @@ export default defineConfig({
       },
       requests:false,
       responses:false,
-      definitions:true
+      definitions:{
+        case:"preserve"
+      }
     },
     {
       name:'zod',

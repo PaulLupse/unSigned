@@ -51,7 +51,7 @@ export default function EditForm() {
 
     const {register, formState:{errors}, handleSubmit, control, watch} = useForm<NewForm>(
         {
-            defaultValues:{elements:currentForm?.elements, name:currentForm?.name},
+            defaultValues:{elements:currentForm?.elements, title:currentForm?.title},
             resolver:zodResolver(zNewForm)
         });
 

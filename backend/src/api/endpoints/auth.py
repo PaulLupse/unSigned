@@ -18,11 +18,11 @@ from src.api.VerificationCodeSender import send_verification_email
 from src.api.auth.Authenticator import authenticate
 from src.config import ACCESS_TOKEN_LIFESPAN_MINUTES, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, SECURE_JWT_KEY, JWT_ALG, \
     REFRESH_TOKEN_LIFESPAN_DAYS
+from src.db.AuthDBConnector import AuthDBConnector
 from src.db.DBResult import DBResult
 from src.api.requests import RegisterRequest, VerificationCodeRequest, VerifyEmailRequest, HandleGoogleUserRequest
 from src.common import limiter
 from src.domain.auth import User
-from src.db.DBConnector import DBConnector, get_db
 from src.api.auth.utils import generate_access_token, generate_refresh_token
 from src.utilities import validate_email
 
@@ -31,7 +31,7 @@ router:APIRouter = APIRouter(prefix="/auth",
 
 from src.common import logger
 
-db_connector:DBConnector = get_db()
+db_connector:AuthDBConnector = AuthDBConnector.get_db()
 
 
 # Verifica starea de autentificare a utilizatorului.

@@ -13,10 +13,9 @@ import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import Loading from "src/components/Loading";
 import {
     type AnswerUnion, ElemType,
-    type Form,
-    type GridAnswer,
-    type GridQuestion,
-    type GridQuestionStatistic,
+    type Form, type MCAnswer,
+    type MCQuestion,
+    type MCQuestionStatistic,
     type QuestionStatisticUnion,
     QuestionType,
     type QuestionUnion,
@@ -34,7 +33,7 @@ function TextAnswerDisplayComponent({answer}:{answer:TextAnswer}) {
     )
 }
 
-function GridAnswerDisplayComponent({answer, question}:{answer:GridAnswer, question:GridQuestion}) {
+function MCAnswerDisplayComponent({answer, question}:{answer:MCAnswer, question:MCQuestion}) {
     return (
         <span className={style.gridChoicesInline}>
 
@@ -44,7 +43,7 @@ function GridAnswerDisplayComponent({answer, question}:{answer:GridAnswer, quest
                     return (
                         <div className={style.choice}>
                             <label>{choice}.</label>
-                            <p>{question.choices[choice]}</p>
+                            <p>{question.choices[choice]?.label}</p>
                         </div>
                     )
                 })
@@ -77,8 +76,8 @@ function AnswerList({submission, questions}:{submission:Submission, questions:Ar
                                 <TextAnswerDisplayComponent answer={answer}/>
                         }
                         {
-                            answer.type===QuestionType.GRID  && question.questionType===QuestionType.GRID &&
-                                <GridAnswerDisplayComponent answer={answer} question={question}/>
+                            answer.type===QuestionType.MC  && question.questionType===QuestionType.MC &&
+                                <MCAnswerDisplayComponent answer={answer} question={question}/>
                         }
 
                     </li>
@@ -88,7 +87,7 @@ function AnswerList({submission, questions}:{submission:Submission, questions:Ar
     )
 }
 
-function SubmissionDisplay({submission, index, questions}:{submission:Submission, index:number, questions:Array<TextQuestion|GridQuestion>}) {
+function SubmissionDisplay({submission, index, questions}:{submission:Submission, index:number, questions:Array<TextQuestion|MCQuestion>}) {
 
     const [display, setDisplay] = useState<boolean>(false)
 
@@ -114,7 +113,7 @@ function SubmissionDisplay({submission, index, questions}:{submission:Submission
     )
 }
 
-function IndividualDisplay({submissions, questions}:{submissions:Submission[], questions:Array<TextQuestion|GridQuestion>}) {
+function IndividualDisplay({submissions, questions}:{submissions:Submission[], questions:Array<TextQuestion|MCQuestion>}) {
     return(
         submissions.map(
             (submission, index) => {
@@ -150,7 +149,7 @@ function TextAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic
     )
 }
 
-function GridAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic:GridQuestionStatistic, question:GridQuestion}) {
+function MCAnswerStatisticDisplay({answerStatistic, question}:{answerStatistic:MCQuestionStatistic, question:MCQuestion}) {
     return (
         <div className={style.choicePercentageGroup}>
             <p>Choice percentages:</p>
@@ -193,8 +192,8 @@ function AnswerStatisticDisplay({answerStatistic, question, index}:{answerStatis
                     <TextAnswerStatisticDisplay answerStatistic={answerStatistic} question={question} />
             }
             {
-                answerStatistic.type == 'grid'  && question.questionType == 'grid' &&
-                    <GridAnswerStatisticDisplay answerStatistic={answerStatistic} question={question} />
+                answerStatistic.type == QuestionType.MC  && question.questionType == QuestionType.MC &&
+                    <MCAnswerStatisticDisplay answerStatistic={answerStatistic} question={question} />
             }
         </li>
     )

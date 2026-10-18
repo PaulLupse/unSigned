@@ -8,7 +8,7 @@ from src.api.CamelCaseRoute import CamelCaseRoute
 from src.api.auth.Authenticator import authenticate
 from src.common import limiter
 from src.domain.auth import User
-from src.db.DBConnector import get_db, DBConnector
+from src.db.DBConnector import DBConnector
 from src.db.DBResult import DBResult
 from src.domain.models import TemplateSummary, Template, NewForm, NewTemplate, TemplateType, Action
 
@@ -16,7 +16,7 @@ router:APIRouter = APIRouter(prefix='/template',
                              tags=['template'],
                              route_class=CamelCaseRoute)
 
-db_connector:DBConnector = get_db()
+db_connector:DBConnector = DBConnector.get_db()
 
 
 def check_template_authorization(

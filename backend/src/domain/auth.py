@@ -8,6 +8,9 @@ from src.utilities import PyObjectId, PyObjectIdField
 
 
 class User(BaseModel):
+    """
+    Date despre utilizator.
+    """
     id: PyObjectId = PyObjectIdField  # Aliasul este necesar deoarece folosim id-ul documentelor din mongodb
     username: str
     is_admin: bool
@@ -15,11 +18,17 @@ class User(BaseModel):
 
 
 class UserStats(BaseModel):
+    """
+    Statistici legate de un utilizator.
+    """
     form_count: int
     template_count: int
 
 
 class UserProfileWithStats(BaseModel):
+    """
+    Date extinse despre utilizator.
+    """
     user: User
     stats: UserStats
 
@@ -57,12 +66,18 @@ class Key(BaseModel):
 
 
 class VerificationCode(BaseModel):
+    """
+    Cod de verificare pentru înregistrare.
+    """
     id: PyObjectId = PyObjectIdField
     code: str
     expires_at: datetime
 
 
 class RefreshToken(BaseModel):
+    """
+    Jeton de reîmprospătare a sesiunii.
+    """
     user_id: str
     hash: str
     is_used: bool

@@ -38,7 +38,7 @@ import ThankYou from "./routes/sub-user/ThankYou";
 import TemplatesMenu from "./routes/user/TemplatesMenu";
 import {ListTemplates} from "./routes/user/ListTemplates";
 
-import "./general.css"
+import "./index.css"
 import Loading from "src/components/Loading";
 import {LoadingOverlayProvider} from "src/components/LoadingOverlayProvider";
 import {GoogleOAuthProvider} from "@react-oauth/google";

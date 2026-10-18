@@ -6,7 +6,7 @@ import * as style from './QuestionDisplayer.module.css'
 import type {FieldErrors, UseFormRegister, UseFormResetField} from "react-hook-form";
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 import {log} from "src/utilities";
-import type {GridQuestion, QuestionUnion, TextQuestion} from "src/domain/types";
+import type {MCQuestion, QuestionUnion, TextQuestion} from "src/domain/types";
 
 
 interface QuestionProps {
@@ -19,8 +19,8 @@ interface TextQuestionProps extends QuestionProps {
     question:TextQuestion
 }
 
-interface GridQuestionProps extends QuestionProps {
-    question:GridQuestion
+interface MCQuestionProps extends QuestionProps {
+    question:MCQuestion
 }
 
 export function TextQuestionComponent({question, index, register}:TextQuestionProps) {
@@ -40,7 +40,7 @@ export function TextQuestionComponent({question, index, register}:TextQuestionPr
     )
 }
 
-export function GridQuestionComponent({question, index, register}:GridQuestionProps) {
+export function MCQuestionComponent({question, index, register}:MCQuestionProps) {
 
     const reg = useMemo(()=>
         register?register(`${index}`,
@@ -79,7 +79,7 @@ export function QuestionComponent({question, index, register}:QuestionProps) {
                question.questionType=='text'?
                    <TextQuestionComponent question={question} index={index} register={register}/>
                    :
-                   <GridQuestionComponent question={question} index={index} register={register}/>
+                   <MCQuestionComponent question={question} index={index} register={register}/>
             }
 
             {

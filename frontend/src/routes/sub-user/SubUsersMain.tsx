@@ -22,7 +22,7 @@ import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {useAlert} from "src/components/AlertProvider";
 import Loading from "src/components/Loading";
 import {ElemType, QuestionType, type Form, type Submission} from "src/client/types.gen";
-import {zGridAnswer, zTextAnswer} from "src/client/zod.gen";
+import {zMCAnswer, zTextAnswer} from "src/client/zod.gen";
 
 interface KeyFormInput {
     key:string
@@ -42,7 +42,7 @@ function parseData(data:any, form:Form):Submission {
             form.elements.filter(e=>e.elemType===ElemType.QUESTION)[key]?.questionType == QuestionType.TEXT ?
                 zTextAnswer.parse({text: value, type:'text'})
                 :
-                zGridAnswer.parse({choices: value?parseGridChoices([...value]):[], type:'grid'})
+                zMCAnswer.parse({choices: value?parseGridChoices([...value]):[], type:'grid'})
         );
     }
     return submission

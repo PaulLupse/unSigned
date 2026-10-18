@@ -54,7 +54,7 @@ export default function FormCreator() {
             const parseResult = zNewForm.safeParse(JSON.parse(progress))
             if (parseResult.success) {
                 setValue("elements", parseResult.data.elements);
-                setValue("name", parseResult.data.name);
+                setValue("title", parseResult.data.title);
             } else {
                 toast.error("Could not load progress.")
             }

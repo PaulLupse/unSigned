@@ -7,10 +7,10 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 
 from src.api.auth.OAuth2PasswordBearerWithCookie import OAuth2PasswordBearerWithCookies
 from src.config import SECURE_JWT_KEY, JWT_ALG
-from src.db.DBConnector import DBConnector, get_db
+from src.db.AuthDBConnector import AuthDBConnector
 from src.domain.auth import User
 
-db_connector:DBConnector = get_db()
+db_connector:AuthDBConnector = AuthDBConnector.get_db()
 
 oauth2_scheme = OAuth2PasswordBearerWithCookies(tokenUrl="api/users/token")
 

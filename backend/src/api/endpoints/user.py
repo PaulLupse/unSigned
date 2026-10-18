@@ -12,11 +12,13 @@ from src.db.DBResult import DBResult
 from src.common import limiter, logger
 from src.domain.auth import User, UserProfileWithStats
 from src.domain.models import FormSummary
-from src.db.DBConnector import DBConnector, get_db
+from src.db.DBConnector import DBConnector
+from src.db.AuthDBConnector import AuthDBConnector
 
 from src.api.requests import ChangeUsernameRequest
 
-db_connector:DBConnector = get_db()
+db_connector:DBConnector = DBConnector.get_db()
+auth_db:AuthDBConnector = AuthDBConnector.get_db()
 
 router:APIRouter = APIRouter(prefix="/user", tags=["users"], route_class=CamelCaseRoute)
 
@@ -31,9 +33,9 @@ async def me(user:Annotated[User, Depends(authenticate)], request: Request):
 def get_user_by_identifier(identifier:str)->User:
 
     if identifier[0] == '@':
-        result:DBResult[User | None] = db_connector.find_user(username=identifier[1::])
+        result:DBResult[User | None] = auth_db.find_user(username=identifier[1::])
     else:
-        result: DBResult[User | None] = db_connector.find_user(user_id=identifier)
+        result: DBResult[User | None] = auth_db.find_user(user_id=identifier)
 
     if not result.ok() or not result.data :
         raise HTTPException(status_code=result.status, detail=result.message)
@@ -103,7 +105,7 @@ async def change_username(user:Annotated[User, Depends(authenticate)],
     if user_id != user.id and not user.is_admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN)
 
-    result = db_connector.change_username(user_id, new_username=req.new_username)
+    result = auth_db.change_username(user_id, new_username=req.new_username)
 
     if not result.ok(): raise HTTPException(result.status, result.message)
     
@@ -118,8 +120,8 @@ async def delete_user(user: Annotated[User, Depends(authenticate)],
     if not user_id == user.id and not user.is_admin:
         raise HTTPException(status_code=403, detail="You are unauthorized to perform this action.")
 
-    db_connector.end_user_session(user_id=user.id)
-    result: DBResult = db_connector.delete_user(user.id)
+    auth_db.end_user_session(user_id=user.id)
+    result: DBResult = auth_db.delete_user(user.id)
 
     if result.status == 200:
 
