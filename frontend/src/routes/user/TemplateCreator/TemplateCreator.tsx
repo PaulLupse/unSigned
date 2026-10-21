@@ -44,7 +44,7 @@ export default function TemplateCreator() {
     const [loadingProgress, setLoadingProgress] = React.useState(false)
 
     const {register, formState:{errors}, handleSubmit, control, watch, getValues, setValue} =
-        useForm<NewTemplate>({defaultValues:{elements:[], name:'New template'}, resolver:zodResolver(zNewTemplate)});
+        useForm<NewTemplate>({defaultValues:{elements:[], title:'New template'}, resolver:zodResolver(zNewTemplate)});
     
     const {append, update, remove, swap} = useFieldArray({control, name:'elements'});
     const formElements = watch("elements");
@@ -86,7 +86,7 @@ export default function TemplateCreator() {
             const parseResult = zNewForm.safeParse(JSON.parse(progress))
             if (parseResult.success) {
                 setValue("elements", parseResult.data.elements);
-                setValue("name", parseResult.data.name);
+                setValue("title", parseResult.data.title);
             }
         }
         setLoadingProgress(false);

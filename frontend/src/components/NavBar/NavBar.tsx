@@ -3,6 +3,8 @@ import type {QueryClient} from "@tanstack/react-query";
 import {useNavigate} from "react-router-dom";
 
 import "./nav-bar.css"
+import {SidebarTrigger} from "src/components/ui/sidebar";
+import {PanelLeftIcon} from "lucide-react";
 
 
 interface NavBarProps {
@@ -32,7 +34,8 @@ export default function NavBar ({sidebarIsOpen, setSidebarIsOpen}:NavBarProps) {
             </div>
 
             <div className={'right'}>
-                <button onClick={()=>{setSidebarIsOpen(!sidebarIsOpen)}} />
+                <SidebarTrigger className="w-8 h-8 p-0 [&_svg]:size-6!" />
+                
             </div>
 
         </div>

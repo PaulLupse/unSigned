@@ -20,7 +20,7 @@ import {FixedElement} from "src/components/FixedElement/FixedElement"
 import {NavButton} from "src/components/Buttons/Buttons";
 import ButtonWithMenu from "src/components/FloatingMenu/FloatingMenu";
 import Loading from "src/components/Loading";
-import {ElemType, type NewForm, QuestionType, type TextQuestion} from "src/client/types.gen";
+import {ElemType, type NewForm, QuestionType, type Template, type TextQuestion} from "src/client/types.gen";
 import {zNewForm} from "src/client/zod.gen";
 import type {QuestionUnion} from "src/domain/types";
 
@@ -41,8 +41,15 @@ export default function FormCreator() {
         enabled: !!usedTemplateId,
         retry:0
     })
+    
+    const loadTemplate = (usedTemplate:Template|undefined)=>{
+        return {
+            elements:usedTemplate?usedTemplate.elements:[],
+            title:'New form'
+        }
+    }
 
-    const {register, formState:{errors}, handleSubmit, control, watch, setValue, getValues} = useForm<NewForm>({values:{elements:usedTemplate.data?usedTemplate.data.elements:[], name:'New form'}});
+    const {register, formState:{errors}, handleSubmit, control, watch, setValue, getValues} = useForm<NewForm>({values:loadTemplate(usedTemplate.data)});
     const {append, update, remove, swap} = useFieldArray({control, name:'elements'});
     const elements = watch("elements");
 

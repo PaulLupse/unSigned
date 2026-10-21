@@ -20,7 +20,7 @@ FROM base AS builder
 # stage folosit pentru "cladirea" codului
 # de la acest stage in colo se considera mediu de producite (de aceea copiem tot ce trebuie)
 
-COPY tsconfig.json webpack.config.cjs ./
+COPY tsconfig.json webpack.config.cjs components.json openapi-ts.config.ts postcss.config.js ./
 COPY src ./src
 COPY static ./static
 

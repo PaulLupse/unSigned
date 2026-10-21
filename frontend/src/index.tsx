@@ -45,6 +45,8 @@ import {GoogleOAuthProvider} from "@react-oauth/google";
 import {AuthProvider, useAuth} from "src/components/AuthProvider";
 import {MeRedirect} from "src/components/MeRedirect";
 import {TemplateType} from "src/client/types.gen";
+import {SidebarProvider, SidebarTrigger} from "src/components/ui/sidebar";
+import {AppSidebar} from "src/components/SideBar/YASB";
 
 
 
@@ -76,20 +78,18 @@ function Index() {
                     }
                 }
             />
-
-            <NavBar
-                sidebarIsOpen={sidebarIsOpen}
-                setSidebarIsOpen={setSidebarIsOpen}
-                queryClient={queryClient} />
-            <main>
-                {
-                    isLoading?
-                    <Loading /> : <Outlet />
-                }
-                <SideBar isOpen={sidebarIsOpen}
-                         setIsOpen={setSidebarIsOpen}
-                         anchor={'right'} />
-            </main>
+            
+                <NavBar
+                    sidebarIsOpen={sidebarIsOpen}
+                    setSidebarIsOpen={setSidebarIsOpen}
+                    queryClient={queryClient} />
+                <main id="main-content">
+                    {
+                        isLoading?
+                        <Loading /> : <Outlet />
+                    }
+                </main>
+                <AppSidebar />
         </div>
     );
 }
@@ -168,9 +168,9 @@ window.onload = ()=>{
         <AlertProvider>
         <StyledEngineProvider injectFirst={true}>
         <AuthProvider>
-
+        <SidebarProvider className="contents">
         <RoutingLayout />
-
+        </SidebarProvider>
         </AuthProvider>
         </StyledEngineProvider>
         </AlertProvider>

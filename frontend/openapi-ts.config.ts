@@ -24,11 +24,9 @@ export default defineConfig({
       name:'zod',
       requests:false,
       responses:false,
-      definitions: true
+      definitions: {
+        case:"preserve"
+      }
     },
-    // {
-    //   name: '@hey-api/transformers',
-    //   dates: true,
-    // },
   ]
 });

@@ -5,7 +5,7 @@ import * as z from 'zod';
 /**
  * Body_login_api_auth_token_post
  */
-export const zBodyLoginApiAuthTokenPost = z.object({
+export const zBody_login_api_auth_token_post = z.object({
     grant_type: z.string().regex(/^password$/).nullish(),
     username: z.string(),
     password: z.string(),
@@ -93,7 +93,7 @@ export const zHeading = z.object({
  * Attributes:
  * choices: Lista id-urilor răspunsurilor alese.
  */
-export const zMcAnswer = z.object({
+export const zMCAnswer = z.object({
     type: z.literal('mc'),
     questionId: z.string().length(6),
     choices: z.array(z.int())
@@ -107,7 +107,7 @@ export const zMcAnswer = z.object({
  * id: Identificatorul variantei.
  * label: Textul variantei de răspuns.
  */
-export const zMcQuestionChoice = z.object({
+export const zMCQuestionChoice = z.object({
     id: z.int(),
     label: z.string()
 });
@@ -120,12 +120,12 @@ export const zMcQuestionChoice = z.object({
  * choices: Variantele de răspuns.
  * is_multiple_select: Flag ce semnalează dacă se pot selecta două sau mai multe de o variante de răspuns în același timp.
  */
-export const zMcQuestion = z.object({
+export const zMCQuestion = z.object({
     elemType: z.literal('question'),
     text: z.string(),
     questionType: z.literal('mc'),
     isOptional: z.boolean().optional().default(false),
-    choices: z.array(zMcQuestionChoice),
+    choices: z.array(zMCQuestionChoice),
     isMultipleSelect: z.boolean()
 });
 
@@ -134,7 +134,7 @@ export const zMcQuestion = z.object({
  *
  * Statistici legate de raspunsurile pentru o singura intrebare de tip grilă.
  */
-export const zMcQuestionStatistic = z.object({
+export const zMCQuestionStatistic = z.object({
     engagement: z.number(),
     type: z.literal('mc'),
     answerRate: z.array(z.number())
@@ -180,7 +180,7 @@ export const zTemplateType = z.enum([
  */
 export const zTemplateSummary = z.object({
     id: z.string(),
-    name: z.string(),
+    title: z.string(),
     ownerId: z.string(),
     status: zTemplateType,
     questionCount: z.int()
@@ -204,7 +204,7 @@ export const zTextAnswer = z.object({
  */
 export const zAnswerUnion = z.discriminatedUnion('type', [
     zTextAnswer,
-    zMcAnswer
+    zMCAnswer
 ]);
 
 /**
@@ -247,7 +247,7 @@ export const zTextQuestion = z.object({
  */
 export const zQuestionUnion = z.discriminatedUnion('questionType', [
     zTextQuestion,
-    zMcQuestion
+    zMCQuestion
 ]);
 
 /**
@@ -302,7 +302,7 @@ export const zNewTemplate = z.object({
  */
 export const zTemplate = z.object({
     id: z.string(),
-    name: z.string(),
+    title: z.string(),
     ownerId: z.string(),
     status: zTemplateType,
     elements: z.array(zFormElementUnion)
@@ -364,7 +364,7 @@ export const zValidationError = z.object({
 /**
  * HTTPValidationError
  */
-export const zHttpValidationError = z.object({
+export const zHTTPValidationError = z.object({
     detail: z.array(zValidationError).optional()
 });
 
@@ -399,7 +399,7 @@ export const zElemType = z.enum([
  * QuestionStatisticUnion
  */
 export const zQuestionStatisticUnion = z.discriminatedUnion('type', [
-    zMcQuestionStatistic,
+    zMCQuestionStatistic,
     zTextQuestionStatistic
 ]);
 

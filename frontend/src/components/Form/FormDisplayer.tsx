@@ -51,14 +51,14 @@ interface FormDisplayerProps {
     resetField?:UseFormResetField<any>
 }
 
-export function FormDisplayer({form:{name, elements}, register, errors, resetField}:FormDisplayerProps) {
+export function FormDisplayer({form:{title, elements}, register, errors, resetField}:FormDisplayerProps) {
 
     return (
         <div className={'form'}>
 
             <div className={'title-frame'}>
                 <h2 className={'form-title'}>
-                    {name}
+                    {title}
                 </h2>
             </div>
 

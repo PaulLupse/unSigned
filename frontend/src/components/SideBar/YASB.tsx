@@ -1,4 +1,4 @@
-import * as React from "react"
+import React from 'react'
 import {
   Calendar,
   Home,
@@ -29,7 +29,7 @@ const navItems = [
 
 export function AppSidebar() {
   return (
-    <Sidebar className="border-r border-border bg-background">
+    <Sidebar className="border-r border-border bg-red " side={'right'}>
       {/* Brand / Logo Header */}
       <SidebarHeader className="border-b border-border/50 px-4 py-3">
         <div className="flex items-center gap-2 font-medium text-sm">
@@ -50,7 +50,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton>
                     <a href={item.url} className="flex items-center gap-3">
                       <item.icon className="h-4 w-4 text-muted-foreground" />
                       <span>{item.title}</span>

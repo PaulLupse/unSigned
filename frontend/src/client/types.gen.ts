@@ -435,9 +435,9 @@ export type Template = {
      */
     id: string;
     /**
-     * Name
+     * Title
      */
-    name: string;
+    title: string;
     /**
      * Ownerid
      */
@@ -460,9 +460,9 @@ export type TemplateSummary = {
      */
     id: string;
     /**
-     * Name
+     * Title
      */
-    name: string;
+    title: string;
     /**
      * Ownerid
      */

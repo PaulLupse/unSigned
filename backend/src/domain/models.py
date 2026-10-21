@@ -285,7 +285,7 @@ class BaseTemplate(BaseModel):
     """
 
     id: PyObjectId = PyObjectIdField
-    name: str
+    title: str
     owner_id: str
     status: TemplateType
 
@@ -313,7 +313,7 @@ class Template(BaseTemplate):
 
         return TemplateSummary(
             id=self.id,
-            name=self.name,
+            title=self.title,
             owner_id=self.owner_id,
             question_count=len([elem for elem in self.elements if elem.elem_type is ElemType.QUESTION]) if self.elements else 0,
             status=self.status

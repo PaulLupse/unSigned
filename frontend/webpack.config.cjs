@@ -47,7 +47,8 @@ module.exports = {
                         options: {
                             presets: [
                                 "@babel/preset-env",
-                                "@babel/preset-react",
+                                ["@babel/preset-react",
+                                { "runtime": "automatic" }],
                                 "@babel/preset-typescript",
                             ],
                         },
@@ -58,7 +59,6 @@ module.exports = {
                 test: /\.css$/i,
                 use: [
                   "style-loader", // Injects CSS into the DOM
-                  "postcss-loader",
                   {
                     loader: "css-loader",
                     options: {
@@ -69,6 +69,7 @@ module.exports = {
                       },
                     },
                   },
+                    "postcss-loader"
                 ],
               },
             {

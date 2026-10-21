@@ -76,7 +76,7 @@ export function FormEditor({register, errors, formElements, addNewQuestion, swap
                        size={0}
                         type='text'
                        data-tooltip-id={'name'}
-                       {...register('name', {required:'Form name required!'})} placeholder="Form name"
+                       {...register('title', {required:'Form name required!'})} placeholder="Form name"
                        readOnly={false}
                 />
                 <FormInputErrorPopup name={'name'} errors={errors} place={"bottom"}/>

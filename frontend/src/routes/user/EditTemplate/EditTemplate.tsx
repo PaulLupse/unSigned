@@ -37,7 +37,7 @@ export default function EditTemplate() {
     }
 
     const {register, formState:{errors}, handleSubmit, control, watch} =
-        useForm<NewForm>({defaultValues:{elements:template?.elements, title:template?.name},
+        useForm<NewForm>({defaultValues:{elements:template?.elements, title:template?.title},
         resolver:zodResolver(zNewForm)});
 
     const {append, update, remove, swap} = useFieldArray({control, name:'elements'});

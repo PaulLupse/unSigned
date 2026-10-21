@@ -247,7 +247,7 @@ export function SubmissionData() {
             <div className={'form'}>
 
                 <h2>
-                    Submissions for {form.name}
+                    Submissions for {form.title}
                 </h2>
 
                 {
