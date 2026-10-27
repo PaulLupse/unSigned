@@ -1,6 +1,6 @@
 import React from 'react'
 import {Drawer} from "@mui/material";
-import './BetterSideBar.css'
+import './Old.css'
 import {Link} from "react-router-dom";
 
 interface SideBarProps {

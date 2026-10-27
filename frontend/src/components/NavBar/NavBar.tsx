@@ -7,13 +7,7 @@ import {SidebarTrigger} from "src/components/ui/sidebar";
 import {PanelLeftIcon} from "lucide-react";
 
 
-interface NavBarProps {
-    queryClient:QueryClient
-    sidebarIsOpen:boolean,
-    setSidebarIsOpen:(sidebarIsOpen:boolean)=>void
-}
-
-export default function NavBar ({sidebarIsOpen, setSidebarIsOpen}:NavBarProps) {
+export default function NavBar () {
 
     const nav = useNavigate()
 

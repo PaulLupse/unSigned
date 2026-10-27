@@ -1,0 +1,11 @@
+.logo {
+  text-align: center;
+  color: white;
+  font-size: 2.25rem;
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none;     /* IE 10+ and older Edge */
+  user-select: none;         /* Standard: Chrome, Firefox, Opera, modern Edge */
+
+  -webkit-text-stroke: 0.033rem black;
+  font-weight: bolder;
+}

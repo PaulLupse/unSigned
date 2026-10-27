@@ -8,7 +8,7 @@ import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {NavButton} from "src/components/Buttons/Buttons";
 import {deleteTemplate} from "src/backend-connection/users";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import toast from "src/utilities/toast";
 import {useAuth} from "src/components/AuthProvider";
 import {type Form, type Template, TemplateType} from "src/domain/types";
 import {zTemplate} from "src/domain/schemas";

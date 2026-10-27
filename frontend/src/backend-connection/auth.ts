@@ -1,11 +1,11 @@
 import {CredentialError, CustomError, handleGenericErrorResponses, log} from "src/utilities";
 
-import {fetch} from "src/utilities";
 import {z} from "zod";
 import {BAD_USER_DATA_ERR, REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
 import type {User} from "src/domain/types";
 import {zUser} from "src/client/zod.gen";
 import type {Credentials, Email, RegisterData} from "src/auth/types";
+import fetch from "src/utilities/fetch";
 
 // Cere un jeton de access (jwt).
 // Returneaza un obiect response cu detaliile de autorizare.

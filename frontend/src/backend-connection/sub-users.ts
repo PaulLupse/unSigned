@@ -1,9 +1,9 @@
 
 import {z} from 'zod'
-import {fetch} from "src/utilities";
 import {REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
 import {zForm, zSubmission} from "src/client/zod.gen";
 import type {Form, Submission} from "src/client/types.gen";
+import fetch from "src/utilities/fetch";
 
 const UseKeyResponseSchema = z.object(
     {

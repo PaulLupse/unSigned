@@ -3,7 +3,7 @@ import React from "react";
 import {getUserDataAndStats} from "src/backend-connection/users";
 
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import toast from "src/utilities/toast";
 import {NavButton} from "src/components/Buttons/Buttons";
 import {useAlert} from "src/components/AlertProvider";
 

@@ -2,7 +2,6 @@
 
 import {CustomError, handleGenericErrorResponses, log} from "src/utilities";
 
-import {fetch} from "src/utilities";
 import {BAD_USER_DATA_ERR, REQUEST_WITH_PAYLOAD_HEADERS} from "src/common";
 import {zUser, zUserProfileWithStats} from "src/auth/schemas";
 import type {
@@ -24,6 +23,7 @@ import {
 
 import type {Email} from "src/auth/types";
 import {ZodError} from "zod";
+import fetch from "src/utilities/fetch";
 
 
 

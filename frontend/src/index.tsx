@@ -16,13 +16,11 @@ import
     KeyInputComponent,
     ShowFormComponent,
 } from "./routes/sub-user/SubUsersMain";
-import {StyledEngineProvider} from '@mui/material/styles';
 
 import {LoginComponent, RegisterComponent} from "./routes/user/Auth/Auth";
-import NavBar from "./components/NavBar/NavBar";
+import NavBar from "./components/NavBar";
 import {DistributeKeys} from "./routes/user/DistributeKeys/DistributeKeys";
-import SideBar from "./components/SideBar/BetterSideBar";
-import toast, {Toaster} from "react-hot-toast";
+import toast from "src/utilities/toast";
 import {Profile} from "./routes/user/Profile/Profile";
 
 
@@ -45,58 +43,45 @@ import {GoogleOAuthProvider} from "@react-oauth/google";
 import {AuthProvider, useAuth} from "src/components/AuthProvider";
 import {MeRedirect} from "src/components/MeRedirect";
 import {TemplateType} from "src/client/types.gen";
-import {SidebarProvider, SidebarTrigger} from "src/components/ui/sidebar";
-import {AppSidebar} from "src/components/SideBar/YASB";
+import {SidebarProvider} from "src/components/ui/sidebar";
+import {Sidebar} from "src/components/SideBar/Sidebar";
+import {Toaster} from "src/components/ui/toast";
+import {CustomError} from "src/utilities";
 
 
 
 function Index() {
 
-    const [sidebarIsOpen, setSidebarIsOpen] = useState(false);
     const {user, isLoading, isError, isSuccess} = useAuth()
-
-    const loc = useLocation();
-    const nav = useNavigate();
 
     return (
         
-        <div id="Pagina intreaga"
-            style={{
+        <div id="the-whole-page"
+             className="grid grid-rows-[auto_1fr] min-h-dvh">
 
-                display:'grid',
-                gridTemplateRows:'100px 1fr',
-                minHeight: '100dvh',
-                minWidth:'320px',
-            }}>
-
-            <Toaster position="top-center"
-                toastOptions={{
-                        style:{
-                            borderRadius:'0',
-                            border:'1px solid'
-                        }
-                    }
-                }
-            />
-            
-                <NavBar
-                    sidebarIsOpen={sidebarIsOpen}
-                    setSidebarIsOpen={setSidebarIsOpen}
-                    queryClient={queryClient} />
-                <main id="main-content">
+            <Toaster />
+            <NavBar />
+            <main id="main-content-wrapper" className="relative overflow-x-hidden">
+                <div id="main-content" className="container mx-auto h-full w-full">
                     {
                         isLoading?
                         <Loading /> : <Outlet />
                     }
-                </main>
-                <AppSidebar />
+                </div>
+                <Sidebar />
+            </main>
         </div>
     );
 }
 
 const queryClient = new QueryClient({
     queryCache: new QueryCache({
-        onError:(error)=>{
+        onError:(error:Error|CustomError)=>{
+
+            // Dacă eroarea ține de autentificare, nu se afișează mesajul de eroare
+            if (error instanceof CustomError && error.status == 401)
+                return
+
             toast.error(error.message)
         }
     })
@@ -166,13 +151,11 @@ window.onload = ()=>{
         <QueryClientProvider client={queryClient} >
         <LoadingOverlayProvider>
         <AlertProvider>
-        <StyledEngineProvider injectFirst={true}>
         <AuthProvider>
-        <SidebarProvider className="contents">
+        <SidebarProvider className="contents" defaultOpen={false}>
         <RoutingLayout />
         </SidebarProvider>
         </AuthProvider>
-        </StyledEngineProvider>
         </AlertProvider>
         </LoadingOverlayProvider>
         </QueryClientProvider>

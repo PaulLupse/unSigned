@@ -14,11 +14,6 @@ body {
     font-family: 'Poppins', sans-serif;
 }
 
-
-html, body, button, input, select, textarea {
-    font-size: 20px;
-}
-
 button:hover {
     background: var(--button-hover);
 }

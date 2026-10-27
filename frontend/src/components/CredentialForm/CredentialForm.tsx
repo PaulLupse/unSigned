@@ -8,7 +8,7 @@ import {CredentialError, CustomError} from "src/utilities";
 
 import * as style from "./credential-form.module.css"
 import {ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
-import toast from "react-hot-toast";
+import toast from "src/utilities/toast";
 import {login} from "src/backend-connection/auth";
 
 import {zCredentials} from "src/auth/schemas";

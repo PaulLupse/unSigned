@@ -4,7 +4,7 @@ import {useGoogleLogin} from "@react-oauth/google";
 
 import * as style from './Buttons.module.css'
 import {handleGoogleUser} from "src/backend-connection/auth";
-import toast from "react-hot-toast";
+import toast from "src/utilities/toast";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 
 interface NavButtonProps extends React.ComponentPropsWithoutRef<'button'> {

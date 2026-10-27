@@ -8,7 +8,7 @@ import {createForm, getTemplate} from "src/backend-connection/users";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
 import {useMutation, useQuery} from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import toast from "src/utilities/toast";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {FormEditor} from "src/components/Form/FormEditor/FormEditor";
 

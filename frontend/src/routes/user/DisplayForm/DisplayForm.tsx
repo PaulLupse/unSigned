@@ -5,7 +5,7 @@ import React, {useCallback, useEffect} from "react";
 import {useNavigate, useOutletContext} from "react-router-dom";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {NavButton} from "src/components/Buttons/Buttons";
-import toast from "react-hot-toast";
+import toast from "src/utilities/toast";
 import {FormDisplayer} from "src/components/Form/FormDisplayer";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
 import {FixedElement} from "src/components/FixedElement/FixedElement";

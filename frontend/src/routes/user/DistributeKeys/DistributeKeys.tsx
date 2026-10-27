@@ -8,7 +8,7 @@ import {useNavigate, useOutletContext} from "react-router-dom";
 import {distributeKeys} from "src/backend-connection/users";
 import {useAlert} from "src/components/AlertProvider";
 import {useMutation} from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import toast from "src/utilities/toast";
 import * as style from './DistributeKeys.module.css'
 import {FixedElement} from "src/components/FixedElement/FixedElement";
 import ButtonBar from "src/components/Buttons/ButtonBar/ButtonBar";
