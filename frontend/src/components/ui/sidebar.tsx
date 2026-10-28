@@ -266,14 +266,14 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon-lg"
-      className={cn(className)}
+      className={cn(className) + " h-10 w-10"}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
-      <MenuIcon />
+      <MenuIcon className="[&_svg]:size-6!" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )

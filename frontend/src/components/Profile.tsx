@@ -9,7 +9,7 @@ export default function Profile() {
   const nav = useNavigate()
 
   return (
-    <span className="flex gap-2 items-center border-2 rounded-xl p-1 bg-gray-50 hover:bg-primary/10">
+    <span className="flex gap-2 p-1 items-center border-muted rounded-xl bg-muted">
 
       <Avatar size="lg" className="hover:bg-primary/30 active:bg-primary/50" onClick={()=>{nav('/me')}}>
         <AvatarImage src="images/account.png" />

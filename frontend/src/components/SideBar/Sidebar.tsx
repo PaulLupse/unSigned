@@ -31,7 +31,7 @@ const navItems:NavItemType[] = [
 
 export function Sidebar() {
   return (
-    <Sb className="border-r border-border z-100" side={'right'} >
+    <Sb className="border-r border-border z-100" side={'left'} >
       {/* Brand / Logo Header */}
       <SidebarHeader className="border-b border-border/50 px-4 py-3">
         <div className="flex items-center gap-2 font-medium text-sm justify-between">

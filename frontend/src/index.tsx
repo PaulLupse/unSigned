@@ -46,13 +46,16 @@ import {TemplateType} from "src/client/types.gen";
 import {SidebarProvider} from "src/components/ui/sidebar";
 import {Sidebar} from "src/components/SideBar/Sidebar";
 import {Toaster} from "src/components/ui/toast";
+import {Button} from "src/components/ui/button";
 import {CustomError} from "src/utilities";
+import {DialogProvider, useDialog} from "src/components/message-dialog";
 
 
 
 function Index() {
 
     const {user, isLoading, isError, isSuccess} = useAuth()
+    const {showDialog} = useDialog();
 
     return (
         
@@ -152,9 +155,11 @@ window.onload = ()=>{
         <LoadingOverlayProvider>
         <AlertProvider>
         <AuthProvider>
+        <DialogProvider>
         <SidebarProvider className="contents" defaultOpen={false}>
         <RoutingLayout />
         </SidebarProvider>
+        </DialogProvider>
         </AuthProvider>
         </AlertProvider>
         </LoadingOverlayProvider>
