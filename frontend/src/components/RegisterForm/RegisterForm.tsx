@@ -10,11 +10,11 @@ import {useMutation} from "@tanstack/react-query";
 import toast from "src/utilities/toast";
 import {CredentialError, CustomError} from "src/utilities";
 import {useNavigate} from "react-router-dom";
-import {useLoading} from "src/components/LoadingOverlayProvider";
 import {ButtonWithIcon, ContinueWithGoogleButton, ToggleButtonWithIcon} from "src/components/Buttons/Buttons";
 
 import {zRegisterData} from "src/auth/schemas";
 import type {RegisterData} from "src/auth/types";
+import {useLoading} from "src/components/Loading";
 
 
 

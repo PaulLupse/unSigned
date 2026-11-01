@@ -1,11 +1,10 @@
 .logo {
   text-align: center;
-  color: white;
+  color: var(--background);
   font-size: 2.25rem;
-  -webkit-user-select: none; /* Safari */
-  -ms-user-select: none;     /* IE 10+ and older Edge */
-  user-select: none;         /* Standard: Chrome, Firefox, Opera, modern Edge */
 
-  -webkit-text-stroke: 0.033rem black;
+  pointer-events: none;
+
+  -webkit-text-stroke: 0.033rem var(--accent-foreground);
   font-weight: bolder;
 }

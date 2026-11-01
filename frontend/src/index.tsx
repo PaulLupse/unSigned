@@ -2,53 +2,53 @@ import React, {StrictMode, useState} from 'react'
 import {createRoot} from "react-dom/client";
 import {BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate} from "react-router-dom";
 import {QueryCache, QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {AlertProvider} from "./components/AlertProvider";
+import {AlertProvider} from "src/components/providers/AlertProvider";
 
 
-import FormCreator from "./routes/user/FormCreator/FormCreator";
-import {FormComponent} from "./routes/user/FormComponent";
-import {DisplayFrom} from "./routes/user/DisplayForm/DisplayForm";
-import {SubmissionData} from "./routes/user/SubmissionData/SubmissionData";
+import FormCreator from "src/views/user/FormCreator/FormCreator";
+import {FormComponent} from "src/views/user/FormComponent";
+import {DisplayFrom} from "src/views/user/DisplayForm/DisplayForm";
+import {SubmissionData} from "src/views/user/SubmissionData/SubmissionData";
 import
     SubUsersMain, {
     BaseComponent,
     FormIdInputComponent,
     KeyInputComponent,
     ShowFormComponent,
-} from "./routes/sub-user/SubUsersMain";
+} from "src/views/sub-user/SubUsersMain";
 
-import {LoginComponent, RegisterComponent} from "./routes/user/Auth/Auth";
-import NavBar from "./components/NavBar";
-import {DistributeKeys} from "./routes/user/DistributeKeys/DistributeKeys";
+import NavBar from "src/components/NavBar";
+import {DistributeKeys} from "src/views/user/DistributeKeys/DistributeKeys";
 import toast from "src/utilities/toast";
-import {Profile} from "./routes/user/Profile/Profile";
+import {Profile} from "src/views/user/Profile/Profile";
 
 
-import './routes/user/Presentation/Presentation.module.css'
-import EditForm from "./routes/user/EditForm/EditForm";
-import TemplateComponent from "./routes/user/TemplateComponent";
-import DisplayTemplate from "./routes/user/DisplayTemplate/DisplayTemplate";
-import EditTemplate from "./routes/user/EditTemplate/EditTemplate";
-import {Presentation} from "./routes/user/Presentation/Presentation";
-import TemplateCreator from "./routes/user/TemplateCreator/TemplateCreator";
-import {ListForms} from "./routes/user/ListForms";
-import ThankYou from "./routes/sub-user/ThankYou";
-import TemplatesMenu from "./routes/user/TemplatesMenu";
-import {ListTemplates} from "./routes/user/ListTemplates";
+import './views/user/Presentation/Presentation.module.css'
+import EditForm from "src/views/user/EditForm/EditForm";
+import TemplateComponent from "src/views/user/TemplateComponent";
+import DisplayTemplate from "src/views/user/DisplayTemplate/DisplayTemplate";
+import EditTemplate from "src/views/user/EditTemplate/EditTemplate";
+import {Presentation} from "src/views/user/Presentation/Presentation";
+import TemplateCreator from "src/views/user/TemplateCreator/TemplateCreator";
+import {ListForms} from "src/views/user/ListForms";
+import ThankYou from "src/views/sub-user/ThankYou";
+import TemplatesMenu from "src/views/user/TemplatesMenu";
+import {ListTemplates} from "src/views/user/ListTemplates";
 
-import "./index.css"
-import Loading from "src/components/Loading";
-import {LoadingOverlayProvider} from "src/components/LoadingOverlayProvider";
+import "src/index.css"
+import Loading, {LoadingOverlayProvider} from "src/components/Loading";
 import {GoogleOAuthProvider} from "@react-oauth/google";
-import {AuthProvider, useAuth} from "src/components/AuthProvider";
-import {MeRedirect} from "src/components/MeRedirect";
+import {AuthProvider, useAuth} from "src/components/providers/AuthProvider";
+import {MeRedirect} from "src/components/utilities/MeRedirect";
 import {TemplateType} from "src/client/types.gen";
 import {SidebarProvider} from "src/components/ui/sidebar";
-import {Sidebar} from "src/components/SideBar/Sidebar";
+import {Sidebar} from "src/components/Sidebar";
 import {Toaster} from "src/components/ui/toast";
 import {Button} from "src/components/ui/button";
 import {CustomError} from "src/utilities";
-import {DialogProvider, useDialog} from "src/components/message-dialog";
+import {DialogProvider, useDialog} from "src/components/MessageDialog";
+import NotFound from "src/views/common/NotFound";
+import LoginView from "src/views/common/LoginView";
 
 
 
@@ -65,13 +65,9 @@ function Index() {
             <Toaster />
             <NavBar />
             <main id="main-content-wrapper" className="relative overflow-x-hidden">
-                <div id="main-content" className="container mx-auto h-full w-full">
-                    {
-                        isLoading?
-                        <Loading /> : <Outlet />
-                    }
+                <div id="main-content" className="mx-auto h-full w-full">
+                    <Outlet />
                 </div>
-                <Sidebar />
             </main>
         </div>
     );
@@ -100,8 +96,8 @@ function RoutingLayout () {
                 <Route path='/' element={<Index />}>
                     <Route index element={<Presentation />} />
                     <Route path='me/*' element={<MeRedirect user={user} />} />
-                    <Route path='login' element={<LoginComponent />}/>
-                    <Route path='register' element={<RegisterComponent />}/>
+                    <Route path='login' element={<LoginView />}/>
+                    <Route path='register' element={<LoginView />}/>
                     <Route path='form/create' element={<FormCreator />} />
 
                     <Route path='user/:username' >
@@ -128,7 +124,9 @@ function RoutingLayout () {
                         <Route path={"public"} element={<ListTemplates type={TemplateType.PUBLIC} />}  />
                         <Route path={'create'} element={<TemplateCreator />}/>
                     </Route>
-                </Route>
+
+                    <Route path="/404" element={<NotFound />} />
+
                 {/* ruta /complete-form este separata de ruta principala deoarece este menita sa fie accesata de sub-utilizatori */}
                 <Route path='complete-form' element={<SubUsersMain />}>
                     <Route index element={<FormIdInputComponent />}></Route>
@@ -138,7 +136,8 @@ function RoutingLayout () {
                         <Route path={"done"} element={<ThankYou />}></Route>
                     </Route>
                 </Route>
-                <Route path='/*' element={<Navigate to={'/'} replace={true} />} ></Route>
+                </Route>
+                <Route path='/*' element={<Navigate to={'/404'} replace={true} />} ></Route>
             </Routes>
         </BrowserRouter>
     )

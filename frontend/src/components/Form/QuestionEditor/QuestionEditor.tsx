@@ -6,7 +6,7 @@ import {zodResolver} from '@hookform/resolvers/zod';
 
 import FormInputErrorPopup from "src/components/FormInputErrorPopup/FormInputErrorPopup";
 
-import {Switch} from "src/components/Switch";
+import {Switch} from "src/components/utilities/Switch";
 import {ElemType, type MCQuestion, QuestionType, type QuestionUnion, type TextQuestion} from "src/client/types.gen";
 import { zGridChoice } from "src/domain/schemas";
 import type {GridChoice} from "src/domain/types";
